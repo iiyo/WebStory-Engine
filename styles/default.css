@@ -1,0 +1,288 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+html, body
+{
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+* 
+{
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -o-box-sizing: border-box;
+}
+
+body
+{
+    color: white;
+    background: rgb(0, 0, 0);
+    font-family: helvetica, verdana, sans-serif;
+    font-size: 1em;
+    font-weight: bold;
+    overflow: auto;
+    text-shadow: 4px 2px 4px black;
+    font-weight: lighter;
+}
+
+img 
+{
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.button a:hover
+{
+    background: url(img/tbg-dark.png) left top;
+}
+
+.button a
+{
+    color: white;
+    display: block;
+    margin: -10px;
+    padding: 20px;
+    text-decoration: none;
+    font-weight: bolder;
+}
+
+#MainTb, #NvlTb
+{
+    position: absolute;
+    background: rgb(0, 0, 0);
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 5000;
+    padding: 10px;
+    box-shadow: 10px 10px 40px black;
+/*     left: 10px; */
+    border: 1px solid gray;
+    border: 1px solid rgba(200, 200, 200, 0.8);
+    border-left: 1px solid white;
+    border-top: 1px solid white;
+    border-left: 1px solid rgba(255, 255, 255, 0.8);
+    border-top: 1px solid  rgba(255, 255, 255, 0.8);
+/*     width: 620px; */
+/*     height: 100px; */
+    border-radius: 5px;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+/*
+#MainTb
+{
+    top: 250px;
+}*/
+
+#NvlTb
+{
+/*     height: 340px; */
+/*     top: 10px; */
+}
+
+#NvlTb p
+{
+    margin-bottom: 10px;
+}
+
+#MainTb .name
+{
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: rgb(0, 0, 0);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 3px;
+    padding-left: 5px;
+    box-shadow: 5px 5px 10px black;
+    border: 1px solid gray;
+    border: 1px solid rgba(200, 200, 200, 0.8);
+    border-left: 1px solid white;
+    border-top: 1px solid white;
+    border-left: 1px solid rgba(255, 255, 255, 0.8);
+    border-top: 1px solid  rgba(255, 255, 255, 0.8);
+    width: 100px;
+    height: 30px;
+    font-size: 12px;
+    border-radius: 5px;
+}
+
+.menu
+{
+    z-index: 5005;
+    top: 20%;
+    position: absolute;
+    width: 50%;
+    left: 25%;
+}
+
+#JifeMainMenu
+{
+    z-index: 10000;
+    background: url('img/106.jpg') center top;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+}
+
+#JifeMainMenu .JifeMenuWrapper
+{
+    position: absolute;
+    /*  top: 50px; */
+    bottom: 50px;
+    padding: 20px;
+    left: 200px;
+    right: 200px;
+    padding-top: 20px;
+    background: url(img/tbg.png) left top;
+    /*  border-radius: 10px; */
+    box-shadow: 10px 10px 20px black;
+    border: 1px solid gray;
+    border-left: 1px solid white;
+    border-top: 1px solid white;
+}
+
+.JifeDecisionButton, .menu .button
+{
+    margin: auto;
+    max-width: 540px;
+    cursor: pointer;
+    box-shadow: 5px 5px 10px black;
+    /*  border-radius: 10px; */
+    overflow: hidden;
+    background: url(img/tbg.png) left top;
+    border: 1px solid gray;
+    border-left: 1px solid white;
+    border-top: 1px solid white;
+}
+
+.menu .button:last-child
+{
+    margin-bottom: 0;
+}
+
+.menu .button
+{
+    width: 100%;
+    margin-bottom: 5%;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: block;
+    color: white;
+    text-decoration: none;
+    font-size: 1em;
+}
+
+.menu .button:hover
+{
+    background: rgba(0, 0, 0, 1);
+    border: 1px solid white;
+}
+
+#Stage
+{
+    line-height: 1.5em;
+    border-radius: 10px;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+    background: black;
+    overflow: hidden;
+    position: absolute;
+}
+
+#WSELoadingScreen
+{
+    background: black;
+    color: white;
+    font-weight: bolder;
+    font-size: 0.8em;
+}
+
+#WSELoadingScreen .container
+{
+    position: absolute;
+    left: 20%;
+    top: 40%;
+    right: 20%;
+}
+
+#WSELoadingScreen .container .heading
+{
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#WSELoadingScreen .container .progressBar
+{
+    background: rgba(40, 40, 40, 0.6);
+    border-radius: 10px;
+    margin-top: 5px;
+    border: 2px solid rgb(20, 20, 20);
+    box-shadow: 0 0 5px rgba(200, 200, 200, 0.6);
+}
+
+#WSELoadingScreenProgress
+{
+    height: 20px;
+    background: rgba(100, 200, 100, 0.8);
+    text-align: right;
+    border-radius: 10px;
+}
+
+#WSELoadingScreenPercentage
+{
+    float: right;
+}
+

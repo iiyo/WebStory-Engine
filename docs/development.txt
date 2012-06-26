@@ -1,0 +1,35 @@
+Save game types for visual novels:
+-------------------------------------
+
+- On changing scenes
+- On every line
+- On save points set by the programmer
+- Before decisions are made
+- Manually by the player
+
+- There needs to be one "current" state and multiple save games.
+
+
+
+What needs to be saved?
+---------------------------
+
+- Scene and position
+- Visited scenes
+- Taken choices (really?)
+- Variables
+
+
+
+ToDo for WSE:
+--------------------
+
+- Add rain effect
+- Save games
+- Settings menu
+- Add animations .....
+- Implement variables
+- Implement conditionals
+- Add sub routines
+- Add curtains
+- Use Web Audio API in Chrome
