@@ -218,6 +218,26 @@ MO5.transform = function(callback, from, to, args)
 };
 
 /**
+ * Sets a timer that is valid for a specific time span and returns it's handle.
+ * This function can be used to wait for non-MO5 functions in animations.
+ * @param duration The time after which the timer is invalid.
+ */
+MO5.createTimer = function(duration)
+{
+    duration = duration || 0;
+    duration = duration < 0 ? 0 : duration;
+    timer = setTimeout(
+        function() 
+        {
+            delete MO5.timers[timer];
+        }, 
+        duration
+    );
+    MO5.timers[timer] = true;
+    return timer;
+};
+
+/**
  * Returns the window's width and height.
  * @return Object An object with a width and a height property.
  */

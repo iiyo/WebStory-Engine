@@ -5,136 +5,79 @@
         <autosave mode="line" />
     </settings>
     <assets>
-        <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="yes"></asset>
+        <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
+            x="10px" y="250px" width="620px" height="100px"></asset>
         <asset name="tb_nvl" type="textbox" behaviour="nvl" cssid="NvlTb" names="no"></asset>
-        <!-- autopause="true": Pause when the window is not focused. -->
-        <asset name="music" type="audio" loop="true" fade="false" autopause="false">
-            <track title="parity">
-                <source href="../jife/work/audio/Parity.ogg" type="ogg" />
-                <source href="../jife/work/audio/Parity.mp3" type="mp3" />
-            </track>
-            <track title="rain">
-                <source href="audio/rainonverandaandthunder-2.mp3" type="mp3" />
-                <source href="audio/rainonverandaandthunder-2.ogg" type="ogg" />
-            </track>
+        <asset name="ambience" type="audio" loop="true" fade="false" autopause="false">
             <track title="birds">
-                <source href="audio/birds.mp3" type="mp3" />
-                <source href="audio/birds.ogg" type="ogg" />
+                <source href="assets/audio/bird_sings_in_the_afternoon.mp3" type="mp3" />
+                <source href="assets/audio/bird_sings_in_the_afternoon.ogg" type="ogg" />
             </track>
         </asset>
-        <asset name="sounds" type="audio" loop="false">
+        <asset name="sounds" type="audio" loop="false" fade="false" autopause="false">
             <track title="bip">
-                <source href="audio/bip.mp3" type="mp3" />
-                <source href="audio/bip.ogg" type="ogg" />
+                <source href="assets/audio/bip.mp3" type="mp3" />
+                <source href="assets/audio/bip.ogg" type="ogg" />
             </track>
-        </asset>
-        <asset name="s" type="character" textbox="tb_main">
-            <name>Sylvie</name>
-        </asset>
-        <asset name="me" type="character" textbox="tb_main">
-            <name>Me</name>
         </asset>
         <asset name="n" type="character" textbox="tb_main"></asset>
-        <asset name="img_sylvie" type="imagepack" x="200" y="20" z="5">
-            <image src="img/sylvie_normal.png" name="normal" />
-            <image src="img/sylvie_smile.png" name="smile" />
-        </asset>
         <asset name="backgrounds" type="imagepack" x="0" y="0" z="0">
-            <image src="img/106.jpg" name="bg106" />
-            <image src="img/meadow.jpg" name="meadow" />
+            <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
+            <image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
+            <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
         </asset>
-        <asset name="canvas" type="canvas"></asset>
-        <asset name="rain" type="rain" canvas="canvas"></asset>
         <asset name="anim" type="animation">
             <group>
-                <transform asset="img_sylvie" property="left" from="0" to="50" unit="px" duration="500" />
+                <do asset="sounds" action="set" track="bip" />
+                <do asset="sounds" action="play" />
+                <transform asset="backgrounds" property="left" from="0" to="-800" unit="px" duration="2000" easing="linear" />
             </group>
             <group>
-                <transform asset="img_sylvie" property="left" from="50" to="0" unit="px" duration="500" />
+                <do asset="sounds" action="play" />
+                <transform asset="backgrounds" property="top" from="0" to="-600" unit="px" duration="2000" easing="linear" />
+            </group>
+            <group>
+                <do asset="sounds" action="play" />
+                <transform asset="backgrounds" property="left" from="-800" to="0" unit="px" duration="2000" easing="linear" />
+            </group>
+            <group>
+                <do asset="sounds" action="play" />
+                <transform asset="backgrounds" property="top" from="-600" to="0" unit="px" duration="2000" easing="linear" />
             </group>
         </asset>
     </assets>
     <scenes>
         <scene id="start">
-            <do asset="music" action="set" track="rain" />
-            <do asset="sounds" action="set" track="bip" />
-            <do asset="music" action="play" />
-            <goto scene="uni" />
-        </scene>
-        <scene id="uni">
-            <do asset="backgrounds" action="set" image="bg106" />
-            <do asset="backgrounds" action="show" duration="1000" />
+            <do asset="backgrounds" action="set" image="clouds01" duration="0" />
+            <do asset="ambience" action="set" track="birds" />
             <wait />
-            <do asset="tb_main" action="show" duration="200" effect="slide" direction="top" />
+            <do asset="ambience" action="play" />
+            <do asset="backgrounds" action="show" duration="500" />
+            <do asset="tb_main" action="show" />
             <wait />
-            <do asset="img_sylvie" action="set" image="normal" />
-            <do asset="img_sylvie" action="show" duration="1000" />
-            <wait />
-<!--             <do asset="anim" action="start" /> -->
-            <do asset="img_sylvie" action="move" x="20%" y="10%" />
-            <wait />
-            <line s="s">Oh hi, do we walk home together?</line>
-            <do asset="sounds" action="play" />
-            <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
-            <do asset="tb_nvl" action="show" duration="200" effect="slide" direction="top" />
-            <do asset="s" action="setTextbox" textbox="tb_nvl" />
-            <do asset="me" action="setTextbox" textbox="tb_nvl" />
-            <do asset="n" action="setTextbox" textbox="tb_nvl" />
-            <do asset="img_sylvie" action="set" image="smile" duration="400" />
-            <line s="n">Yes, I said, and my voice was already shaking.</line>
-            <line s="me">I don't know....</line>
-            <do asset="img_sylvie" action="set" image="normal" duration="400" />
-            <line s="me">Do you really want to?</line>
-            <line s="me">I mean I'm... kinda an asshole.</line>
-            <do asset="img_sylvie" action="hide" duration="1000" />
-            <do asset="tb_nvl" action="hide" duration="1000" effect="slide" direction="bottom" />
-            <wait />
-            <do asset="backgrounds" action="hide" duration="1000" />
-            <wait />
-            <goto scene="meadow" />
-        </scene>
-        <scene id="meadow">
-            <do asset="music" action="set" track="birds" />
-            <do asset="tb_main" action="clear" />
-            <do asset="tb_nvl" action="clear" />
-            <do asset="backgrounds" action="set" image="meadow" duration="0" />
-            <wait />
-            <do asset="tb_nvl" action="show" duration="1000" effect="slide" direction="top" />
-            <do asset="img_sylvie" action="show" duration="1000" />
-            <do asset="backgrounds" action="show" duration="2000" />
-            <line s="me">Woo, it's green here.</line>
-<!--             <do asset="anim" action="stop" /> -->
-            <line s="me">I hate it.</line>
-            <do asset="tb_nvl" action="hide" duration="200" effect="slide" direction="bottom" />
-            <do asset="tb_nvl" action="clear" />
-            <wait />
-            <do asset="tb_main" action="show" duration="200" effect="slide" direction="top" />
-            <do asset="s" action="setTextbox" textbox="tb_main" />
-            <do asset="me" action="setTextbox" textbox="tb_main" />
-            <do asset="n" action="setTextbox" textbox="tb_main" />
-            <wait />
-            <line s="n">What to do?</line>
-            <choice duration="500">
-                <trigger event="click" asset="sounds" action="play" />
-                <option scene="restart">Go kill myself.</option>
-                <option scene="talk">Talk to Sylvie.</option>
+            <line s="n" stop="false">
+                Welcome to the WebStory Engine demo!
+            </line>
+            <wait duration="2000" />
+            <line s="n">
+                To start, click on the screen or press [:b:]space[:/b:] / [:b:]right arrow[:/b:] key.
+            </line>
+            <do asset="anim" action="start" />
+            <stop />
+            <do asset="anim" action="stop" />
+            <choice>
+                <option scene="restart">Restart demo</option>
             </choice>
         </scene>
-        <scene id="talk">
-            <line s="me">We need to talk.</line>
-            <goto scene="restart" />
-        </scene>
         <scene id="restart">
-            <do asset="img_sylvie" action="hide" duration="1000" />
             <do asset="tb_main" action="hide" duration="1000" effect="slide" direction="bottom" />
             <wait />
             <do asset="backgrounds" action="hide" duration="1000" />
             <wait />
-            <do asset="img_sylvie" action="set" image="smile" />
             <do asset="tb_main" action="clear" />
-            <do asset="backgrounds" action="set" image="bg106" />
-            <do asset="img_sylvie" action="move" x="0" y="0" />
-            <do asset="music" action="stop" />
+            <do asset="backgrounds" action="move" x="0" y="0" duration="0" />
+            <do asset="ambience" action="stop" />
+            <do asset="sounds" action="stop" />
             <wait />
             <goto scene="start" />
         </scene>

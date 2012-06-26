@@ -401,6 +401,12 @@ WSE.Interpreter.prototype.changeScene = function(scene)
 {
     var children, len, i, nodeName, id;
     
+    if (typeof scene === "undefined" || scene === null)
+    {
+        this.bus.trigger("wse.interpreter.error", {message: "Scene does not exist."});
+        return;
+    }
+    
     id = scene.getAttribute("id");
     
     this.visitedScenes.push(id);
@@ -692,11 +698,13 @@ WSE.Interpreter.prototype.runGotoCommand = function(command)
 
 WSE.Interpreter.prototype.runLineCommand = function(command)
 {
-    var speakerId, speakerName, textboxName, i, len, current, assetElements, text;
+    var speakerId, speakerName, textboxName, i, len, current, 
+        assetElements, text, doNext;
     
     this.game.subscribeListeners();
     
     speakerId = command.getAttribute("s");
+    doNext = command.getAttribute("stop") === "false" ? true : false;
     
     if (speakerId === null)
     {
@@ -752,7 +760,7 @@ WSE.Interpreter.prototype.runLineCommand = function(command)
         }
     );
     this.assets[textboxName]["put"](text, speakerName);
-    return { doNext: false, wait: true };
+    return { doNext: doNext, wait: true };
 };
 
 WSE.Interpreter.prototype.runDoCommand = function(command)
@@ -866,7 +874,7 @@ WSE.Interpreter.prototype.createAsset = function(asset)
             this.assets[name] = new WSE.assets.Audio(asset, this.bus);
             break;
         case "animation":
-            this.assets[name] = new WSE.assets.Animation(asset, this.stage, this.bus, this.assets);
+            this.assets[name] = new WSE.assets.Animation(asset, this.stage, this.bus, this.assets, this);
             break;
         default:
             this.game.bus.trigger("wse.interpreter.warning", {element: asset, message: "Unknown asset type '" + type + "'."});
@@ -1396,6 +1404,8 @@ WSE.assets.Textbox.prototype.put = function(text, name)
     textElement = this.textElement;
     nameElement = this.nameElement;
     
+    text = WSE.tools.textToHtml(text);
+    
     if (this.type === "adv")
     {
         WSE.fx.transform(
@@ -1804,7 +1814,7 @@ WSE.assets.Audio.prototype.set = function(command)
 
 
 
-WSE.assets.Animation = function(asset, stage, bus, assets)
+WSE.assets.Animation = function(asset, stage, bus, assets, interpreter)
 {
     var groups, i, len, current, curFn, transformations, j, jlen, self;
     
@@ -1840,15 +1850,25 @@ WSE.assets.Animation = function(asset, stage, bus, assets)
     {
         current = groups[i];
         transformations = current.getElementsByTagName("transform");
-        (function(transf)
+        doElements = current.getElementsByTagName("do");
+        
+        (function(transf, doEls)
         {
+            var dlen = doEls.length;
             jlen = transformations.length;
             self.cbs.push(function()
             {
-                var timers = [], from, to, unit, curTr, curAs, curAsName, dur, propName, j;
+                var timers = [], from, to, unit, curTr, curAs, curAsName, dur, 
+                    propName, j, easingFn, easingType, opt, di;
                 for (j = 0; j < jlen; j += 1)
                 {
                     curTr = transf[j];
+                    
+                    if (typeof curTr === "undefined")
+                    {
+                        continue;
+                    }
+                    
                     curAsName = curTr.getAttribute("asset");
                     try
                     {
@@ -1858,32 +1878,56 @@ WSE.assets.Animation = function(asset, stage, bus, assets)
                     {
                         continue;
                     }
+                    easingType = curTr.getAttribute("easing");
 //                     console.log(curAsName, curAs);
                     from = parseInt(curTr.getAttribute("from"), 10);
                     to = parseInt(curTr.getAttribute("to"), 10);
                     unit = curTr.getAttribute("unit") || "";
                     dur = curTr.getAttribute("duration") || 500;
                     propName = curTr.getAttribute("property");
+                    opt = {};
+                    opt.duration = dur;
+                    if (easingType !== null 
+                        && typeof WSE.fx.easing[easingType] !== "undefined" 
+                        && WSE.fx.easing[easingType] !== null)
+                    {
+                        opt.easing = WSE.fx.easing[easingType];
+                    }
                     timers.push(
-                        (function(as, f, t, pn, u, d)
+                        (function(as, f, t, pn, u, opt)
                         {
-                            console.log(f, t, pn, u, d);
+//                             console.log(f, t, pn, u, opt);
                             return WSE.fx.transform(
                                 function(v) { as.style[pn] = v + u; },
                                 f,
                                 t,
-                                {
-                                    duration: d,
-                                    log: true
-                                }
+                                opt
                             );
-                        }(curAs, from, to, propName, unit, dur))
+                        }(curAs, from, to, propName, unit, opt))
                     );
+                }
+                for (di = 0; di < dlen; di += 1)
+                {
+                    (function()
+                    {
+                        var curDur, curDoEl;
+                        curDoEl = doEls[di];
+                        curDur = curDoEl.getAttribute("duration");
+//                     console.log("Running do command.");
+                        interpreter.runDoCommand(curDoEl);
+                        if (curDur !== null)
+                        {
+                            console.log("Creating timer...");
+                            timers.push(
+                                WSE.fx.createTimer(curDur)
+                            );
+                        }
+                    }());
                 }
 //                 console.log(timers);
                 return timers;
             });
-        }(transformations));
+        }(transformations, doElements));
     }
     
     this.anim = new WSE.fx.Animation(this.cbs);
@@ -1946,4 +1990,21 @@ WSE.tools.removeEventListener = function(elem, type, listener)
         return;
     }
     elem.removeEventListener( type, listener, false );
+};
+
+WSE.tools.textToHtml = function(text)
+{
+    if (!(String.prototype.trim))
+    {
+        text = text.replace(/^\n/, "");
+        text = text.replace(/\n$/, "");
+    }
+    else
+    {
+        text = text.trim();
+    }
+    text = text.replace(/\n/g, "<br />");
+    text = text.replace(/\[:/g, "<");
+    text = text.replace(/:\]/g, ">");
+    return text;
 };

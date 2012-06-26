@@ -57,6 +57,11 @@ html, body
     -o-box-sizing: border-box;
 }
 
+b
+{
+    font-weight: bold;
+}
+
 body
 {
     color: white;
