@@ -270,14 +270,6 @@ WSE.Interpreter.prototype.start = function()
     
     this.buildLoadingScreen();
     
-    this.bus.subscribe(
-        function()
-        {
-            //self.currentElement += 1;
-        },
-        "wse.interpreter.next"
-    );
-    
     // Adds location info to warnings and errors.
     fn = function(data)
     {
@@ -342,6 +334,7 @@ WSE.Interpreter.prototype.start = function()
     this.bus.subscribe(
         function() 
         { 
+            document.getElementById("WSELoadingScreenProgress").style.width = "100%";
             WSE.fx.transform(
                 function(v) 
                 { 
@@ -1329,6 +1322,7 @@ WSE.assets.Textbox = function(asset, stage, bus)
     this.bus = bus;
     this.type = asset.getAttribute("behaviour") || "adv";
     this.showNames = asset.getAttribute("names") === "yes" ? true : false;
+    this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
     
     if (this.type === "nvl")
     {
@@ -1404,7 +1398,7 @@ WSE.assets.Textbox.prototype.put = function(text, name)
     textElement = this.textElement;
     nameElement = this.nameElement;
     
-    text = WSE.tools.textToHtml(text);
+    text = WSE.tools.textToHtml(text, this.nltobr);
     
     if (this.type === "adv")
     {
@@ -1917,7 +1911,6 @@ WSE.assets.Animation = function(asset, stage, bus, assets, interpreter)
                         interpreter.runDoCommand(curDoEl);
                         if (curDur !== null)
                         {
-                            console.log("Creating timer...");
                             timers.push(
                                 WSE.fx.createTimer(curDur)
                             );
@@ -1992,8 +1985,10 @@ WSE.tools.removeEventListener = function(elem, type, listener)
     elem.removeEventListener( type, listener, false );
 };
 
-WSE.tools.textToHtml = function(text)
+WSE.tools.textToHtml = function(text, nltobr)
 {
+    nltobr = nltobr || false;
+    
     if (!(String.prototype.trim))
     {
         text = text.replace(/^\n/, "");
@@ -2003,8 +1998,10 @@ WSE.tools.textToHtml = function(text)
     {
         text = text.trim();
     }
-    text = text.replace(/\n/g, "<br />");
+    
+    text = nltobr === true ? text.replace(/\n/g, "<br />") : text;
     text = text.replace(/\[:/g, "<");
     text = text.replace(/:\]/g, ">");
+    
     return text;
 };

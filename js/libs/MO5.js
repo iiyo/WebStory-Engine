@@ -173,10 +173,15 @@ MO5.getUniqueId = function()
 MO5.transform = function(callback, from, to, args) 
 {
 	args = args || {};
+    
+    if (typeof callback === "undefined" || !callback)
+    {
+        throw new Error("MO5.transform expects parameter callback to be a function.");
+    }
 	
 	var dur = args.duration || 1000,
+        now,
 		f,
-		step = 1 / dur,
 		tStart = new Date().getTime(),
 		func, 
 		cv = from, 
@@ -184,35 +189,62 @@ MO5.transform = function(callback, from, to, args)
 		timer, 
 		cur = 0,
 		tElapsed = 0,
-		tPaused = 0,
 		wasPaused = false,
 		diff = to - from,
 		doLog = args.log || false,
+        c = 0, // number of times func get's executed
         onFinish = args.onFinish || function() {};
 	
+    if (!Date.now) 
+    {  
+        now = function () 
+        {  
+            return +(new Date);  
+        };  
+    }  
+    else
+    {
+        now = Date.now;
+    }
+    
 	f = args.easing || MO5.easing.sineEaseOut;
 	
 	func = function() 
 	{
-		tElapsed = new Date().getTime() - tStart;
-		if (tElapsed > dur)
+        var t, tb, dt;
+        
+        tb = now();
+        c += 1;
+        t = now();
+		tElapsed = t - tStart;
+//         console.log("t: " + t + "; tStart: " + tStart + "; Elapsed: " + tElapsed + "; cv: " + cv + "; from: " + from + "; to: " + to, callback);
+        
+        if (tElapsed > dur)
 		{
 			cv = from + diff;
-			callback(cv);
+			callback(to);
 			clearInterval(timer);
-			delete MO5.timers[timer];
+            delete MO5.timers[timer];
             onFinish();
 			return;
 		}
-		cv = f(dur,tElapsed - tPaused) * diff + from;
+		
+		requestAnimationFrame(func);
+		cv = f(dur, tElapsed) * diff + from;
+        
 		callback(cv);
+        
+        dt = now() - tb;
+        
 		if (doLog === true)
 		{
-			console.log("Current value: "+cv);
+			console.log("Current value: " + cv + "; c: " + c + "; Exec time: " + dt);
 		}
 	};
 	
-	timer = setInterval(func,10);
+    timer = MO5.getUniqueId();
+//     timer = setInterval(func, 100);
+    requestAnimationFrame(func);
 	MO5.timers[timer] = true;
 	return timer;
 };
@@ -224,8 +256,11 @@ MO5.transform = function(callback, from, to, args)
  */
 MO5.createTimer = function(duration)
 {
+    var timer;
+    
     duration = duration || 0;
     duration = duration < 0 ? 0 : duration;
+    
     timer = setTimeout(
         function() 
         {
@@ -233,7 +268,9 @@ MO5.createTimer = function(duration)
         }, 
         duration
     );
+    
     MO5.timers[timer] = true;
+    
     return timer;
 };
 
