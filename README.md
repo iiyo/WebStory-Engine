@@ -4,6 +4,8 @@ The WebStory Engine is an engine for interactive web stories (e.g. visual
 novels). WebStories are written in an easy-to-use yet powerful XML format
 and run directly in the browser.
 
+Example at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
+
 ## License Agreement ##
 
 License: BSD 3-Clause License.
