@@ -353,13 +353,26 @@ MO5.Point.prototype.getDistance = function(otherPoint)
  */
 MO5.easing = {};
 
+/*!
+TERMS OF USE - EASING EQUATIONS
+Open source under the BSD License.
+Copyright 2001 Robert Penner All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ * Neither the name of the author nor the names of contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 /**
  * Function for linear transformations.
  */
 MO5.easing.linear = function(d, t)
 {
-	var val = t / d;
-	return val;
+    return t / d;
 };
 
 /**
@@ -391,12 +404,67 @@ MO5.easing.sineEaseInOut = function( d, t )
     }
 };
 
+
+/*
+ * EaseOutBounce for JavaScript, taken from jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
+ *
+ * TERMS OF USE - jQuery Easing
+ * 
+ * Open source under the BSD License. 
+ * 
+ * Copyright © 2008 George McGinley Smith
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without modification, 
+ * are permitted provided that the following conditions are met:
+ * 
+ * Redistributions of source code must retain the above copyright notice, this list of 
+ * conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list 
+ * of conditions and the following disclaimer in the documentation and/or other materials 
+ * provided with the distribution.
+ * 
+ * Neither the name of the author nor the names of contributors may be used to endorse 
+ * or promote products derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ *  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ *  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED 
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+ * OF THE POSSIBILITY OF SUCH DAMAGE. 
+ *
+ */
+MO5.easing.easeOutBounce = function (d, t) 
+{
+    var b = 0, c = 1;
+    
+    if ((t/=d) < (1/2.75)) 
+    {
+        return c*(7.5625*t*t) + b;
+    } 
+    else if (t < (2/2.75)) 
+    {
+        return c*(7.5625*(t-=(1.5/2.75))*t + .75) + b;
+    } 
+    else if (t < (2.5/2.75)) 
+    {
+        return c*(7.5625*(t-=(2.25/2.75))*t + .9375) + b;
+    } 
+    else 
+    {
+        return c*(7.5625*(t-=(2.625/2.75))*t + .984375) + b;
+    }
+}
+
 MO5.easing.createEaseOutFunction = function( potency )
 {
     var fn = function( d, t ) 
     {
-        var val = 1 - Math.pow( 1 - ( t / d ), potency );
-        return val;
+        return 1 - Math.pow( 1 - ( t / d ), potency );
     };
     return fn;
 };
@@ -405,8 +473,7 @@ MO5.easing.createEaseInFunction = function( potency )
 {
     var fn = function( d, t ) 
     {
-        var val = Math.pow( ( t / d ), potency );
-        return val;
+        return Math.pow( ( t / d ), potency );
     };
     return fn;
 };
@@ -431,6 +498,21 @@ MO5.easing.createEaseInOutFunction = function( potency )
     };
     return fn;
 };
+
+MO5.easing.easeOutQuad   = MO5.easing.createEaseOutFunction(2);
+MO5.easing.easeOutCubic  = MO5.easing.createEaseOutFunction(3);
+MO5.easing.easeOutQuart  = MO5.easing.createEaseOutFunction(4);
+MO5.easing.easeOutQuint  = MO5.easing.createEaseOutFunction(5);
+
+MO5.easing.easeInQuad   = MO5.easing.createEaseInFunction(2);
+MO5.easing.easeInCubic  = MO5.easing.createEaseInFunction(3);
+MO5.easing.easeInQuart  = MO5.easing.createEaseInFunction(4);
+MO5.easing.easeInQuint  = MO5.easing.createEaseInFunction(5);
+
+MO5.easing.easeInOutQuad   = MO5.easing.createEaseInOutFunction(2);
+MO5.easing.easeInOutCubic  = MO5.easing.createEaseInOutFunction(3);
+MO5.easing.easeInOutQuart  = MO5.easing.createEaseInOutFunction(4);
+MO5.easing.easeInOutQuint  = MO5.easing.createEaseInOutFunction(5);
 
 
 //////////////////////////////////////
@@ -1836,33 +1918,5 @@ MO5.dom.ImagePack = function(args)
     this.bus.trigger("mo5.dom.imagepack.create", this);
 };
 MO5.dom.ImagePack.prototype = new MO5.dom.PrototypeObject();
-
-
-
-
-
-
-MO5.Movie = function(script)
-{
-    if (!(this instanceof MO5.Movie))
-    {
-        return new MO5.Movie(script);
-    }
-    
-    this.script = script;
-    this.assets = script.getElementsByTagName("assets")[0];
-    this.scenes = script.getElementsByTagName("scenes")[0];
-    this.bus = MO5.bus;
-    this.currentScene = 0;
-    this.bus.trigger("mo5.movie.constructed", this);
-};
-
-MO5.Movie.prototype.nextScene = function()
-{
-    
-};
-
-
-
 
 

@@ -24,12 +24,11 @@ What needs to be saved?
 ToDo for WSE:
 --------------------
 
-- Add rain effect
 - Save games
 - Settings menu
-- Add animations .....
 - Implement variables
 - Implement conditionals
 - Add sub routines
 - Add curtains
 - Use Web Audio API in Chrome
+- Add rain effect

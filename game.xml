@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <ws>
     <settings>
-        <stage width="1200px" height="360px" id="Stage" create="yes" center="yes" />
+        <stage width="800px" height="360px" id="Stage" create="yes" center="yes" />
         <autosave mode="line" />
     </settings>
     <assets>
         <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
-            x="10px" y="300px" width="1180px" height="50px"></asset>
+            x="10px" y="300px" width="780px" height="50px"></asset>
         <asset name="tb_nvl" type="textbox" behaviour="nvl" cssid="NvlTb" names="no"></asset>
         <asset name="ambience" type="audio" loop="true" fade="false" autopause="false">
             <track title="birds">
@@ -26,71 +26,90 @@
             <image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
             <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
         </asset>
+        <asset name="bgchanger" type="animation">
+            <group>
+                <do asset="backgrounds" action="set" image="rainbow" duration="5000"/>
+            </group>
+            <group>
+                <do asset="backgrounds" action="set" image="clouds01" duration="5000"/>
+            </group>
+            <group>
+                <do asset="backgrounds" action="set" image="clouds02" duration="5000"/>
+            </group>
+        </asset>
         <asset name="anim" type="animation">
             <group>
                 <do asset="sounds" action="set" track="bip" />
                 <do asset="sounds" action="play" />
-				<do asset="backgrounds" action="move" x="-600px" y="-600px" duration="2000" />
+                <do asset="backgrounds" action="move" x="-300px" y="-300px" duration="2000" easing="easeOutBounce" />
             </group>
             <group>
                 <do asset="sounds" action="play" />
-                <transform asset="backgrounds" property="left" from="-600" to="0" unit="px" duration="2000" />
+                <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
             </group>
-			<group>
-				<do asset="backgrounds" action="move" x="-600px" y="0px" duration="2000" />
-			</group>
+            <group>
+                <do asset="backgrounds" action="move" x="-300px" y="0px" duration="2000" easing="easeOutBounce" />
+            </group>
             <group>
                 <do asset="sounds" action="play" />
-                <transform asset="backgrounds" property="left" from="-600" to="0" unit="px" duration="2000" />
+                <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
             </group>
         </asset>
     </assets>
     <scenes>
         <scene id="start">
+            <line s="n" stop="false">
+                Welcome to the WebStory Engine demo!
+            </line>
             <do asset="backgrounds" action="set" image="clouds02" duration="0" />
             <do asset="ambience" action="set" track="birds" />
             <wait />
 <!--             <do asset="ambience" action="play" /> -->
             <do asset="backgrounds" action="show" duration="500" />
-            <do asset="tb_main" action="show" />
+<!--             <wait /> -->
+            <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce"  />
             <wait />
-            <line s="n" stop="false">
-                Welcome to the WebStory Engine demo!
-            </line>
             <wait duration="1000" />
 <!--             <do asset="backgrounds" action="set" image="rainbow" duration="1000" /> -->
-			<do asset="tb_main" action="hide" effect="slide" direction="bottom" />
-			<wait />
-			<do asset="tb_main" action="show" effect="slide" direction="top" />
+            <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
+            <wait />
+            <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
             <line s="n">
-                To start, click on the screen or press [:b:]space[:/b:] / [:b:]right arrow[:/b:] key.
+                To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
             </line>
-			<do asset="tb_main" action="hide" effect="slide" direction="bottom" />
-			<wait />
+            <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
+            <wait />
+            <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
+            <line s="n" stop="false">
+                What are you interested in?
+            </line>
             <choice>
-                <option scene="animation">Animation demo</option>
-                <option scene="slideshow">Image slide show</option>
+                <option scene="demos">View demos</option>
+                <option scene="engine">Learn more about WSE</option>
             </choice>
-		</scene>
-		<scene id="slideshow">
-			<do asset="backgrounds" action="set" image="rainbow" duration="1000" />
-			<wait />
-			<do asset="backgrounds" action="set" image="clouds02" duration="1000" />
-			<wait />
-			<do asset="backgrounds" action="set" image="clouds01" duration="1000" />
-			<wait />
+        </scene>
+        <scene id="demos">
+            <line s="n" stop="false">Please choose.</line>
             <choice>
-                <option scene="slideshow">Restart slide show</option>
+                <option scene="animation">Background animation example</option>
+                <option scene="change_bg">Changing images</option>
                 <option scene="restart">Back to main menu</option>
             </choice>
-		</scene>
-		<scene id="animation">
-			<do asset="tb_main" action="show" duration="500" />
+        </scene>
+        <scene id="change_bg">
+            <do asset="bgchanger" action="start" />
+            <line s="n">Click to stop</line>
+            <do asset="bgchanger" action="stop" />
+            <goto scene="demos" />
+        </scene>
+        <scene id="animation">
+            <do asset="tb_main" action="show" duration="500" />
             <do asset="anim" action="start" />
-			<line s="n">To stop, click again.</line>
+            <line s="n">To stop, click again.</line>
             <do asset="anim" action="stop" />
             <choice>
                 <option scene="animation">Restart animation</option>
+                <option scene="demos">Back to demos</option>
                 <option scene="restart">Back to main menu</option>
             </choice>
         </scene>
