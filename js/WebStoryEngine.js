@@ -49,24 +49,29 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.interpreter = new out.Interpreter(this);
         this.keys = new out.Keys();
         //console.log("this.interpreter: ", this.interpreter);
+        
         this.bus.subscribe(
-
-        function (data)
-        {
-            console.log("Message: " + data);
-        }, "wse.interpreter.message");
+            function (data)
+            {
+                console.log("Message: " + data);
+            }, 
+            "wse.interpreter.message"
+        );
+        
         this.bus.subscribe(
-
-        function (data)
-        {
-            console.log("Error: " + data.message);
-        }, "wse.interpreter.error");
+            function (data)
+            {
+                console.log("Error: " + data.message);
+            }, 
+            "wse.interpreter.error"
+        );
+        
         this.bus.subscribe(
-
-        function (data)
-        {
-            console.log("Warning: " + data.message, data.element);
-        }, "wse.interpreter.warning");
+            function (data)
+            {
+                console.log("Warning: " + data.message, data.element);
+            }, "wse.interpreter.warning"
+        );
     };
 
     out.Game.prototype.load = function (url)
@@ -124,8 +129,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         if (stageInfo.getAttribute("center") === "yes")
         {
-            out.tools.attachEventListener(
-            window, 'resize', alignFn);
+            out.tools.attachEventListener(window, 'resize', alignFn);
             alignFn();
         }
         this.stage = stage;
@@ -139,21 +143,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         if (this.ws === null)
         {
-            return setTimeout(function ()
-            {
-                self.start();
-            });
+            return setTimeout( function () { self.start(); } );
         }
 
         this.next = function ()
         {
             self.bus.trigger("wse.game.next", this);
-            /*
-        if (self.interpreter.rush === true || self.interpreter.wait === true)
-        {
-            self.interpreter.wait = false;
-            return;
-        }*/
             self.interpreter.next(true);
         };
         fn = function ()
@@ -162,15 +157,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         };
         this.subscribeListeners = function ()
         {
-            out.tools.attachEventListener(
-            this.stage, 'click', fn);
+            out.tools.attachEventListener(this.stage, 'click', fn);
             this.keys.addListener(this.keys.keys.RIGHT_ARROW, this.next);
             this.keys.addListener(this.keys.keys.SPACE, this.next);
         };
         this.unsubscribeListeners = function ()
         {
-            out.tools.removeEventListener(
-            this.stage, 'click', fn);
+            out.tools.removeEventListener(this.stage, 'click', fn);
             this.keys.removeListener(this.keys.keys.RIGHT_ARROW, this.next);
             this.keys.removeListener(this.keys.keys.SPACE, this.next);
         };
@@ -234,11 +227,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             }
         };
 
-        this.bus.subscribe(
-        fn, "wse.assets.loading.increase");
+        this.bus.subscribe(fn, "wse.assets.loading.increase");
 
-        this.bus.subscribe(
-        fn, "wse.assets.loading.decrease");
+        this.bus.subscribe(fn, "wse.assets.loading.decrease");
 
         this.loadScreen = loadScreen;
     };
@@ -281,56 +272,62 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             section = section || "scenes";
             switch (section)
             {
-            case "assets":
-                msg = "         Encountered in section 'assets'.";
-                break;
-            case "settings":
-                msg = "         Encountered in section 'settings'.";
-                break;
-            default:
-                msg = "         Encountered in scene '" + self.sceneId + "', element " + self.currentElement + ".";
-                break;
+                case "assets":
+                    msg = "         Encountered in section 'assets'.";
+                    break;
+                case "settings":
+                    msg = "         Encountered in section 'settings'.";
+                    break;
+                default:
+                    msg = "         Encountered in scene '" + self.sceneId + "', element " + self.currentElement + ".";
+                    break;
             }
             console.log(msg);
         };
+        
         this.bus.subscribe(fn, "wse.interpreter.error");
         this.bus.subscribe(fn, "wse.interpreter.warning");
         this.bus.subscribe(
-
-        function ()
-        {
-            console.log("Game over.");
-        }, "wse.interpreter.end");
-
-        this.bus.subscribe(
-
-        function ()
-        {
-            self.numberOfFunctionsToWaitFor += 1;
-        }, "wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            function ()
+            {
+                console.log("Game over.");
+            }, 
+            "wse.interpreter.end"
+        );
 
         this.bus.subscribe(
-
-        function ()
-        {
-            self.numberOfFunctionsToWaitFor -= 1;
-        }, "wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-
-        this.bus.subscribe(
-
-        function ()
-        {
-            self.assetsLoading += 1;
-            self.assetsLoadingMax += 1;
-        }, "wse.assets.loading.increase");
+            function ()
+            {
+                self.numberOfFunctionsToWaitFor += 1;
+            }, 
+            "wse.interpreter.numberOfFunctionsToWaitFor.increase"
+        );
 
         this.bus.subscribe(
+            function ()
+            {
+                self.numberOfFunctionsToWaitFor -= 1;
+            }, 
+            "wse.interpreter.numberOfFunctionsToWaitFor.decrease"
+        );
 
-        function ()
-        {
-            self.assetsLoading -= 1;
-            self.assetsLoaded += 1;
-        }, "wse.assets.loading.decrease");
+        this.bus.subscribe(
+            function ()
+            {
+                self.assetsLoading += 1;
+                self.assetsLoadingMax += 1;
+            }, 
+            "wse.assets.loading.increase"
+        );
+
+        this.bus.subscribe(
+            function ()
+            {
+                self.assetsLoading -= 1;
+                self.assetsLoaded += 1;
+            }, 
+            "wse.assets.loading.decrease"
+        );
 
         this.bus.subscribe(
 
@@ -338,26 +335,31 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             document.getElementById("WSELoadingScreenProgress").style.width = "100%";
             out.fx.transform(
-
-            function (v)
-            {
-                self.loadScreen.style.opacity = v;
-            }, 1, 0, {
-                duration: 500,
-                onFinish: function ()
+                function (v)
                 {
-                    self.loadScreen.style.display = "none";
+                    self.loadScreen.style.opacity = v;
+                }, 
+                1, 
+                0, 
+                {
+                    duration: 500,
+                    onFinish: function ()
+                    {
+                        self.loadScreen.style.display = "none";
+                    }
                 }
-            });
+            );
             console.log("Hiding loading screen...");
         }, "wse.assets.loading.finished");
 
         this.buildAssets();
-        setTimeout(function ()
-        {
-            self.runStory();
-        }, 1000);
-
+        setTimeout(
+            function ()
+            {
+                self.runStory();
+            }, 
+            1000
+        );
     };
 
     out.Interpreter.prototype.runStory = function ()

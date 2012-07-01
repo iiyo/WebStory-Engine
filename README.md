@@ -1,8 +1,8 @@
 # WebStory Engine #
 
 The WebStory Engine is an engine for interactive web stories (e.g. visual
-novels) that is written in JavaScript. WebStories are written in an
-easy-to-use yet powerful XML format.
+novels). WebStories are written in an easy-to-use yet powerful XML format
+and run directly in the browser.
 
 ## License Agreement ##
 
