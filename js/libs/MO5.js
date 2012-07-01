@@ -45,7 +45,8 @@
             * Jonathan Steinbeck <jonathan@steinbeck.in>
         
         
-        Dependencies:
+        Dependencies
+        ------------
         
             * Squiddle.js
 

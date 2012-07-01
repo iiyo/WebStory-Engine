@@ -903,27 +903,30 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         switch (type)
         {
-        case "textbox":
-            this.assets[name] = new out.assets.Textbox(asset, this.stage, this.bus);
-            break;
-        case "character":
-            this.assets[name] = new out.assets.Character(asset, this.stage, this.bus);
-            break;
-        case "imagepack":
-            this.assets[name] = new out.assets.Imagepack(asset, this.stage, this.bus);
-            break;
-        case "audio":
-            this.assets[name] = new out.assets.Audio(asset, this.bus);
-            break;
-        case "animation":
-            this.assets[name] = new out.assets.Animation(asset, this.stage, this.bus, this.assets, this);
-            break;
-        default:
-            this.game.bus.trigger("wse.interpreter.warning", {
-                element: asset,
-                message: "Unknown asset type '" + type + "'."
-            });
-            return;
+            case "textbox":
+                this.assets[name] = new out.assets.Textbox(asset, this.stage, this.bus);
+                break;
+            case "character":
+                this.assets[name] = new out.assets.Character(asset, this.stage, this.bus);
+                break;
+            case "imagepack":
+                this.assets[name] = new out.assets.Imagepack(asset, this.stage, this.bus);
+                break;
+            case "audio":
+                this.assets[name] = new out.assets.Audio(asset, this.bus);
+                break;
+            case "animation":
+                this.assets[name] = new out.assets.Animation(asset, this.stage, this.bus, this.assets, this);
+                break;
+            default:
+                this.game.bus.trigger(
+                    "wse.interpreter.warning", 
+                    {
+                        element: asset,
+                        message: "Unknown asset type '" + type + "'."
+                    }
+                );
+                return;
         }
     };
 
@@ -933,7 +936,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.assets.mixins.move = function (command, args)
     {
-        var x, y, z, element, xHandle, yHandle, zHandle, xFn, yFn, zFn, self, wait, xUnit, yUnit, duration, easingType, easing, waitX, waitY, waitZ;
+        var x, y, z, element, xHandle, yHandle, zHandle, xFn, yFn, zFn, self, 
+            wait, xUnit, yUnit, duration, easingType, easing, 
+            waitX, waitY, waitZ, isAnimation;
 
         self = this;
         element = this.element;
@@ -943,6 +948,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         duration = command.getAttribute("duration") || 500;
         easingType = command.getAttribute("easing") || "sineEaseOut";
         easing = (typeof out.fx.easing[easingType] !== null) ? out.fx.easing[easingType] : out.fx.easing.sineEaseOut;
+        isAnimation = args.animation === true ? true : false;
 
         if (x !== null)
         {
@@ -971,56 +977,77 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         if (x !== null)
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            if (!isAnimation) 
             {
-                element.style.left = v + xUnit;
-            }, element.offsetLeft, x, {
-                onFinish: function ()
+                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                },
-                duration: duration,
-                easing: easing
-            });
+                    element.style.left = v + xUnit;
+                }, 
+                element.offsetLeft, 
+                x, 
+                {
+                    onFinish: !isAnimation ? function ()
+                    {
+                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    } : null,
+                    duration: duration,
+                    easing: easing
+                }
+            );
         }
 
         if (y !== null)
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            if (!isAnimation) 
             {
-                element.style.top = v + yUnit;
-            }, element.offsetTop, y, {
-                onFinish: function ()
+                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                },
-                duration: duration,
-                easing: easing
-            });
+                    element.style.top = v + yUnit;
+                }, 
+                element.offsetTop, 
+                y, 
+                {
+                    onFinish: !isAnimation ? function ()
+                    {
+                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    } : null,
+                    duration: duration,
+                    easing: easing
+                }
+            );
         }
 
         if (z !== null)
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            if (!isAnimation) 
             {
-                element.style.zIndex = v;
-            }, element.style.zIndex || 0, parseInt(z, 10), {
-                onFinish: function ()
+                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                },
-                duration: duration,
-                easing: easing
-            });
+                    element.style.zIndex = v;
+                }, 
+                element.style.zIndex || 0, 
+                parseInt(z, 10), 
+                {
+                    onFinish: !isAnimation ? function ()
+                    {
+                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    } : null,
+                    duration: duration,
+                    easing: easing
+                }
+            );
         }
 
         return {
@@ -1030,7 +1057,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.assets.mixins.show = function (command, args)
     {
-        var self, duration, handle, fn, wait, effect, direction, ox, oy, prop, bus, stage, element, isAnimation, easing, easingType;
+        var self, duration, handle, fn, wait, effect, direction, ox, oy, prop, 
+            bus, stage, element, isAnimation, easing, easingType;
 
         args = args || {};
         self = this;
@@ -1051,59 +1079,73 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             oy = element.offsetTop;
             switch (direction)
             {
-            case "left":
-                element.style.left = ox + stage.offsetWidth + "px";
-                prop = "left";
-                break;
-            case "right":
-                element.style.left = ox - stage.offsetWidth + "px";
-                prop = "left";
-                break;
-            case "top":
-                element.style.top = oy + stage.offsetHeight + "px";
-                prop = "top";
-                break;
-            case "bottom":
-                element.style.top = oy - stage.offsetHeight + "px";
-                prop = "top";
-                break;
-            default:
-                element.style.left = ox - stage.offsetWidth + "px";
-                prop = "left";
-                break;
+                case "left":
+                    element.style.left = ox + stage.offsetWidth + "px";
+                    prop = "left";
+                    break;
+                case "right":
+                    element.style.left = ox - stage.offsetWidth + "px";
+                    prop = "left";
+                    break;
+                case "top":
+                    element.style.top = oy + stage.offsetHeight + "px";
+                    prop = "top";
+                    break;
+                case "bottom":
+                    element.style.top = oy - stage.offsetHeight + "px";
+                    prop = "top";
+                    break;
+                default:
+                    element.style.left = ox - stage.offsetWidth + "px";
+                    prop = "left";
+                    break;
             }
             element.style.opacity = 1;
-            bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            
+            if (!isAnimation) 
             {
-                element.style[prop] = v + "px";
-            }, (prop === "left" ? element.offsetLeft : element.offsetTop), (prop === "left" ? ox : oy), {
-                duration: duration,
-                onFinish: function ()
+                bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                },
-                easing: easing
-            });
+                    element.style[prop] = v + "px";
+                }, 
+                (prop === "left" ? element.offsetLeft : element.offsetTop), (prop === "left" ? ox : oy), 
+                {
+                    duration: duration,
+                    onFinish: !isAnimation ? function ()
+                    {
+                        bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    } : null,
+                    easing: easing
+                }
+            );
         }
         else
         {
-            bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            if (!isAnimation) 
             {
-                element.style.opacity = v;
-            }, 0, 1, {
-                duration: duration,
-                onFinish: function ()
+                bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                },
-                easing: easing
-            });
+                    element.style.opacity = v;
+                }, 
+                0, 
+                1, 
+                {
+                    duration: duration,
+                    onFinish: !isAnimation ? function ()
+                    {
+                        bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    } : null,
+                    easing: easing
+                }
+            );
         }
 
         return {
@@ -1113,13 +1155,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.assets.mixins.hide = function (command, args)
     {
-        var self, duration, handle, fn, wait, effect, direction, ox, oy, to, prop;
+        var self, duration, handle, fn, wait, effect, direction, 
+            ox, oy, to, prop, isAnimation;
 
         self = this;
         wait = command.getAttribute("wait") === "yes" ? true : false;
         duration = command.getAttribute("duration") || 500;
         effect = command.getAttribute("effect") || "fade";
         direction = command.getAttribute("direction") || "left";
+        isAnimation = args.animation === true ? true : false;
 
         if (effect === "slide")
         {
@@ -1149,54 +1193,76 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 prop = "left";
                 break;
             }
-            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            
+            if (!isAnimation) 
             {
-                self.element.style[prop] = v + "px";
-            }, (prop === "left" ? ox : oy), to, {
-                duration: duration,
-                onFinish: function ()
+                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    self.element.style.opacity = 0;
-                    switch (direction)
+                    self.element.style[prop] = v + "px";
+                }, 
+                (prop === "left" ? ox : oy), 
+                to, 
+                {
+                    duration: duration,
+                    onFinish: function ()
                     {
-                    case "left":
-                    case "right":
-                        self.element.style.left = ox + "px";
-                        prop = "left";
-                        break;
-                    case "top":
-                    case "bottom":
-                        self.element.style.top = oy + "px";
-                        prop = "top";
-                        break;
-                    default:
-                        self.element.style.left = ox + "px";
-                        prop = "left";
-                        break;
+                        if (!isAnimation) 
+                        {
+                            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        }
+                        
+                        self.element.style.opacity = 0;
+                        switch (direction)
+                        {
+                            case "left":
+                            case "right":
+                                self.element.style.left = ox + "px";
+                                prop = "left";
+                                break;
+                            case "top":
+                            case "bottom":
+                                self.element.style.top = oy + "px";
+                                prop = "top";
+                                break;
+                            default:
+                                self.element.style.left = ox + "px";
+                                prop = "left";
+                                break;
+                        }
                     }
-                }
-            });
+                });
         }
         else
         {
-            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            out.fx.transform(
-
-            function (v)
+            if (!isAnimation) 
             {
-                self.element.style.opacity = v;
-            }, 1, 0, {
-                duration: duration,
-                onFinish: function ()
+                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            out.fx.transform(
+                function (v)
                 {
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    self.element.style.opacity = 0;
+                    self.element.style.opacity = v;
+                }, 
+                1, 
+                0, 
+                {
+                    duration: duration,
+                    onFinish: function ()
+                    {
+                        if (!isAnimation) 
+                        {
+                            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        }
+                        
+                        self.element.style.opacity = 0;
+                    }
                 }
-            });
+            );
         }
 
 
@@ -1298,13 +1364,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.assets.Imagepack.prototype.show = out.assets.mixins.show;
     out.assets.Imagepack.prototype.hide = out.assets.mixins.hide;
 
-    out.assets.Imagepack.prototype.set = function (command)
+    out.assets.Imagepack.prototype.set = function (command, args)
     {
-        var image, name, self, old, duration;
+        var image, name, self, old, duration, isAnimation;
 
+        args = args || {};
         self = this;
         name = command.getAttribute("image");
         duration = command.getAttribute("duration") || 400;
+        isAnimation = args.animation === true ? true : false;
 
         if (name === null)
         {
@@ -1355,43 +1423,64 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 }
             }
         }
-
-        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-        out.fx.transform(
-
-        function (v)
+        
+        if (!isAnimation) 
         {
-            image.style.opacity = v;
-        }, 0, 1, {
-            duration: duration / 2,
-            easing: out.fx.easing.linear,
-            onFinish: function ()
+            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+        }
+        
+        out.fx.transform(
+            function (v)
             {
-                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                image.style.opacity = v;
+            }, 
+            0, 
+            1, 
+            {
+                duration: duration / 2,
+                easing: out.fx.easing.linear,
+                onFinish: function ()
+                {
+                    if (!isAnimation) 
+                    {
+                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    }
+                }
             }
-        });
+        );
 
         if (this.current !== null)
         {
-            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            setTimeout(
-
-            function ()
+            if (!isAnimation) 
             {
-                out.fx.transform(
-
-                function (v)
+                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            }
+            
+            setTimeout(
+                function ()
                 {
-                    old.style.opacity = v;
-                }, 1, 0, {
-                    duration: duration,
-                    onFinish: function ()
-                    {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    },
-                    easing: out.fx.easing.linear
-                });
-            }, duration / 2);
+                    out.fx.transform(
+                        function (v)
+                        {
+                            old.style.opacity = v;
+                        }, 
+                        1, 
+                        0, 
+                        {
+                            duration: duration,
+                            onFinish: function ()
+                            {
+                                if (!isAnimation) 
+                                {
+                                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                                }
+                            },
+                            easing: out.fx.easing.linear
+                        }
+                    );
+                }, 
+                duration / 2
+            );
         }
 
         this.current = image;
@@ -1959,7 +2048,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     curTr = transf[j];
                     
-                    if (typeof curTr === "undefined")
+                    if (typeof curTr === "undefined" || curTr === null)
                     {
                         continue;
                     }

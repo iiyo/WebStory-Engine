@@ -97,10 +97,21 @@
             </choice>
         </scene>
         <scene id="change_bg">
+            <line s="n" stop="false">Please choose.</line>
+            <choice>
+                <option scene="change_bg_start">Start changing images</option>
+                <option scene="change_bg_stop">Stop changing images</option>
+                <option scene="demos">Back to demos</option>
+                <option scene="restart">Back to main menu</option>
+            </choice>
+        </scene>
+        <scene id="change_bg_start">
             <do asset="bgchanger" action="start" />
-            <line s="n">Click to stop</line>
+            <goto scene="change_bg" />
+        </scene>
+        <scene id="change_bg_stop">
             <do asset="bgchanger" action="stop" />
-            <goto scene="demos" />
+            <goto scene="change_bg" />
         </scene>
         <scene id="animation">
             <do asset="tb_main" action="show" duration="500" />
