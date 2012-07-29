@@ -58,9 +58,12 @@
     </assets>
     <scenes>
         <scene id="start">
+            <var ifstate="set" key="increase_test" action="print" />
             <line s="n" stop="false">
                 Welcome to the WebStory Engine demo!
             </line>
+            <var key="demo_started" action="set" value="true" />
+            <var ifstate="unset" key="increase_test" action="set" value="0" scope="global" />
             <do asset="backgrounds" action="set" image="clouds02" duration="0" />
             <do asset="ambience" action="set" track="birds" />
             <wait />
@@ -74,6 +77,15 @@
             <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
             <wait />
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
+            <var key="increase_test" action="increase" />
+            <line s="n">
+                The increase_test variable is {$increase_test}.
+            </line>
+            <var key="increase_test" action="decrease" />
+            <line s="n">
+                Variable decreased. The increase_test variable is {$increase_test}.
+            </line>
+            <var key="increase_test" action="increase" />
             <line s="n">
                 To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
             </line>
@@ -84,45 +96,20 @@
                 What are you interested in?
             </line>
             <choice>
-                <option scene="demos">View demos</option>
-                <option scene="engine">Learn more about WSE</option>
+                <option label="I want to learn more!">
+                    <var key="learn_more_pressed" value="true" />
+                </option>
+                <option label="No, thanks.">
+                    <var key="learn_more_pressed" value="false" />
+                </option>
             </choice>
-        </scene>
-        <scene id="demos">
-            <line s="n" stop="false">Please choose.</line>
-            <choice>
-                <option scene="animation">Background animation example</option>
-                <option scene="change_bg">Changing images</option>
-                <option scene="restart">Back to main menu</option>
-            </choice>
-        </scene>
-        <scene id="change_bg">
-            <line s="n" stop="false">Please choose.</line>
-            <choice>
-                <option scene="change_bg_start">Start changing images</option>
-                <option scene="change_bg_stop">Stop changing images</option>
-                <option scene="demos">Back to demos</option>
-                <option scene="restart">Back to main menu</option>
-            </choice>
-        </scene>
-        <scene id="change_bg_start">
-            <do asset="bgchanger" action="start" />
-            <goto scene="change_bg" />
-        </scene>
-        <scene id="change_bg_stop">
-            <do asset="bgchanger" action="stop" />
-            <goto scene="change_bg" />
-        </scene>
-        <scene id="animation">
-            <do asset="tb_main" action="show" duration="500" />
-            <do asset="anim" action="start" />
-            <line s="n">To stop, click again.</line>
-            <do asset="anim" action="stop" />
-            <choice>
-                <option scene="animation">Restart animation</option>
-                <option scene="demos">Back to demos</option>
-                <option scene="restart">Back to main menu</option>
-            </choice>
+            <line s="n" ifkey="learn_more_pressed" ifvalue="true">
+                You want to learn more.
+            </line>
+            <line s="n" ifkey="learn_more_pressed" ifvalue="false">
+                You don't want to learn more.
+            </line>
+            <goto scene="restart" />
         </scene>
         <scene id="restart">
             <do asset="backgrounds" action="hide" duration="1000" />
@@ -132,7 +119,7 @@
 <!--             <do asset="ambience" action="stop" /> -->
             <do asset="sounds" action="stop" />
             <wait />
-            <goto scene="start" />
+            <restart />
         </scene>
     </scenes>
 </ws>

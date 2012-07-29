@@ -116,8 +116,7 @@ var Squiddle = ( function( console, exports )
         
         event = event || "*";
         data = data || null;
-        async = async || true;
-        async = ( async === false ) ? false : true;
+        async = ( typeof async !== "undefined" && async === false ) ? false : true;
         
         var cbs, len, info, j, f, cur, self = this;
         
@@ -222,7 +221,32 @@ var Squiddle = ( function( console, exports )
         }
     };
     
+    Sq.inject = function (obj, args)
+    {
+        args = args || {};
+        obj.squiddle = new Sq(args);
+        
+        obj.subscribe = function (listener, event) 
+        { 
+            event = event || "*"; this.squiddle.subscribe(listener, event); 
+        };
+        
+        obj.unsubscribe = function (listener, event) 
+        { 
+            event = event || "*"; this.squiddle.unsubscribe(listener, event); 
+        };
+        
+        obj.trigger = function (event, data, async)
+        {
+            event = event || "*";
+            data = data || null;
+            async = ( typeof async !== "undefined" && async === false ) ? false : true;
+            this.squiddle.trigger(event, data, async);
+        };
+    };
+    
     exports.create = Sq;
+    exports.inject = Sq.inject;
     
     return Sq;
     
