@@ -48,6 +48,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.load(this.url);
         this.interpreter = new out.Interpreter(this);
         this.keys = new out.Keys();
+        this.listenersSubscribed = false;
         //console.log("this.interpreter: ", this.interpreter);
         
         this.bus.subscribe(
@@ -160,12 +161,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             out.tools.attachEventListener(this.stage, 'click', fn);
             this.keys.addListener(this.keys.keys.RIGHT_ARROW, this.next);
             this.keys.addListener(this.keys.keys.SPACE, this.next);
+            this.listenersSubscribed = true;
         };
         this.unsubscribeListeners = function ()
         {
             out.tools.removeEventListener(this.stage, 'click', fn);
             this.keys.removeListener(this.keys.keys.RIGHT_ARROW, this.next);
             this.keys.removeListener(this.keys.keys.SPACE, this.next);
+            this.listenersSubscribed = false;
         };
         this.interpreter.start();
     };
@@ -191,6 +194,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.startTime = 0;
         this.runVars = {};
         this.globalVars = {};
+        
+        this.datasource = new out.datasources.LocalStorage();
     };
 
     out.Interpreter.prototype.buildLoadingScreen = function ()
@@ -859,23 +864,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         menuElement.style.opacity = 0;
         this.stage.appendChild(menuElement);
-        /*
-    
-    out.fx.transform(
-        function(v) { menuElement.style.opacity = v; }, 0, 1,
-        { 
-            onFinish: function() { self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease"); },
-            duration: duration
-        }
-    );*/
 
         out.assets.mixins.show(command, {
             element: menuElement,
             bus: this.bus,
             stage: this.stage
         });
-        
-        console.log("Funcs to wait for after: " + this.numberOfFunctionsToWaitFor);
 
         return {
             doNext: false,
@@ -1153,11 +1147,33 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return saves;
     };
     
+    out.Interpreter.prototype.restoreSaveGame = function(saves)
+    {
+        var assets, key, cur;
+        
+        assets = this.assets;
+        
+        for (key in assets)
+        {
+            if (assets.hasOwnProperty(key))
+            {
+                try
+                {
+                    assets[key].restore(saves);
+                }
+                catch (e)
+                {
+                    console.log("WSE Internal Error: Asset '" + key + "' does not have a 'load' method!");
+                }
+            }
+        }
+    };
+    
     out.Interpreter.prototype.save = function(name)
     {
         name = name || "no name";
         
-        var savegame;
+        var savegame, json, key, savegameList, listKey;
         
         savegame = {};
         savegame.saves = this.createSaveGame();
@@ -1166,13 +1182,137 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegame.screenContents = this.stage.innerHTML;
         savegame.runVars = this.runVars;
         savegame.globalVars = this.globalVars;
+        savegame.name = name;
+        savegame.log = this.log;
+        savegame.visitedScenes = this.visitedScenes;
+        savegame.gameUrl = this.game.url;
+        savegame.index = this.index;
+        savegame.wait = this.wait;
+        savegame.currentElement = this.currentElement;
+        savegame.sceneId = this.sceneId;
+        savegame.listenersSubscribed = this.game.listenersSubscribed;
         
-        savegame = JSON.stringify(savegame);
-        localStorage.setItem("testsave", savegame);
+        key = "wse_" + savegame.gameUrl + "_savegame_" + name;
+        
+        json = JSON.stringify(savegame);
+        
+        listKey = "wse_" + savegame.gameUrl + "_savegames_list";
+        
+        savegameList = JSON.parse(this.datasource.get(listKey));
+        savegameList = savegameList || [];
+        savegameList.push(key);
+        
+        try
+        {
+            this.datasource.set(key, json);
+            this.datasource.set(listKey, JSON.stringify(savegameList));
+        }
+        catch (e)
+        {
+            this.bus.trigger("wse.interpreter.warning", { message: "Savegame could not be created!" });
+            return false;
+        }
         
         this.bus.trigger("wse.interpreter.save", { interpreter: this, savegame: savegame });
         
-        return savegame;
+        return true;
+    };
+    
+    out.Interpreter.prototype.getSavegameList = function ()
+    {
+        var json, key;
+        key = "wse_" + this.game.url + "_savegames_list";
+        console.log("key is: ", key);
+        json = this.datasource.get(key);
+        console.log("JSON is: ", json);
+        return JSON.parse();
+    };
+    
+    out.Interpreter.prototype.load = function (name)
+    {
+        var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId;
+        self = this;
+        
+        savegameId = "wse_" + this.game.url + "_savegame_" + name;
+        
+        ds = this.datasource;
+        savegame = ds.get(savegameId);
+        
+        if (!savegame)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                { message: "Could not load savegame '" + savegameId + "'!" }
+            );
+            return false;
+        }
+        
+        savegame = JSON.parse(savegame);
+        
+        this.restoreSaveGame(savegame.saves);
+        
+        this.startTime = savegame.startTime;
+        this.stage.innerHTML = savegame.screenContents;
+        this.runVars = savegame.runVars;
+        this.globalVars = savegame.globalVars;
+        this.log = savegame.log;
+        this.visitedScenes = savegame.visitedScenes;
+        this.index = savegame.index;
+        this.wait = savegame.wait;
+        this.currentElement = savegame.currentElement;
+        
+        if (savegame.listenersSubscribed)
+        {
+            this.game.subscribeListeners();
+        };
+        
+        sceneId = savegame.sceneId;
+        this.sceneId = sceneId;
+        
+        scenes = this.story.getElementsByTagName("scene");
+        this.scenes = scenes;
+        
+        for (i = 0, len = this.scenes.length; i < len; i += 1)
+        {
+            if (scenes[i].getAttribute("id") === sceneId)
+            {
+                scene = scenes[i];
+                break;
+            }
+        }
+        
+        if (!scene)
+        {
+            this.bus.trigger(
+                "wse.interpreter.error",
+                { message: "Loading savegame '" + savegameId + "' failed: Scene not found!" }
+            );
+            return false;
+        }
+        
+        this.commands = scene.childNodes;
+        
+        //setTimeout( function () { self.next(); }, 0);
+        
+        return true;
+    };
+    
+    
+    out.datasources = {};
+    
+    out.datasources.LocalStorage = function ()
+    {
+        this.ls = localStorage;
+    };
+    
+    out.datasources.LocalStorage.prototype.set = function (key, value)
+    {
+        this.ls.setItem(key, value);
+    };
+    
+    out.datasources.LocalStorage.prototype.get = function (key)
+    {
+        return this.ls.getItem(key);
     };
 
 
@@ -1186,7 +1326,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             waitX, waitY, waitZ, isAnimation;
 
         self = this;
-        element = this.element;
+        element = document.getElementById(this.cssid);
         x = command.getAttribute("x");
         y = command.getAttribute("y");
         z = command.getAttribute("z");
@@ -1313,7 +1453,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         duration = command.getAttribute("duration") || 500;
         effect = command.getAttribute("effect") || "fade";
         direction = command.getAttribute("direction") || "right";
-        element = args.element || this.element;
+        element = args.element || document.getElementById(this.cssid);
+        
+        console.log("CSS ID: " + this.cssid, element);
+        
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         easingType = command.getAttribute("easing") || "sineEaseOut";
@@ -1405,7 +1548,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.assets.mixins.hide = function (command, args)
     {
         var self, duration, handle, fn, wait, effect, direction, 
-            ox, oy, to, prop, isAnimation;
+            ox, oy, to, prop, isAnimation, element;
 
         self = this;
         wait = command.getAttribute("wait") === "yes" ? true : false;
@@ -1413,12 +1556,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         effect = command.getAttribute("effect") || "fade";
         direction = command.getAttribute("direction") || "left";
         isAnimation = args.animation === true ? true : false;
+        element = document.getElementById(this.cssid);
 
         if (effect === "slide")
         {
-            ox = this.element.offsetLeft;
-            oy = this.element.offsetTop;
-            this.element.style.opacity = 1;
+            ox = element.offsetLeft;
+            oy = element.offsetTop;
+            element.style.opacity = 1;
             switch (direction)
             {
             case "left":
@@ -1451,7 +1595,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             out.fx.transform(
                 function (v)
                 {
-                    self.element.style[prop] = v + "px";
+                    element.style[prop] = v + "px";
                 }, 
                 (prop === "left" ? ox : oy), 
                 to, 
@@ -1464,21 +1608,21 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
                         }
                         
-                        self.element.style.opacity = 0;
+                        element.style.opacity = 0;
                         switch (direction)
                         {
                             case "left":
                             case "right":
-                                self.element.style.left = ox + "px";
+                                element.style.left = ox + "px";
                                 prop = "left";
                                 break;
                             case "top":
                             case "bottom":
-                                self.element.style.top = oy + "px";
+                                element.style.top = oy + "px";
                                 prop = "top";
                                 break;
                             default:
-                                self.element.style.left = ox + "px";
+                                element.style.left = ox + "px";
                                 prop = "left";
                                 break;
                         }
@@ -1495,7 +1639,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             out.fx.transform(
                 function (v)
                 {
-                    self.element.style.opacity = v;
+                    element.style.opacity = v;
                 }, 
                 1, 
                 0, 
@@ -1508,7 +1652,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
                         }
                         
-                        self.element.style.opacity = 0;
+                        element.style.opacity = 0;
                     }
                 }
             );
@@ -1562,6 +1706,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.bus = bus;
         this.name = asset.getAttribute("name");
         this.id = out.tools.getUniqueId();
+        this.cssid = "wse_imagepack_" + this.id;
 
         self = this;
         images = {};
@@ -1571,6 +1716,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         element.draggable = false;
 
         element.setAttribute("class", "imagepack");
+        element.setAttribute("id", this.cssid);
 
         children = asset.getElementsByTagName("image");
         
@@ -1613,7 +1759,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             image.style.position = "absolute";
             image.draggable = false;
 
-            images[name] = image;
+            images[name] = this.cssid + "_" + name;
+            image.setAttribute("id", images[name]);
             element.appendChild(image);
         }
 
@@ -1622,7 +1769,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         element.style.top = asset.getAttribute("y") || 0;
         element.style.zIndex = asset.getAttribute("z") || 0;
 
-        this.element = element;
         this.images = images;
         this.current = null;
 
@@ -1656,7 +1802,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             };
         }
 
-        image = this.images[name];
+        image = document.getElementById(this.images[name]);
 
         if (typeof image === "undefined" || image === null)
         {
@@ -1679,7 +1825,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     continue;
                 }
-                if (this.images[key] === old)
+                if (key === old)
                 {
                     this.bus.trigger(
                         "wse.interpreter.warning", 
@@ -1730,10 +1876,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             setTimeout(
                 function ()
                 {
+                    var oldEl = document.getElementById(self.images[old]);
                     out.fx.transform(
                         function (v)
                         {
-                            old.style.opacity = v;
+                            oldEl.style.opacity = v;
                         }, 
                         1, 
                         0, 
@@ -1754,7 +1901,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             );
         }
 
-        this.current = image;
+        this.current = name;
 
         return {
             doNext: true
@@ -1781,7 +1928,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         obj[this.id] = { 
             assetType: "Imagepack",
-            current: name
+            current: name,
+            cssid: this.cssid,
+            images: images
         };
         this.bus.trigger("wse.assets.imagepack.save", { subject: this, saves: obj });
     };
@@ -1818,6 +1967,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.showNames = asset.getAttribute("names") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
         this.id = out.tools.getUniqueId();
+        this.cssid = "wse_textbox_" + this.id;
 
         if (this.type === "nvl")
         {
@@ -1832,11 +1982,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         textElement.setAttribute("class", "text");
         nameElement.setAttribute("class", "name");
 
-        cssid = asset.getAttribute("cssid");
-        if (cssid)
-        {
-            element.setAttribute("id", cssid);
-        }
+        cssid = asset.getAttribute("cssid") || this.cssid;
+        element.setAttribute("id", cssid);
+        this.cssid = cssid;
 
         x = asset.getAttribute("x");
         if (x)
@@ -1870,13 +2018,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             nameElement.style.display = "none";
         }
+        
+        nameElement.setAttribute("id", this.cssid + "_name");
+        textElement.setAttribute("id", this.cssid + "_text");
 
-        this.element = element;
-        this.nameElement = nameElement;
-        this.textElement = textElement;
+        this.nameElement = this.cssid + "_name";
+        this.textElement = this.cssid + "_text";
         this.helper = helper;
 
-        this.element.style.opacity = 0;
+        element.style.opacity = 0;
 
         this.bus.trigger("wse.assets.textbox.constructor", this);
     };
@@ -1891,8 +2041,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         var textElement, nameElement, namePart;
 
-        textElement = this.textElement;
-        nameElement = this.nameElement;
+        textElement = document.getElementById(this.textElement);
+        nameElement = document.getElementById(this.nameElement);
 
         text = this.helper.replaceVariables(text);
         text = out.tools.textToHtml(text, this.nltobr);
@@ -1961,8 +2111,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.assets.Textbox.prototype.clear = function ()
     {
-        this.textElement.innerHTML = "";
-        this.nameElement.innerHTML = "";
+        document.getElementById(this.textElement).innerHTML = "";
+        document.getElementById(this.nameElement).innerHTML = "";
         this.bus.trigger("wse.assets.textbox.clear", this);
         return {
             doNext: true
@@ -1975,7 +2125,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             assetType: "Textbox",
             type: this.type,
             showNames: this.showNames,
-            nltobr: this.nltobr
+            nltobr: this.nltobr,
+            cssid: this.cssid,
+            nameElement: this.nameElement,
+            textElement: this.textElement
         };
     };
     
@@ -1985,6 +2138,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.type = save.type;
         this.showNames = save.showNames;
         this.nltobr = save.nltobr;
+        this.cssid = save.cssid;
+        this.nameElement = save.nameElement;
+        this.textElement = save.textElement;
     };
 
 
