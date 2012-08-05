@@ -2,7 +2,13 @@
 <ws>
     <settings>
         <stage width="800px" height="360px" id="Stage" create="yes" center="yes" />
-        <autosave mode="line" />
+        <autosave>
+            <mode on="line" max="20" />
+            <mode on="decision" max="10" />
+        </autosave>
+        <triggers>
+            <trigger name="game_menu_key_trigger" event="keydown" key="ESC" goto="game_menu_scene" />
+        </triggers>
     </settings>
     <assets>
         <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
@@ -110,6 +116,12 @@
                 You don't want to learn more.
             </line>
             <goto scene="restart" />
+        </scene>
+        <scene id="game_menu_scene">
+            <choice>
+                <option label="Save / Load Game" special="savegame_menu"></option>
+                <option label="Back to Main Menu" scene="restart"></option>
+            </choice>
         </scene>
         <scene id="restart">
             <do asset="backgrounds" action="hide" duration="1000" />

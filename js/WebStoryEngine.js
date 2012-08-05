@@ -833,6 +833,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         menuElement = document.createElement("div");
         menuElement.setAttribute("class", "menu");
+        
+        // associate HTML element with XML element; used when loading savegames:
+        menuElement.setAttribute("data-wse-index", this.index);
+        menuElement.setAttribute("data-wse-scene-id", this.sceneId);
+        menuElement.setAttribute("data-wse-game", this.game.url);
+        menuElement.setAttribute("data-wse-type", "choice");
 
         for (i = 0; i < len; i += 1)
         {
@@ -1173,7 +1179,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     {
         name = name || "no name";
         
-        var savegame, json, key, savegameList, listKey;
+        var savegame, json, key, savegameList, listKey, lastKey;
         
         savegame = {};
         savegame.saves = this.createSaveGame();
@@ -1200,6 +1206,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         savegameList = JSON.parse(this.datasource.get(listKey));
         savegameList = savegameList || [];
+        lastKey = savegameList.indexOf(key);
+        if (lastKey >= 0)
+        {
+            savegameList.splice(lastKey, 1);
+        }
         savegameList.push(key);
         
         try
@@ -1220,12 +1231,20 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.Interpreter.prototype.getSavegameList = function ()
     {
-        var json, key;
+        var json, key, names, i, len, out;
         key = "wse_" + this.game.url + "_savegames_list";
-        console.log("key is: ", key);
         json = this.datasource.get(key);
-        console.log("JSON is: ", json);
-        return JSON.parse();
+        if (json === null)
+        {
+            return [];
+        }
+        names = JSON.parse(json);
+        out = [];
+        for (i = 0, len = names.length; i < len; i += 1)
+        {
+            out.push(JSON.parse(this.datasource.get(names[i])));
+        }
+        return out;
     };
     
     out.Interpreter.prototype.load = function (name)
@@ -1292,7 +1311,33 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         this.commands = scene.childNodes;
         
-        //setTimeout( function () { self.next(); }, 0);
+        // Re-insert choice menu to get back the DOM events associated with it:
+        (function (interpreter)
+        {
+            var elements, i, len, cur, index, type, com;
+            elements = interpreter.stage.getElementsByTagName("*");
+            
+            for (i = 0, len = elements.length; i < len; i += 1)
+            {
+                cur = elements[i];
+                type = cur.getAttribute("data-wse-type") || "";
+                if (type !== "choice")
+                {
+                    continue;
+                }
+                index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
+                if (index === null)
+                {
+                    interpreter.bus.trigger("wse.interpreter.warning", { message: "No data-wse-index found on element." });
+                    continue;
+                }
+                com = interpreter.commands[index];
+                //console.log("Re-inserting choice menu: ", com);
+                interpreter.stage.removeChild(cur);
+                interpreter.runChoiceCommand(com);
+                interpreter.game.unsubscribeListeners();
+            }
+        }(this))
         
         return true;
     };
@@ -1455,7 +1500,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         direction = command.getAttribute("direction") || "right";
         element = args.element || document.getElementById(this.cssid);
         
-        console.log("CSS ID: " + this.cssid, element);
+//         console.log("CSS ID: " + this.cssid, element);
         
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
