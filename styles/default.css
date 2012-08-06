@@ -239,7 +239,6 @@ img
 #Stage
 {
     line-height: 1.5em;
-    border-radius: 10px;
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
     background: black;
@@ -289,5 +288,71 @@ img
 #WSELoadingScreenPercentage
 {
     float: right;
+}
+
+.WSESavegameMenu
+{
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.WSESavegameMenu .list
+{
+    border: 1px solid white;
+    padding: 5px;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    left: 200px;
+    border-radius: 5px;
+}
+
+.WSESavegameMenu .button
+{
+    border: 1px solid rgb(200, 200, 200);
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.WSESavegameMenu .button:hover
+{
+    border: 1px solid white;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.WSESavegameMenu .button .elapsed
+{
+    float: right;
+}
+
+.WSESavegameMenu .list
+{
+    overflow: hidden;
+}
+
+.WSESavegameMenu .list .active
+{
+    background: rgba(0, 0, 0, 1);
+}
+
+.WSESavegameMenu .list .button .name
+{
+    font-weight: bold;
+}
+
+.WSESavegameMenu .panel
+{
+    width: 190px;
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    bottom: 5px;
 }
 

@@ -7,12 +7,15 @@
             <mode on="decision" max="10" />
         </autosave>
         <triggers>
-            <trigger name="game_menu_key_trigger" event="keydown" key="ESC" goto="game_menu_scene" />
+            <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" special="savegames" />
+            <trigger name="next_arrow_trigger" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_space_trigger" event="keyup" key="SPACE" special="next" />
+            <trigger name="custom_event_trigger" event="custom_event" sub="custom_event_scene" />
         </triggers>
     </settings>
     <assets>
         <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
-            x="10px" y="300px" width="780px" height="50px"></asset>
+            x="5px" y="255px" width="790px" height="100px"></asset>
         <asset name="tb_nvl" type="textbox" behaviour="nvl" cssid="NvlTb" names="no"></asset>
         <asset name="ambience" type="audio" loop="true" fade="false" autopause="false">
             <track title="birds">
@@ -64,6 +67,8 @@
     </assets>
     <scenes>
         <scene id="start">
+            <trigger name="custom_event_trigger" action="activate" />
+            <trigger name="game_menu_key_trigger" action="activate" />
             <var ifstate="set" key="increase_test" action="print" />
             <line s="n" stop="false">
                 Welcome to the WebStory Engine demo!
@@ -91,6 +96,8 @@
             <line s="n">
                 Variable decreased. The increase_test variable is {$increase_test}.
             </line>
+            <sub scene="sub_scene_test" />
+            <fire event="custom_event" />
             <var key="increase_test" action="increase" />
             <line s="n">
                 To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
@@ -122,6 +129,32 @@
                 <option label="Save / Load Game" special="savegame_menu"></option>
                 <option label="Back to Main Menu" scene="restart"></option>
             </choice>
+        </scene>
+        <scene id="sub_scene_test">
+            <line s="n">
+                Hello from the sub scene!
+            </line>
+            <line s="n">
+                A sub scene is a scene that is called from within another scene, but
+                not using the goto command; instead the sub command is used.
+            </line>
+            <line s="n">
+               That means that after all of the sub scenes commands have been executed,
+               the story continues from the point where the sub scene was called.
+            </line>
+            <line s="n">Let's go even one level deeper...</line>
+            <sub scene="sub_scene_test_2" />
+            <line s="n">And now we are back at the first sub scene.</line>
+        </scene>
+        <scene id="sub_scene_test_2">
+            <line s="n">
+                This line is part of another sub scene called from within the previous sub scene.
+            </line>
+        </scene>
+        <scene id="custom_event_scene">
+            <line s="n">
+                A custom event has been triggered.
+            </line>
         </scene>
         <scene id="restart">
             <do asset="backgrounds" action="hide" duration="1000" />

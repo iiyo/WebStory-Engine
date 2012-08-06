@@ -194,6 +194,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.startTime = 0;
         this.runVars = {};
         this.globalVars = {};
+        this.callStack = [];
         
         this.datasource = new out.datasources.LocalStorage();
     };
@@ -250,11 +251,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.index = 0;
         this.currentElement = 0;
         this.sceneId = null;
-        this.commans = [];
+        this.commands = [];
         this.wait = false;
+        this.startTime = Math.round(+new Date() / 1000);
         //     this.rush = false;
 
-        var self, fn;
+        var self, fn, makeKeyFn;
 
         self = this;
 
@@ -362,6 +364,26 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }, "wse.assets.loading.finished");
 
         this.buildAssets();
+        this.createTriggers();
+        
+        makeKeyFn = function (type)
+        {
+            return function (ev)
+            {
+                self.bus.trigger(
+                    type,
+                    {
+                        event: ev,
+                        keys: self.game.keys.keys
+                    }
+                );
+            };
+        };
+        
+        this.game.keys.forAll(makeKeyFn("keyup"), "up");
+        this.game.keys.forAll(makeKeyFn("keydown"), "down");
+        this.game.keys.forAll(makeKeyFn("keypress"), "press");
+        
         setTimeout(
             function ()
             {
@@ -406,7 +428,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             });
             return;
         }
-        this.startTime = new Date().getTime();
+        this.startTime = Math.round(+new Date() / 1000);
         this.changeScene(scenes[0]);
     };
 
@@ -454,6 +476,65 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         this.next();
     };
+    
+    out.Interpreter.prototype.pushToCallStack = function ()
+    {
+        var obj = {};
+        obj.index = this.index;
+        obj.sceneId = this.sceneId;
+        obj.currentElement = this.currentElement;
+        this.callStack.push(obj);
+    };
+    
+    out.Interpreter.prototype.popFromCallStack = function ()
+    {
+        var top = this.callStack.pop();
+        
+        this.bus.trigger(
+            "wse.interpreter.message",
+            "Returning from sub scene '" + this.sceneId + "' to scene '" + top.sceneId + "'...",
+            false
+        );
+        
+        this.index = top.index + 1;
+        this.sceneId = top.sceneId;
+        //this.currentScene = this.scenes[top.sceneId];
+        
+        this.currentScene = this.getSceneById(top.sceneId);
+        
+        this.currentElement = top.currentElement;
+        this.commands = this.currentScene.childNodes;
+        
+        //console.log(this.commands);
+    };
+    
+    out.Interpreter.prototype.getSceneById = function (sceneName)
+    {
+        var i, len, current, scene;
+        scene = null;
+        
+        for (i = 0, len = this.scenes.length; i < len; i += 1)
+        {
+            current = this.scenes[i];
+            if (current.getAttribute("id") === sceneName)
+            {
+                scene = current;
+                break;
+            }
+        }
+        
+        if (scene === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    message: "Scene '" + sceneName + "' not found!"
+                }
+            );
+        }
+        
+        return scene;
+    };
 
     out.Interpreter.prototype.next = function (triggeredByUser)
     {
@@ -484,6 +565,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         if (this.index >= this.commands.length)
         {
+            if (this.callStack.length > 0)
+            {
+                this.popFromCallStack();
+                setTimeout( function () { self.next(); }, 0);
+                return;
+            }
             this.bus.trigger("wse.interpreter.end", this);
             return;
         }
@@ -595,6 +682,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 return this.runWaitCommand(command);
             case "restart":
                 return this.runRestartCommand(command);
+            case "sub":
+                return this.runSubCommand(command);
+            case "fire":
+                return this.runFireCommand(command);
+            case "trigger":
+                return this.runTriggerCommand(command);
             case "stop":
                 this.game.subscribeListeners();
                 return {
@@ -610,6 +703,129 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     doNext: true
                 };
         }
+    };
+    
+    out.Interpreter.prototype.runFireCommand = function (command)
+    {
+        var eventName;
+        eventName = command.getAttribute("event") || null;
+        
+        if (eventName === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No event specified on trigger element."
+                }
+            );
+            return { doNext: true };
+        }
+        
+        this.bus.trigger(
+            "wse.interpreter.message",
+            "Triggering event '" + eventName + "'.",
+            false
+        );
+        
+        this.bus.trigger(eventName, command, false);
+        
+        return { doNext: true };
+    };
+    
+    out.Interpreter.prototype.runTriggerCommand = function (command)
+    {
+        var triggerName, action;
+        triggerName = command.getAttribute("name") || null;
+        action = command.getAttribute("action") || null;
+        
+        if (triggerName === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No name specified on trigger command."
+                }
+            );
+            return { doNext: true };
+        }
+        
+        if (action === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No action specified on trigger command referencing trigger '" + triggerName + "'."
+                }
+            );
+            return { doNext: true };
+        }
+        
+        if (typeof this.triggers[triggerName] === "undefined" || this.triggers[triggerName] === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Reference to unknown trigger '" + triggerName + "'."
+                }
+            );
+            return { doNext: true };
+        }
+        
+        if (typeof this.triggers[triggerName][action] !== "function")
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Unknown action '" + action + "' on trigger command referencing trigger '" + triggerName + "'."
+                }
+            );
+            return { doNext: true };
+        }
+        
+        this.triggers[triggerName][action](command);
+        
+        return { doNext: true };
+    };
+    
+    out.Interpreter.prototype.runSubCommand = function (command)
+    {
+        var sceneId, scene;
+        sceneId = command.getAttribute("scene") || null;
+        
+        if (sceneId === null)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Missing 'scene' attribute on 'sub' command!"
+                }
+            );
+            return { doNext: true };
+        }
+        
+        this.bus.trigger(
+            "wse.interpreter.message",
+            "Entering sub scene '" + sceneId + "'...",
+            false
+        );
+        
+        this.pushToCallStack();
+        scene = this.getSceneById(sceneId);
+        
+        this.commands = scene.childNodes;
+        this.index = 0;
+        this.sceneId = sceneId;
+        this.currentElement = 0;
+        
+        return {
+            doNext: true
+        };
     };
     
     out.Interpreter.prototype.runRestartCommand = function (command)
@@ -629,7 +845,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.runVars = {};
         this.log = [];
         this.visitedScenes = [];
-        this.startTime = new Date().getTime();
+        this.startTime = Math.round(+new Date() / 1000);
         
         return {
             doNext: true,
@@ -1043,6 +1259,61 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         return this.assets[assetName][action](command, args);
     };
+    
+    out.Interpreter.prototype.createTriggers = function ()
+    {
+        var triggers, i, len, cur, curName, self, curTrigger;
+        self = this;
+        
+        this.triggers = {};
+        
+        try
+        {
+            triggers = this.game.ws.getElementsByTagName("triggers")[0].getElementsByTagName("trigger");
+        }
+        catch (e)
+        {
+            console.log(e);
+            return;
+        }
+        
+        for (i = 0, len = triggers.length; i < len; i += 1)
+        {
+            cur = triggers[i];
+            curName = cur.getAttribute("name") || null;
+            
+            if (curName === null)
+            {
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: cur,
+                        message: "No name specified for trigger."
+                    }
+                );
+                continue;
+            }
+            
+            if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null)
+            {
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: cur,
+                        message: "A trigger with the name '" + curName + "' already exists."
+                    }
+                );
+                continue;
+            }
+            
+            curTrigger = new out.Trigger(cur, this);
+            
+            if (typeof curTrigger.fn === "function")
+            {
+                this.triggers[curName] = curTrigger;
+            }
+        }
+    };
 
     out.Interpreter.prototype.buildAssets = function ()
     {
@@ -1184,7 +1455,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegame = {};
         savegame.saves = this.createSaveGame();
         savegame.startTime = this.startTime;
-        savegame.currentTime = new Date().getTime();
+        savegame.saveTime = Math.round(+new Date() / 1000);
         savegame.screenContents = this.stage.innerHTML;
         savegame.runVars = this.runVars;
         savegame.globalVars = this.globalVars;
@@ -1197,8 +1468,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegame.currentElement = this.currentElement;
         savegame.sceneId = this.sceneId;
         savegame.listenersSubscribed = this.game.listenersSubscribed;
+        savegame.callStack = this.callStack;
         
-        key = "wse_" + savegame.gameUrl + "_savegame_" + name;
+        key = this.buildSavegameId(name);
         
         json = JSON.stringify(savegame);
         
@@ -1247,12 +1519,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return out;
     };
     
+    out.Interpreter.prototype.buildSavegameId = function (name)
+    {
+        return "wse_" + this.game.url + "_savegame_" + name;
+    };
+    
     out.Interpreter.prototype.load = function (name)
     {
         var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId;
         self = this;
         
-        savegameId = "wse_" + this.game.url + "_savegame_" + name;
+        savegameId = this.buildSavegameId(name);
         
         ds = this.datasource;
         savegame = ds.get(savegameId);
@@ -1279,6 +1556,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.index = savegame.index;
         this.wait = savegame.wait;
         this.currentElement = savegame.currentElement;
+        this.callStack = savegame.callStack;
         
         if (savegame.listenersSubscribed)
         {
@@ -1312,25 +1590,36 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.commands = scene.childNodes;
         
         // Re-insert choice menu to get back the DOM events associated with it:
+        // Remove savegame menu on load:
         (function (interpreter)
         {
-            var elements, i, len, cur, index, type, com;
+            var elements, i, len, cur, index, type, com, rem;
             elements = interpreter.stage.getElementsByTagName("*");
             
             for (i = 0, len = elements.length; i < len; i += 1)
             {
                 cur = elements[i];
                 type = cur.getAttribute("data-wse-type") || "";
+                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
+                
+                if (rem === true)
+                {
+                    interpreter.stage.removeChild(cur);
+                }
+                
                 if (type !== "choice")
                 {
                     continue;
                 }
+                
                 index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
+                
                 if (index === null)
                 {
                     interpreter.bus.trigger("wse.interpreter.warning", { message: "No data-wse-index found on element." });
                     continue;
                 }
+                
                 com = interpreter.commands[index];
                 //console.log("Re-inserting choice menu: ", com);
                 interpreter.stage.removeChild(cur);
@@ -1340,6 +1629,186 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }(this))
         
         return true;
+    };
+    
+    out.Interpreter.prototype.toggleSavegameMenu = function ()
+    {
+        var menu, nextButton, prevButton, loadButton, saveButton, exportButton, self;
+        var importButton, savegames, i, len, buttonPanel, resumeButton, id, sgList;
+        var cur, curEl, makeClickFn, listenerStatus, curElapsed;
+        
+        self = this;
+        id = "WSESaveGameMenu_" + this.game.url;
+        listenerStatus = this.game.listenersSubscribed;
+        
+        menu = document.getElementById(id) || null;
+        
+        if (menu !== null)
+        {
+            try
+            {
+                listenerStatus = menu.getAttribute("data-wse-listener-status") === "true" ? true : false;
+                this.stage.removeChild(menu);
+            }
+            catch (e)
+            {
+                console.log(e);
+            }
+            if (listenerStatus === true)
+            {
+                this.game.subscribeListeners();
+            }
+            return;
+        }
+        
+        this.game.unsubscribeListeners();
+        
+        menu = document.createElement("div");
+        menu.innerHTML = "";
+        menu.setAttribute("id", id);
+        menu.setAttribute("class", "WSESavegameMenu");
+        menu.setAttribute("data-wse-remove", "true");
+        menu.setAttribute("data-wse-listener-status", listenerStatus);
+        menu.style.zIndex = 100000;
+        menu.style.position = "absolute";
+        
+        savegames = this.getSavegameList();
+        
+        nextButton = document.createElement("div");
+        nextButton.setAttribute("class", "button next");
+        nextButton.innerHTML = "Next";
+        
+        prevButton = document.createElement("div");
+        prevButton.setAttribute("class", "button previous");
+        prevButton.innerHTML = "Previous";
+        
+        saveButton = document.createElement("div");
+        saveButton.setAttribute("class", "button save");
+        saveButton.innerHTML = "Save";
+        
+        loadButton = document.createElement("div");
+        loadButton.setAttribute("class", "button load");
+        loadButton.innerHTML = "Load";
+        loadButton.addEventListener(
+            "click",
+            function (ev)
+            {
+                var active, savegameName;
+                ev.stopPropagation();
+                ev.preventDefault();
+                active = menu.querySelector(".active") || null;
+                if (active === null)
+                {
+                    return;
+                }
+                savegameName = active.getAttribute("data-wse-savegame-name");
+                self.stage.removeChild(document.getElementById(id));
+                self.load(savegameName);
+            },
+            false
+        );
+        
+        buttonPanel = document.createElement("div");
+        buttonPanel.setAttribute("class", "panel");
+        
+        resumeButton = document.createElement("div");
+        resumeButton.setAttribute("class", "button resume");
+        resumeButton.innerHTML = "Resume";
+        resumeButton.addEventListener(
+            "click",
+            function (ev) 
+            {
+                ev.stopPropagation();
+                ev.preventDefault();
+                self.stage.removeChild(document.getElementById(id));
+                if (listenerStatus === true)
+                {
+                    self.game.subscribeListeners();
+                }
+            },
+            false
+        );
+        
+        sgList = document.createElement("div");
+        sgList.setAttribute("class", "list");
+        
+        buttonPanel.appendChild(loadButton);
+        buttonPanel.appendChild(saveButton);
+        buttonPanel.appendChild(nextButton);
+        buttonPanel.appendChild(prevButton);
+        buttonPanel.appendChild(resumeButton);
+        menu.appendChild(buttonPanel);
+        
+        makeClickFn = function (curEl, cur)
+        {
+            return function (event)
+            {
+                var old;
+                event.stopPropagation();
+                event.preventDefault();
+                try
+                {
+                    old = sgList.querySelector(".active") || null;
+                    if (old !== null)
+                    {
+                        old.setAttribute("class", old.getAttribute("class").replace(/active/, ""));
+                    }
+                }
+                catch (e) 
+                {
+                    console.log(e);
+                }
+                curEl.setAttribute("class", curEl.getAttribute("class") + " active");
+            };
+        };
+        
+        curEl = document.createElement("div");
+        curEl.setAttribute("class", "button");
+        
+        for (i = 0, len = savegames.length; i < len; i += 1)
+        {
+            cur = savegames[i];
+            curEl = document.createElement("div");
+            curElapsed = cur.saveTime - cur.startTime;
+            curEl.setAttribute("class", "button");
+            curEl.setAttribute("data-wse-savegame-name", cur.name);
+            curEl.innerHTML = '' +
+                '<p class="name">' + cur.name + '</p>' +
+                '<p class="description">' + 
+                '<span class="elapsed">' +
+                parseInt((curElapsed / 60) / 60, 10) + 'h ' +
+                parseInt((curElapsed / 60) % 60, 10) + 'm ' + 
+                parseInt(curElapsed % 60, 10) + 's' + 
+                '</span>' +
+                '<span class="date">' +
+                new Date(cur.saveTime * 1000).toUTCString() + 
+                '</span>' + 
+                '</p>';
+            curEl.addEventListener("click", makeClickFn(curEl, cur), false);
+            sgList.appendChild(curEl);
+        }
+        
+        menu.addEventListener(
+            "click",
+            function (ev) 
+            {
+                var active;
+                ev.stopPropagation();
+                ev.preventDefault();
+                active = menu.querySelector(".active") || null;
+                if (active === null)
+                {
+                    return;
+                }
+                active.setAttribute("class", active.getAttribute("class").replace(/active/, ""));
+            },
+            false
+        );
+        
+        menu.appendChild(sgList);
+        
+        this.stage.appendChild(menu);
+        
     };
     
     
@@ -1358,6 +1827,172 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.datasources.LocalStorage.prototype.get = function (key)
     {
         return this.ls.getItem(key);
+    };
+    
+    
+    out.Trigger = function (trigger, interpreter)
+    {
+        var self = this, fn;
+        
+        this.name = trigger.getAttribute("name") || null;
+        this.event = trigger.getAttribute("event") || null;
+        this.special = trigger.getAttribute("special") || null;
+        this.sub = trigger.getAttribute("sub") || null;
+        this.interpreter = interpreter;
+        this.isSubscribed = false;
+        
+        if (this.name === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: trigger,
+                    message: "No 'name' attribute specified on 'trigger' element."
+                }
+            );
+            return;
+        }
+        
+        if (this.event === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: trigger,
+                    message: "No 'event' attribute specified on 'trigger' element '" + this.name + "'."
+                }
+            );
+            return;
+        }
+        
+        if (this.special === null && this.sub === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: trigger,
+                    message: "No suitable action or function found for trigger element '" + this.name + "'."
+                }
+            );
+            return;
+        }
+        
+        this.isKeyEvent = false;
+        this.key = null;
+        
+        if (this.sub !== null)
+        {
+            fn = function ()
+            {
+                var sub = interpreter.game.ws.createElement("sub");
+                sub.setAttribute("scene", self.sub);
+                interpreter.runSubCommand(sub);
+            };
+        }
+        
+        if (this.special !== null && this.special !== "next" && this.special !== "savegames")
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: trigger,
+                    message: "Unknown special specified on trigger element '" + this.name + "'."
+                }
+            );
+            return;
+        }
+        
+        if (this.special === "next")
+        {
+            fn = function ()
+            {
+                self.interpreter.next();
+            }
+        }
+        
+        if (this.special === "savegames")
+        {
+            fn = function ()
+            {
+                self.interpreter.toggleSavegameMenu();
+            }
+        }
+        
+        switch (this.event)
+        {
+            case "keyup":
+            case "keydown":
+            case "keypress":
+                this.isKeyEvent = true;
+                this.key = trigger.getAttribute("key") || null;
+            
+                if (this.key === null)
+                {
+                    interpreter.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            element: trigger,
+                            message: "No 'key' attribute specified on trigger element '" + this.name + "'."
+                        }
+                    );
+                    return;
+                }
+                
+                if (typeof interpreter.game.keys.keys[this.key] === "undefined" || interpreter.game.keys.keys[this.key] === null)
+                {
+                    interpreter.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            element: trigger,
+                            message: "Unknown key '" + this.key + "' specified on trigger element '" + this.name + "'."
+                        }
+                    );
+                    return;
+                }
+                
+                this.fn = function (data)
+                {
+                    if (data.keys[self.key].kc !== data.event.keyCode)
+                    {
+                        return;
+                    }
+                    fn();
+                };
+                
+                return;
+            default:
+                this.fn = fn;
+        }
+    };
+    
+    out.Trigger.prototype.activate = function ()
+    {
+        if (this.isSubscribed === true)
+        {
+            return;
+        }
+        
+        this.interpreter.bus.subscribe(
+            this.fn,
+            this.event
+        );
+        
+        this.isSubscribed = true;
+    };
+    
+    out.Trigger.prototype.deactivate = function ()
+    {
+        if (this.isSubscribed === false)
+        {
+            return;
+        }
+        
+        this.interpreter.bus.unsubscribe(
+            this.fn,
+            this.event
+        );
+        
+        this.isSubscribed = false;
     };
 
 
