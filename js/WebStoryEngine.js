@@ -195,6 +195,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.runVars = {};
         this.globalVars = {};
         this.callStack = [];
+        this.keysDisabled = 0; // if this is > 0, key triggers should be disabled
         
         this.datasource = new out.datasources.LocalStorage();
     };
@@ -1501,7 +1502,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return true;
     };
     
-    out.Interpreter.prototype.getSavegameList = function ()
+    out.Interpreter.prototype.getSavegameList = function (reversed)
     {
         var json, key, names, i, len, out;
         key = "wse_" + this.game.url + "_savegames_list";
@@ -1514,7 +1515,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         out = [];
         for (i = 0, len = names.length; i < len; i += 1)
         {
-            out.push(JSON.parse(this.datasource.get(names[i])));
+            if (reversed === true)
+            {
+                out.unshift(JSON.parse(this.datasource.get(names[i])));
+            }
+            else
+            {
+                out.push(JSON.parse(this.datasource.get(names[i])));
+            }
         }
         return out;
     };
@@ -1599,6 +1607,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             for (i = 0, len = elements.length; i < len; i += 1)
             {
                 cur = elements[i];
+                if (typeof cur === "undefined" || cur === null)
+                {
+                    continue;
+                }
+                
                 type = cur.getAttribute("data-wse-type") || "";
                 rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
                 
@@ -1621,7 +1634,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 }
                 
                 com = interpreter.commands[index];
-                //console.log("Re-inserting choice menu: ", com);
+                
+                if (com.nodeName === "#text" || com.nodeName === "#comment")
+                {
+                    continue;
+                }
+                
+                console.log("Re-inserting choice menu: ", com);
                 interpreter.stage.removeChild(cur);
                 interpreter.runChoiceCommand(com);
                 interpreter.game.unsubscribeListeners();
@@ -1631,9 +1650,36 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return true;
     };
     
+    out.Interpreter.prototype.deleteSavegame = function (name)
+    {
+        var sgs, i, len, key, index, json, id;
+        
+        key = "wse_" + this.game.url + "_savegames_list";
+        json = this.datasource.get(key);
+        if (json === null)
+        {
+            return false;
+        }
+        sgs = JSON.parse(json);
+        
+        id = this.buildSavegameId(name);
+        
+        index = sgs.indexOf(id);
+        
+        if (index >= 0)
+        {
+            sgs.splice(index, 1);
+            this.datasource.set("wse_" + this.game.url + "_savegames_list", JSON.stringify(sgs));
+            this.datasource.remove(id);
+            return true;
+        }
+        
+        return false;
+    };
+    
     out.Interpreter.prototype.toggleSavegameMenu = function ()
     {
-        var menu, nextButton, prevButton, loadButton, saveButton, exportButton, self;
+        var menu, deleteButton, loadButton, saveButton, exportButton, self;
         var importButton, savegames, i, len, buttonPanel, resumeButton, id, sgList;
         var cur, curEl, makeClickFn, listenerStatus, curElapsed;
         
@@ -1656,11 +1702,16 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             }
             if (listenerStatus === true)
             {
+                this.savegameMenuVisible = false;
                 this.game.subscribeListeners();
             }
+            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
             return;
         }
         
+        this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+        
+        this.savegameMenuVisible = true;
         this.game.unsubscribeListeners();
         
         menu = document.createElement("div");
@@ -1672,24 +1723,52 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         menu.style.zIndex = 100000;
         menu.style.position = "absolute";
         
-        savegames = this.getSavegameList();
+        savegames = this.getSavegameList(true);
         
-        nextButton = document.createElement("div");
-        nextButton.setAttribute("class", "button next");
-        nextButton.innerHTML = "Next";
+        deleteButton = document.createElement("input");
+        deleteButton.setAttribute("class", "button delete");
+        deleteButton.setAttribute("type", "button");
+        deleteButton.value = "Delete";
+        deleteButton.addEventListener(
+            "click",
+            function (ev)
+            {
+                var active, savegameName, fn;
+                ev.stopPropagation();
+                ev.preventDefault();
+                active = menu.querySelector(".active") || null;
+                if (active === null)
+                {
+                    return;
+                }
+                savegameName = active.getAttribute("data-wse-savegame-name");
+                fn = function (decision)
+                {   
+                    if (decision === false)
+                    {
+                        return;
+                    }
+                    self.deleteSavegame(savegameName);
+                    self.toggleSavegameMenu();
+                    self.toggleSavegameMenu();
+                }
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Delete game?",
+                        message: "Do you really want to delete savegame '" + savegameName + "'?",
+                        callback: fn
+                    }
+                );
+            },
+            false
+        );
         
-        prevButton = document.createElement("div");
-        prevButton.setAttribute("class", "button previous");
-        prevButton.innerHTML = "Previous";
-        
-        saveButton = document.createElement("div");
+        saveButton = document.createElement("input");
         saveButton.setAttribute("class", "button save");
-        saveButton.innerHTML = "Save";
-        
-        loadButton = document.createElement("div");
-        loadButton.setAttribute("class", "button load");
-        loadButton.innerHTML = "Load";
-        loadButton.addEventListener(
+        saveButton.setAttribute("type", "button");
+        saveButton.value = "Save";
+        saveButton.addEventListener(
             "click",
             function (ev)
             {
@@ -1699,11 +1778,102 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 active = menu.querySelector(".active") || null;
                 if (active === null)
                 {
+                    out.tools.ui.prompt(
+                        self,
+                        {
+                            title: "New savegame",
+                            message: "Please enter a name for the savegame:",
+                            callback: function (data)
+                            {
+                                if (!data)
+                                {
+                                    return;
+                                }
+                                self.toggleSavegameMenu();
+                                self.game.listenersSubscribed = listenerStatus;
+                                self.save(data);
+                                self.toggleSavegameMenu();
+                                self.game.listenersSubscribed = false;
+                                out.tools.ui.alert(
+                                    self,
+                                    {
+                                        title: "Game saved",
+                                        message: "Your game has been saved."
+                                    }
+                                );
+                            }
+                        }
+                    );
                     return;
                 }
                 savegameName = active.getAttribute("data-wse-savegame-name");
-                self.stage.removeChild(document.getElementById(id));
-                self.load(savegameName);
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Overwrite savegame?",
+                        message: "You are about to overwrite an old savegame. Are you sure?",
+                        trueText: "Yes",
+                        falseText: "No",
+                        callback: function (decision)
+                        {
+                            if (decision === false)
+                            {
+                                return;
+                            }
+                            self.toggleSavegameMenu();
+                            self.save(savegameName);
+                            self.toggleSavegameMenu();
+                            out.tools.ui.alert(
+                                self,
+                                {
+                                    title: "Game saved",
+                                    message: "Your game has been saved."
+                                }
+                            );
+                        }
+                    }
+                );
+            },
+            false
+        );
+        
+        loadButton = document.createElement("input");
+        loadButton.setAttribute("class", "button load");
+        loadButton.setAttribute("type", "button");
+        loadButton.setAttribute("tabindex", 1);
+        loadButton.value = "Load";
+        loadButton.addEventListener(
+            "click",
+            function (ev)
+            {
+                var active, savegameName, fn;
+                ev.stopPropagation();
+                ev.preventDefault();
+                active = menu.querySelector(".active") || null;
+                if (active === null)
+                {
+                    return;
+                }
+                savegameName = active.getAttribute("data-wse-savegame-name");
+                fn = function (decision)
+                {   
+                    if (decision === false)
+                    {
+                        return;
+                    }
+                    self.stage.removeChild(document.getElementById(id));
+                    self.savegameMenuVisible = false;
+                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                    self.load(savegameName);
+                }
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Load game?",
+                        message: "Loading a savegame will discard all unsaved progress. Continue?",
+                        callback: fn
+                    }
+                );
             },
             false
         );
@@ -1711,9 +1881,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         buttonPanel = document.createElement("div");
         buttonPanel.setAttribute("class", "panel");
         
-        resumeButton = document.createElement("div");
+        resumeButton = document.createElement("input");
         resumeButton.setAttribute("class", "button resume");
-        resumeButton.innerHTML = "Resume";
+        resumeButton.setAttribute("type", "button");
+        resumeButton.value = "Resume";
         resumeButton.addEventListener(
             "click",
             function (ev) 
@@ -1721,10 +1892,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 ev.stopPropagation();
                 ev.preventDefault();
                 self.stage.removeChild(document.getElementById(id));
+                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
                 if (listenerStatus === true)
                 {
                     self.game.subscribeListeners();
                 }
+                self.savegameMenuVisible = false;
             },
             false
         );
@@ -1734,8 +1907,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         buttonPanel.appendChild(loadButton);
         buttonPanel.appendChild(saveButton);
-        buttonPanel.appendChild(nextButton);
-        buttonPanel.appendChild(prevButton);
+        buttonPanel.appendChild(deleteButton);
         buttonPanel.appendChild(resumeButton);
         menu.appendChild(buttonPanel);
         
@@ -1759,6 +1931,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     console.log(e);
                 }
                 curEl.setAttribute("class", curEl.getAttribute("class") + " active");
+                loadButton.focus();
             };
         };
         
@@ -1808,7 +1981,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         menu.appendChild(sgList);
         
         this.stage.appendChild(menu);
-        
     };
     
     
@@ -1827,6 +1999,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.datasources.LocalStorage.prototype.get = function (key)
     {
         return this.ls.getItem(key);
+    };
+    
+    out.datasources.LocalStorage.prototype.remove = function (key)
+    {
+        return this.ls.removeItem(key);
     };
     
     
@@ -1953,6 +2130,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 this.fn = function (data)
                 {
                     if (data.keys[self.key].kc !== data.event.keyCode)
+                    {
+                        return;
+                    }
+                    if (interpreter.keysDisabled > 0)
                     {
                         return;
                     }
@@ -3153,8 +3334,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             assetType: "Audio",
             isPlaying: this.isPlaying,
             fade: this.fade,
-            currentIndex: this.currentIndex
+            currentIndex: this.currentIndex,
+            currentTime: 0
         };
+        if (this.isPlaying)
+        {
+            obj[this.id].currentTime = this.current.currentTime;
+        }
         this.bus.trigger("wse.assets.audio.save", this);
     };
     
@@ -3164,6 +3350,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.isPlaying = vals.isPlaying;
         this.fade = vals.fade;
         this.currentIndex = vals.currentIndex;
+        this.current.currentTime = vals.currentTime;
+        if (this.isPlaying)
+        {
+            this.play();
+        }
+        else
+        {
+            this.stop();
+        }
         this.bus.trigger("wse.assets.audio.restore", this);
     };
 
@@ -3436,6 +3631,225 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         out.tools.uniqueIdCount += 1;
         return out.tools.uniqueIdCount;
     };
+    
+    
+    
+    out.tools.ui = {
+        
+        confirm: function (interpreter, args)
+        {
+            var title, message, trueText, falseText, callback, root, dialog;
+            var tEl, mEl, yesEl, noEl, container;
+            
+            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            interpreter.keysDisabled += 1;
+            
+            args = args || {};
+            title = args.title || "Confirm?";
+            message = args.message || "Do you want to proceed?";
+            trueText = args.trueText || "Yes";
+            falseText = args.falseText || "No";
+            callback = typeof args.callback === "function" ? args.callback : function () {};
+            root = args.parent || interpreter.stage;
+            
+            container = document.createElement("div");
+            container.setAttribute("class", "WSEUIContainer");
+            container.setAttribute("data-wse-remove", "true");
+            dialog = document.createElement("div");
+            dialog.setAttribute("class", "WSEUIDialog WSEUIConfirm");
+            
+            tEl = document.createElement("div");
+            tEl.innerHTML = title;
+            tEl.setAttribute("class", "title");
+            
+            mEl = document.createElement("div");
+            mEl.innerHTML = message;
+            mEl.setAttribute("class", "message");
+            
+            yesEl = document.createElement("input");
+            yesEl.value = trueText;
+            yesEl.setAttribute("class", "true button");
+            yesEl.setAttribute("type", "button");
+            yesEl.addEventListener(
+                "click",
+                function (ev)
+                {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    root.removeChild(container);
+                    callback(true);
+                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    interpreter.keysDisabled -= 1;
+                }
+            );
+            
+            noEl = document.createElement("input");
+            noEl.value = falseText;
+            noEl.setAttribute("class", "false button");
+            noEl.setAttribute("type", "button");
+            noEl.addEventListener(
+                "click",
+                function (ev)
+                {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    root.removeChild(container);
+                    callback(false);
+                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    interpreter.keysDisabled -= 1;
+                }
+            );
+            
+            dialog.appendChild(tEl);
+            dialog.appendChild(mEl);
+            dialog.appendChild(yesEl);
+            dialog.appendChild(noEl);
+            container.appendChild(dialog);
+            root.appendChild(container);
+            
+            yesEl.focus();
+        },
+        
+        alert: function (interpreter, args)
+        {
+            var title, message, okText, callback, root, dialog;
+            var tEl, mEl, buttonEl, container;
+            
+            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            interpreter.keysDisabled += 1;
+            
+            args = args || {};
+            title = args.title || "Alert!";
+            message = args.message || "Please take notice of this!";
+            okText = args.okText || "OK";
+            callback = typeof args.callback === "function" ? args.callback : function () {};
+            root = args.parent || interpreter.stage;
+            
+            container = document.createElement("div");
+            container.setAttribute("class", "WSEUIContainer");
+            container.setAttribute("data-wse-remove", "true");
+            dialog = document.createElement("div");
+            dialog.setAttribute("class", "WSEUIDialog WSEUIConfirm");
+            
+            tEl = document.createElement("div");
+            tEl.innerHTML = title;
+            tEl.setAttribute("class", "title");
+            
+            mEl = document.createElement("div");
+            mEl.innerHTML = message;
+            mEl.setAttribute("class", "message");
+            
+            buttonEl = document.createElement("input");
+            buttonEl.value = okText;
+            buttonEl.setAttribute("class", "true button");
+            buttonEl.setAttribute("type", "button");
+            buttonEl.addEventListener(
+                "click",
+                function (ev)
+                {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    root.removeChild(container);
+                    callback(true);
+                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    interpreter.keysDisabled -= 1;
+                }
+            );
+            
+            dialog.appendChild(tEl);
+            dialog.appendChild(mEl);
+            dialog.appendChild(buttonEl);
+            container.appendChild(dialog);
+            root.appendChild(container);
+            
+            buttonEl.focus();
+        },
+        
+        prompt: function (interpreter, args)
+        {
+            var title, message, submitText, cancelText, callback, root, dialog;
+            var tEl, mEl, buttonEl, cancelEl, inputEl, container, defaultValue, keyCancelFn;
+            
+            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            interpreter.keysDisabled += 1;
+            
+            args = args || {};
+            title = args.title || "Input required";
+            message = args.message || "Please enter something:";
+            submitText = args.submitText || "Submit";
+            cancelText = args.cancelText || "Cancel";
+            defaultValue = args.defaultValue || "";
+            callback = typeof args.callback === "function" ? args.callback : function () {};
+            root = args.parent || interpreter.stage;
+            
+            container = document.createElement("div");
+            container.setAttribute("class", "WSEUIContainer");
+            container.setAttribute("data-wse-remove", "true");
+            dialog = document.createElement("div");
+            dialog.setAttribute("class", "WSEUIDialog WSEUIPrompt");
+            
+            tEl = document.createElement("div");
+            tEl.innerHTML = title;
+            tEl.setAttribute("class", "title");
+            
+            mEl = document.createElement("div");
+            mEl.innerHTML = message;
+            mEl.setAttribute("class", "message");
+            
+            inputEl = document.createElement("input");
+            inputEl.value = defaultValue;
+            inputEl.setAttribute("class", "input text");
+            inputEl.setAttribute("type", "text");
+            
+            buttonEl = document.createElement("input");
+            buttonEl.value = submitText;
+            buttonEl.setAttribute("class", "submit button");
+            buttonEl.setAttribute("type", "button");
+            buttonEl.addEventListener(
+                "click",
+                function (ev)
+                {
+                    var val = inputEl.value;
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    root.removeChild(container);
+                    callback(val);
+                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    interpreter.keysDisabled -= 1;
+                }
+            );
+            
+            cancelEl = document.createElement("input");
+            cancelEl.value = cancelText;
+            cancelEl.setAttribute("class", "cancel button");
+            cancelEl.setAttribute("type", "button");
+            cancelEl.addEventListener(
+                "click",
+                function (ev)
+                {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    root.removeChild(container);
+                    callback(null);
+                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                    interpreter.keysDisabled -= 1;
+                }
+            );
+            
+            dialog.appendChild(tEl);
+            dialog.appendChild(mEl);
+            dialog.appendChild(inputEl);
+            dialog.appendChild(buttonEl);
+            dialog.appendChild(cancelEl);
+            container.appendChild(dialog);
+            root.appendChild(container);
+            
+            inputEl.focus();
+        }
+        
+    };
+    
+    
 
     return out;
 

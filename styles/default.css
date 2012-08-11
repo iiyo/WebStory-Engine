@@ -66,7 +66,7 @@ body
 {
     color: white;
     background: rgb(0, 0, 0);
-    font-family: helvetica, verdana, sans-serif;
+    font-family: arial, verdana, sans-serif;
     font-size: 1em;
     font-weight: bold;
     overflow: auto;
@@ -296,7 +296,7 @@ img
     left: 0;
     bottom: 0;
     right: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .WSESavegameMenu .list
@@ -309,6 +309,7 @@ img
     bottom: 5px;
     left: 200px;
     border-radius: 5px;
+    overflow-y: auto !important;
 }
 
 .WSESavegameMenu .button
@@ -321,7 +322,16 @@ img
     cursor: pointer;
 }
 
-.WSESavegameMenu .button:hover
+.WSESavegameMenu .button[type=button]
+{
+    display: block;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1em;
+    width: 99%;
+}
+
+.WSESavegameMenu .button:hover, .WSESavegameMenu .button:focus
 {
     border: 1px solid white;
     background: rgba(0, 0, 0, 0.9);
@@ -355,4 +365,74 @@ img
     top: 5px;
     bottom: 5px;
 }
+
+.WSEUIContainer
+{
+    background: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    color: white;
+    position: absolute;
+    z-index: 200000;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    cursor: default !important;
+}
+
+.WSEUIDialog
+{
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 20px;
+    width: 50%;
+    margin: auto;
+    margin-top: 10%;
+    box-shadow: 5px 5px 10px black;
+}
+
+.WSEUIDialog .button
+{
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 10px;
+    margin-right: 10px;
+    color: white;
+    cursor: pointer !important;
+    font-weight: bold;
+    font-size: 1.1em;
+    min-width: 100px;
+    text-align: center;
+}
+
+.WSEUIDialog .button:hover, .WSEUIDialog .button:hover:focus
+{
+    background: rgba(0, 0, 0, 1);
+}
+
+.WSEUIDialog .title
+{
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.WSEUIDialog .message
+{
+    margin-bottom: 20px;
+}
+
+.WSEUIDialog .input
+{
+    display: block;
+    margin-bottom: 20px;
+    width: 80%;
+    padding: 5px;
+    background: black;
+    color: white;
+}
+
+
 

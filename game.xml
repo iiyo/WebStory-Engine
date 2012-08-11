@@ -1,32 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <ws>
     <settings>
-        <stage width="800px" height="360px" id="Stage" create="yes" center="yes" />
+        <stage width="900px" height="460px" id="Stage" create="yes" center="yes" />
         <autosave>
             <mode on="line" max="20" />
             <mode on="decision" max="10" />
         </autosave>
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" special="savegames" />
-            <trigger name="next_arrow_trigger" event="keyup" key="RIGHT_ARROW" special="next" />
-            <trigger name="next_space_trigger" event="keyup" key="SPACE" special="next" />
-            <trigger name="custom_event_trigger" event="custom_event" sub="custom_event_scene" />
+            <trigger name="custom_event_trigger"  event="custom_event" sub="custom_event_scene" />
         </triggers>
     </settings>
     <assets>
         <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
-            x="5px" y="255px" width="790px" height="100px"></asset>
+            x="5px" y="355px" width="890px" height="100px"></asset>
         <asset name="tb_nvl" type="textbox" behaviour="nvl" cssid="NvlTb" names="no"></asset>
-        <asset name="ambience" type="audio" loop="true" fade="false" autopause="false">
-            <track title="birds">
-                <source href="assets/audio/birds.mp3" type="mp3" />
-                <source href="assets/audio/birds.ogg" type="ogg" />
-            </track>
-        </asset>
-        <asset name="sounds" type="audio" loop="false" fade="false" autopause="false">
-            <track title="bip">
-                <source href="assets/audio/bip.mp3" type="mp3" />
-                <source href="assets/audio/bip.ogg" type="ogg" />
+        <asset name="music" type="audio" loop="true" fade="false" autopause="false">
+            <track title="legend">
+                <source href="/Desktop/wlegend.mp3" type="mp3" />
+                <source href="/Desktop/wlegend.ogg" type="ogg" />
             </track>
         </asset>
         <asset name="n" type="character" textbox="tb_main"></asset>
@@ -76,9 +68,9 @@
             <var key="demo_started" action="set" value="true" />
             <var ifstate="unset" key="increase_test" action="set" value="0" scope="global" />
             <do asset="backgrounds" action="set" image="clouds02" duration="0" />
-            <do asset="ambience" action="set" track="birds" />
+            <do asset="music" action="set" track="legend" />
             <wait />
-<!--             <do asset="ambience" action="play" /> -->
+            <do asset="music" action="play" />
             <do asset="backgrounds" action="show" duration="500" />
 <!--             <wait /> -->
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce"  />
@@ -96,6 +88,7 @@
             <line s="n">
                 Variable decreased. The increase_test variable is {$increase_test}.
             </line>
+            <do asset="music" action="stop" />
             <sub scene="sub_scene_test" />
             <fire event="custom_event" />
             <var key="increase_test" action="increase" />
