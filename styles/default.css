@@ -163,7 +163,7 @@ img
 
 .menu
 {
-    z-index: 5005;
+    z-index: 51000;
     top: 20%;
     position: absolute;
     width: 50%;
@@ -369,7 +369,6 @@ img
 .WSEUIContainer
 {
     background: rgba(0, 0, 0, 0.6);
-    cursor: pointer;
     color: white;
     position: absolute;
     z-index: 200000;
@@ -377,7 +376,7 @@ img
     left: 0;
     bottom: 0;
     right: 0;
-    cursor: default !important;
+    cursor: default;
 }
 
 .WSEUIDialog
@@ -400,7 +399,7 @@ img
     padding: 10px;
     margin-right: 10px;
     color: white;
-    cursor: pointer !important;
+    cursor: pointer;
     font-weight: bold;
     font-size: 1.1em;
     min-width: 100px;

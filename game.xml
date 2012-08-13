@@ -2,50 +2,41 @@
 <ws>
     <settings>
         <stage width="900px" height="460px" id="Stage" create="yes" center="yes" />
-        <autosave>
-            <mode on="line" max="20" />
-            <mode on="decision" max="10" />
-        </autosave>
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" special="savegames" />
             <trigger name="custom_event_trigger"  event="custom_event" sub="custom_event_scene" />
         </triggers>
     </settings>
     <assets>
-        <asset name="tb_main" type="textbox" behaviour="adv" cssid="MainTb" names="no" 
-            x="5px" y="355px" width="890px" height="100px"></asset>
-        <asset name="tb_nvl" type="textbox" behaviour="nvl" cssid="NvlTb" names="no"></asset>
-        <asset name="music" type="audio" loop="true" fade="false" autopause="false">
+        <textbox name="tb_main" behaviour="adv" cssid="MainTb" names="no" 
+            x="5px" y="355px" width="890px" height="100px"></textbox>
+        <textbox name="tb_nvl" behaviour="nvl" cssid="NvlTb" names="no"></textbox>
+        <audio name="music" loop="true" fade="true" autopause="false">
             <track title="legend">
                 <source href="/Desktop/wlegend.mp3" type="mp3" />
                 <source href="/Desktop/wlegend.ogg" type="ogg" />
             </track>
-        </asset>
-        <asset name="n" type="character" textbox="tb_main"></asset>
-        <asset name="backgrounds" type="imagepack" x="0" y="0" z="0">
+        </audio>
+        <character name="n" textbox="tb_main"></character>
+        <imagepack name="backgrounds" x="0" y="0" z="0">
             <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
             <image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
+        </imagepack>
+        <imagepack name="backgrounds2" x="0" y="0" z="0">
             <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
-        </asset>
-        <asset name="bgchanger" type="animation">
-            <group>
-                <do asset="backgrounds" action="set" image="rainbow" duration="5000"/>
-            </group>
-            <group>
-                <do asset="backgrounds" action="set" image="clouds01" duration="5000"/>
-            </group>
-            <group>
-                <do asset="backgrounds" action="set" image="clouds02" duration="5000"/>
-            </group>
-        </asset>
-        <asset name="anim" type="animation">
+        </imagepack>
+        <curtain name="fog" z="50000"></curtain>
+        <curtain name="flash" color="white"></curtain>
+        <animation name="anim">
             <group>
                 <do asset="sounds" action="set" track="bip" />
                 <do asset="sounds" action="play" />
-                <do asset="backgrounds" action="move" x="-300px" y="-300px" duration="2000" easing="easeOutBounce" />
+                <do asset="backgrounds" action="move" x="-300px" y="-200px" duration="2000" easing="easeOutBounce" />
+                <do asset="backgrounds" action="flicker" duration="2000" times="10" />
             </group>
             <group>
                 <do asset="sounds" action="play" />
+                <do asset="backgrounds" action="show" />
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
             </group>
             <group>
@@ -55,7 +46,7 @@
                 <do asset="sounds" action="play" />
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
             </group>
-        </asset>
+        </animation>
     </assets>
     <scenes>
         <scene id="start">
@@ -65,6 +56,7 @@
             <line s="n" stop="false">
                 Welcome to the WebStory Engine demo!
             </line>
+            <alert title="A test alert" message="This is a test alert!" />
             <var key="demo_started" action="set" value="true" />
             <var ifstate="unset" key="increase_test" action="set" value="0" scope="global" />
             <do asset="backgrounds" action="set" image="clouds02" duration="0" />
@@ -72,11 +64,20 @@
             <wait />
             <do asset="music" action="play" />
             <do asset="backgrounds" action="show" duration="500" />
-<!--             <wait /> -->
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce"  />
             <wait />
             <wait duration="1000" />
-<!--             <do asset="backgrounds" action="set" image="rainbow" duration="1000" /> -->
+            <do asset="flash" action="flash" duration="500" />
+            <wait />
+            <prompt title="Who are you?" message="Please enter your name:" var="player_name" />
+            <wait />
+            <line s="n">Hello, {$player_name}!</line>
+            <confirm title="Really?" message="Is this really your name? Are you sure?" var="player_name_is_correct" />
+            <wait />
+            <prompt ifkey="player_name_is_correct" ifvalue="false" title="What's your REAL name?" 
+                message="Please enter your real name now. Don't lie! Lies are bad." var="player_name" />
+            <wait />
+            <line s="n">Hello again, {$player_name}!</line>
             <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
             <wait />
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
@@ -84,6 +85,8 @@
             <line s="n">
                 The increase_test variable is {$increase_test}.
             </line>
+            <do asset="flash" action="flicker" duration="2000" times="10" opacity="0.5" />
+            <wait />
             <var key="increase_test" action="decrease" />
             <line s="n">
                 Variable decreased. The increase_test variable is {$increase_test}.
@@ -124,6 +127,13 @@
             </choice>
         </scene>
         <scene id="sub_scene_test">
+            <do asset="fog" action="show" effect="slide" direction="right" />
+            <wait />
+            <do asset="backgrounds2" action="set" image="rainbow" duration="0" />
+            <do asset="backgrounds2" action="show" duration="0" />
+            <wait />
+            <do asset="fog" action="hide" effect="slide" direction="right" />
+            <wait />
             <line s="n">
                 Hello from the sub scene!
             </line>
@@ -138,6 +148,7 @@
             <line s="n">Let's go even one level deeper...</line>
             <sub scene="sub_scene_test_2" />
             <line s="n">And now we are back at the first sub scene.</line>
+            <do asset="backgrounds2" action="hide" duration="500" />
         </scene>
         <scene id="sub_scene_test_2">
             <line s="n">
@@ -154,7 +165,6 @@
             <wait />
             <do asset="tb_main" action="clear" />
             <do asset="backgrounds" action="move" x="0" y="0" duration="0" />
-<!--             <do asset="ambience" action="stop" /> -->
             <do asset="sounds" action="stop" />
             <wait />
             <restart />

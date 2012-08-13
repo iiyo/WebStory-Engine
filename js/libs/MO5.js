@@ -643,6 +643,7 @@ MO5.Animation = function(callbacks)
 	this.stopped = true;
 	this.paused = false;
 	this.timers = {};
+    this.index = 0;
 };
 
 MO5.Animation.prototype.animate = function(callbacks,onFinish)
@@ -651,19 +652,22 @@ MO5.Animation.prototype.animate = function(callbacks,onFinish)
 
 	var self = this,
 		cbs = callbacks.slice(),
-		cur = cbs.shift(),
+		cur = cbs[this.index],
 		ts,
 		len,
 		i,
 		cb;
 
-	if (cur === undefined)
+	if (typeof cur === "undefined" || cur === null)
 	{
+        this.index = 0;
 		return onFinish();
 	}
+	
+	this.index += 1;
 
 	ts = cur();
-	if (ts === undefined)
+	if (typeof ts === "undefined")
 	{
 		this.animate(cbs,onFinish);
 		return;
@@ -730,7 +734,7 @@ MO5.Animation.prototype.run = function()
 				}
 			);
 		},
-		1
+		0
 	);
 };
 
