@@ -686,7 +686,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 };
             }
             
-            if (varContainer[ifkey] !== ifval)
+            if (("" + varContainer[ifkey]) !== ifval)
             {
                 this.bus.trigger("wse.interpreter.message", "Conidition not met.");
                 this.bus.trigger("wse.interpreter.runcommand.after.condition.false", {interpreter: this, command: command}, false);
@@ -879,9 +879,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         interpreter.log = [];
         interpreter.visitedScenes = [];
         interpreter.startTime = Math.round(+new Date() / 1000);
-        interpreter.stage.innerHTML = "";
-        
-        interpreter.buildAssets();
         
         return {
             doNext: true,
@@ -3534,7 +3531,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     return;
                 }
                 self.current.volume += 0.01;
-                console.log("FadeIn volume:", self.current.volume);
             };
             timer = setInterval(fn, 5);
             return timer;
@@ -3553,7 +3549,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     return;
                 }
                 self.current.volume -= 0.01;
-                console.log("FadeOut volume:", self.current.volume);
             };
             timer = setInterval(fn, 5);
             return;
@@ -3847,7 +3842,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.bus = interpreter.bus;
         this.stage = interpreter.stage;
         this.color = asset.getAttribute("color") || "black";
-        this.z = asset.getAttribute("z") || 2000;
+        this.z = asset.getAttribute("z") || 20000;
         this.id = out.tools.getUniqueId();
         this.cssid = "WSECurtain_" + this.id;
         this.element = document.createElement("div");
@@ -3861,7 +3856,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.element.style.height = this.stage.offsetHeight + "px";
         this.element.style.opacity = 0;
         this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
         
         this.stage.appendChild(this.element);
     };
@@ -3882,14 +3876,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     {
         obj[this.id].color = this.color;
         obj[this.id].cssid = this.cssid;
-        obj[this.id].z = this.z;
     };
     
     out.assets.Curtain.prototype.restore = function (obj)
     {
         this.color = obj[this.id].color;
         this.cssid = obj[this.id].cssid;
-        this.z = obj[this.id].z;
         try
         {
             this.element = document.getElementById(this.cssid);
@@ -3903,7 +3895,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return;
         }
         this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
     };
     
     
@@ -4235,7 +4226,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
     };
     
-    out.commands = out.Interpreter.prototype.commands;
+    
 
     return out;
 
@@ -4244,68 +4235,3 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     typeof MO5 === "undefined" ? false : MO5, 
     typeof STEINBECK === "undefined" ? false : STEINBECK
 ));
-
-
-(function (module)
-{
-    var makeInputFn = function (type)
-    {
-        return function (command, interpreter)
-        {
-            var title, message, scope, container, key;
-            title = command.getAttribute("title") || "Input required...";
-            message = command.getAttribute("message") || "Your input is required:";
-            key = command.getAttribute("var") || null;
-            scope = command.getAttribute("scope") || "run";
-            
-            if (key === null)
-            {
-                interpreter.bus.trigger(
-                    "wse.interpreter.warning",
-                    {element: command, message: "No 'var' attribute defined on " + type + " command. Command ignored."}
-                );
-                return {
-                    doNext: true
-                };
-            }
-            
-            if (scope !== "global" && scope !== "run")
-            {
-                interpreter.bus.trigger(
-                    "wse.interpreter.warning",
-                    {element: command, message: "Unknown scope defined. Ignored."}
-                );
-                return {
-                    doNext: true
-                };
-            }
-            
-            container = scope === "run" ? interpreter.runVars : interpreter.globalVars;
-            
-            module.tools.ui[type](
-                interpreter, 
-                {
-                    title: title, 
-                    message: message,
-                    callback: function (decision)
-                    {
-                        container[key] = "" + decision;
-                    }
-                }
-            );
-            return {doNext: true};
-        };
-    }; 
-    
-    module.commands.alert = function (command, interpreter)
-    {
-        var title, message;
-        title = command.getAttribute("title") || "Alert!";
-        message = command.getAttribute("message") || "Alert!";
-        module.tools.ui.alert(interpreter, {title: title, message: message});
-        return {doNext: true};
-    };
-    
-    module.commands.confirm = makeInputFn("confirm");
-    module.commands.prompt = makeInputFn("prompt");
-}(WSE));

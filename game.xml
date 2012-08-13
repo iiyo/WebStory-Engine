@@ -25,7 +25,7 @@
         <imagepack name="backgrounds2" x="0" y="0" z="0">
             <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
         </imagepack>
-        <curtain name="fog" z="50000"></curtain>
+        <curtain name="fog"></curtain>
         <curtain name="flash" color="white"></curtain>
         <animation name="anim">
             <group>
@@ -69,15 +69,6 @@
             <wait duration="1000" />
             <do asset="flash" action="flash" duration="500" />
             <wait />
-            <prompt title="Who are you?" message="Please enter your name:" var="player_name" />
-            <wait />
-            <line s="n">Hello, {$player_name}!</line>
-            <confirm title="Really?" message="Is this really your name? Are you sure?" var="player_name_is_correct" />
-            <wait />
-            <prompt ifkey="player_name_is_correct" ifvalue="false" title="What's your REAL name?" 
-                message="Please enter your real name now. Don't lie! Lies are bad." var="player_name" />
-            <wait />
-            <line s="n">Hello again, {$player_name}!</line>
             <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
             <wait />
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
@@ -130,7 +121,7 @@
             <do asset="fog" action="show" effect="slide" direction="right" />
             <wait />
             <do asset="backgrounds2" action="set" image="rainbow" duration="0" />
-            <do asset="backgrounds2" action="show" duration="0" />
+            <do asset="backgrounds2" action="show" duration="500" />
             <wait />
             <do asset="fog" action="hide" effect="slide" direction="right" />
             <wait />
