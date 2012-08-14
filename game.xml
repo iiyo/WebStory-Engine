@@ -4,38 +4,48 @@
         <stage width="900px" height="460px" id="Stage" create="yes" center="yes" />
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" special="savegames" />
+            <trigger name="next_on_n" event="keyup" key="N" special="next" />
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
             <trigger name="custom_event_trigger"  event="custom_event" sub="custom_event_scene" />
+            <trigger name="savegame_trigger"  event="toggle_savegames" special="savegames" />
+            <trigger name="sub_scene_by_key"  event="keyup" key="UP_ARROW" sub="custom_event_scene" />
         </triggers>
     </settings>
     <assets>
         <textbox name="tb_main" behaviour="adv" cssid="MainTb" names="no" 
             x="5px" y="355px" width="890px" height="100px"></textbox>
+            
         <textbox name="tb_nvl" behaviour="nvl" cssid="NvlTb" names="no"></textbox>
-        <audio name="music" loop="true" fade="true" autopause="false">
+        
+        <audio name="music" loop="true" fade="false" autopause="false">
             <track title="legend">
                 <source href="/Desktop/wlegend.mp3" type="mp3" />
                 <source href="/Desktop/wlegend.ogg" type="ogg" />
             </track>
         </audio>
+        
         <character name="n" textbox="tb_main"></character>
+        
         <imagepack name="backgrounds" x="0" y="0" z="0">
             <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
             <image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
         </imagepack>
+        
         <imagepack name="backgrounds2" x="0" y="0" z="0">
             <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
         </imagepack>
+        
         <curtain name="fog"></curtain>
+        
         <curtain name="flash" color="white"></curtain>
+        
         <animation name="anim">
             <group>
-                <do asset="sounds" action="set" track="bip" />
-                <do asset="sounds" action="play" />
                 <do asset="backgrounds" action="move" x="-300px" y="-200px" duration="2000" easing="easeOutBounce" />
                 <do asset="backgrounds" action="flicker" duration="2000" times="10" />
             </group>
             <group>
-                <do asset="sounds" action="play" />
                 <do asset="backgrounds" action="show" />
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
             </group>
@@ -43,58 +53,104 @@
                 <do asset="backgrounds" action="move" x="-300px" y="0px" duration="2000" easing="easeOutBounce" />
             </group>
             <group>
-                <do asset="sounds" action="play" />
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
             </group>
         </animation>
+        
     </assets>
     <scenes>
+        
         <scene id="start">
             <trigger name="custom_event_trigger" action="activate" />
             <trigger name="game_menu_key_trigger" action="activate" />
+            <trigger name="savegame_trigger" action="activate" />
+            <trigger name="next_on_n" action="activate" />
+            <trigger name="next_on_right" action="activate" />
+            <trigger name="next_on_space" action="activate" />
+            <trigger name="sub_scene_by_key" action="activate" />
             <var ifstate="set" key="increase_test" action="print" />
+            
             <line s="n" stop="false">
                 Welcome to the WebStory Engine demo!
             </line>
+            
             <alert title="A test alert" message="This is a test alert!" />
             <var key="demo_started" action="set" value="true" />
             <var ifstate="unset" key="increase_test" action="set" value="0" scope="global" />
             <do asset="backgrounds" action="set" image="clouds02" duration="0" />
             <do asset="music" action="set" track="legend" />
+            
             <wait />
+            
             <do asset="music" action="play" />
             <do asset="backgrounds" action="show" duration="500" />
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce"  />
+            
             <wait />
-            <wait duration="1000" />
+            <wait duration="1000" /> <!-- Waits another second after all effects are finished. -->
+            
+            <prompt title="Who are you?" message="Please enter your name:" var="player_name" />
+            
+            <wait />
+            
+            <line s="n">Hello, {$player_name}!</line>
+            
+            <confirm title="Really?" message="Is this really your name? Are you sure?" var="player_name_is_correct" />
+            
+            <wait />
+            
+            <prompt ifkey="player_name_is_correct" ifvalue="false" title="What's your REAL name?" 
+                message="Please enter your real name now. Don't lie! Lies are bad." var="player_name" />
+            
+            <wait />
+            
+            <line s="n">Hello again, {$player_name}!</line>
+            
             <do asset="flash" action="flash" duration="500" />
+            
             <wait />
+            
             <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
+            
             <wait />
+            
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
             <var key="increase_test" action="increase" />
+            
             <line s="n">
                 The increase_test variable is {$increase_test}.
             </line>
+            
             <do asset="flash" action="flicker" duration="2000" times="10" opacity="0.5" />
+            
             <wait />
+            
             <var key="increase_test" action="decrease" />
+            
             <line s="n">
                 Variable decreased. The increase_test variable is {$increase_test}.
             </line>
+            
             <do asset="music" action="stop" />
+            
             <sub scene="sub_scene_test" />
             <fire event="custom_event" />
             <var key="increase_test" action="increase" />
+            
             <line s="n">
                 To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
             </line>
+            
             <do asset="tb_main" action="hide" effect="slide" direction="bottom" />
+            
             <wait />
+            
             <do asset="tb_main" action="show" effect="slide" direction="bottom" easing="easeOutBounce" />
+            
             <line s="n" stop="false">
                 What are you interested in?
             </line>
+            
             <choice>
                 <option label="I want to learn more!">
                     <var key="learn_more_pressed" value="true" />
@@ -103,62 +159,89 @@
                     <var key="learn_more_pressed" value="false" />
                 </option>
             </choice>
+            
             <line s="n" ifkey="learn_more_pressed" ifvalue="true">
                 You want to learn more.
             </line>
+            
             <line s="n" ifkey="learn_more_pressed" ifvalue="false">
                 You don't want to learn more.
             </line>
+            
             <goto scene="restart" />
         </scene>
+        
         <scene id="game_menu_scene">
             <choice>
                 <option label="Save / Load Game" special="savegame_menu"></option>
                 <option label="Back to Main Menu" scene="restart"></option>
             </choice>
         </scene>
+        
         <scene id="sub_scene_test">
             <do asset="fog" action="show" effect="slide" direction="right" />
+            
             <wait />
+            
             <do asset="backgrounds2" action="set" image="rainbow" duration="0" />
             <do asset="backgrounds2" action="show" duration="500" />
+            
             <wait />
+            
             <do asset="fog" action="hide" effect="slide" direction="right" />
+            
             <wait />
+            
             <line s="n">
                 Hello from the sub scene!
             </line>
+            
+            <fire event="toggle_savegames" />
+            
             <line s="n">
                 A sub scene is a scene that is called from within another scene, but
                 not using the goto command; instead the sub command is used.
             </line>
+            
             <line s="n">
                That means that after all of the sub scenes commands have been executed,
                the story continues from the point where the sub scene was called.
             </line>
+            
             <line s="n">Let's go even one level deeper...</line>
+            
             <sub scene="sub_scene_test_2" />
+            
             <line s="n">And now we are back at the first sub scene.</line>
+            
             <do asset="backgrounds2" action="hide" duration="500" />
         </scene>
+        
         <scene id="sub_scene_test_2">
             <line s="n">
                 This line is part of another sub scene called from within the previous sub scene.
             </line>
         </scene>
+        
         <scene id="custom_event_scene">
             <line s="n">
                 A custom event has been triggered.
             </line>
         </scene>
+        
         <scene id="restart">
             <do asset="backgrounds" action="hide" duration="1000" />
+            
             <wait />
+            
             <do asset="tb_main" action="clear" />
             <do asset="backgrounds" action="move" x="0" y="0" duration="0" />
             <do asset="sounds" action="stop" />
+            
             <wait />
+            
             <restart />
         </scene>
+        
     </scenes>
 </ws>

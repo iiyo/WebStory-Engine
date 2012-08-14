@@ -103,7 +103,6 @@ img
     position: absolute;
     background: rgb(0, 0, 0);
     background: rgba(0, 0, 0, 0.8);
-    z-index: 5000;
     padding: 10px;
     box-shadow: 10px 10px 40px black;
 /*     left: 10px; */

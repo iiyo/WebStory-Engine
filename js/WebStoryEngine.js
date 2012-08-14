@@ -159,15 +159,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.subscribeListeners = function ()
         {
             out.tools.attachEventListener(this.stage, 'click', fn);
-            this.keys.addListener(this.keys.keys.RIGHT_ARROW, fn);
-            this.keys.addListener(this.keys.keys.SPACE, fn);
+//             this.keys.addListener(this.keys.keys.RIGHT_ARROW, fn);
+//             this.keys.addListener(this.keys.keys.SPACE, fn);
             this.listenersSubscribed = true;
         };
         this.unsubscribeListeners = function ()
         {
             out.tools.removeEventListener(this.stage, 'click', fn);
-            this.keys.removeListener(this.keys.keys.RIGHT_ARROW, fn);
-            this.keys.removeListener(this.keys.keys.SPACE, fn);
+//             this.keys.removeListener(this.keys.keys.RIGHT_ARROW, fn);
+//             this.keys.removeListener(this.keys.keys.SPACE, fn);
             this.listenersSubscribed = false;
         };
         this.interpreter.start();
@@ -196,6 +196,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.globalVars = {};
         this.callStack = [];
         this.keysDisabled = 0; // if this is > 0, key triggers should be disabled
+        this.state = "listen";
+        this.waitCounter = 0;
         
         this.datasource = new out.datasources.LocalStorage();
     };
@@ -386,6 +388,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.game.keys.forAll(makeKeyFn("keydown"), "down");
         this.game.keys.forAll(makeKeyFn("keypress"), "press");
         
+        this.game.subscribeListeners();
+        
         setTimeout(
             function ()
             {
@@ -561,34 +565,40 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         var nodeName, command, check, self;
         
         this.bus.trigger("wse.interpreter.next.before", this, false);
-        
-        this.stopped = false;
-
-        this.game.unsubscribeListeners();
-
-        triggeredByUser = triggeredByUser === true ? true : false;
 
         self = this;
-
-        if (this.waitForTimer === true || (this.wait === true && this.numberOfFunctionsToWaitFor > 0))
-        {/*
-            console.log("Waiting. numberOfFunctionsToWaitFor:" + this.numberOfFunctionsToWaitFor + 
-                "; wait: " + this.wait + "; waitForTimer: " + this.waitForTimer);*/
-            setTimeout(function ()
-            {
-                self.next();
-            }, 10);
-            //         console.log("Waiting...");
-            this.bus.trigger("wse.interpreter.next.after.postponed", this, false);
+        
+        if (this.state === "pause")
+        {
             return;
         }
-
-        if (this.wait === true && this.numberOfFunctionsToWaitFor < 1)
+        
+        if (this.waitCounter > 0)
         {
-            //         console.log("Waiting stopped.");
-            this.wait = false;
-            this.game.subscribeListeners();
+            setTimeout(function () { self.next(); }, 10);
+            return;
         }
+        
+
+//         if (this.waitForTimer === true || (this.wait === true && this.numberOfFunctionsToWaitFor > 0))
+//         {
+//             setTimeout(function ()
+//             {
+//                 self.next();
+//             }, 10);
+//             this.bus.trigger("wse.interpreter.next.after.postponed", this, false);
+//             return;
+//         }
+
+//         if (this.wait === true && this.numberOfFunctionsToWaitFor < 1)
+//         {
+//             //         console.log("Waiting stopped.");
+//             this.wait = false;
+//             this.game.subscribeListeners();
+//         }
+        
+        this.stopped = false;
+//         this.game.unsubscribeListeners();
 
         if (this.index >= this.currentCommands.length)
         {
@@ -627,10 +637,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         check.wait = check.wait === true ? true : false;
         check.changeScene = check.changeScene || null;
 
-        if (check.wait === true)
-        {
-            this.wait = true;
-        }
+//         if (check.wait === true)
+//         {
+//             this.wait = true;
+//         }
 
         this.index += 1;
 
@@ -720,7 +730,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.Interpreter.prototype.commands.stop = function (command, interpreter)
     {
         interpreter.bus.trigger("wse.interpreter.commands.stop", {interpreter: interpreter, command: command}, false);
-        interpreter.game.subscribeListeners();
+//         interpreter.game.subscribeListeners();
         return {
             doNext: false,
             wait: true
@@ -1071,6 +1081,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     0
                 );
                 self.stage.removeChild(me);
+                interpreter.waitCounter -= 1;
             };
         };
         
@@ -1127,8 +1138,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         out.assets.mixins.show(command, {
             element: menuElement,
             bus: interpreter.bus,
-            stage: interpreter.stage
+            stage: interpreter.stage,
+            interpreter: interpreter
         });
+        
+        interpreter.waitCounter += 1;
 
         return {
             doNext: false,
@@ -1180,7 +1194,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         interpreter.bus.trigger("wse.interpreter.commands.line", {interpreter: interpreter, command: command}, false);
 
-        interpreter.game.subscribeListeners();
+//         interpreter.game.subscribeListeners();
 
         speakerId = command.getAttribute("s");
         doNext = command.getAttribute("stop") === "false" ? true : false;
@@ -1700,15 +1714,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 console.log("Re-inserting choice menu: ", com);
                 interpreter.stage.removeChild(cur);
                 interpreter.commands.choice(com, interpreter);
-                interpreter.game.unsubscribeListeners();
+//                 interpreter.game.unsubscribeListeners();
             }
         }(this));
         
-        if (savegame.listenersSubscribed)
-        {
-            console.log("Subscribing listeners after loading a savegame...");
-            this.game.subscribeListeners();
-        }
+//         if (savegame.listenersSubscribed)
+//         {
+//             console.log("Subscribing listeners after loading a savegame...");
+//             this.game.subscribeListeners();
+//         }
         
         this.bus.trigger("wse.interpreter.load.after", {interpreter: this, savegame: savegame}, false);
         
@@ -1768,21 +1782,24 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             if (listenerStatus === true)
             {
                 this.savegameMenuVisible = false;
-                this.game.subscribeListeners();
+//                 this.game.subscribeListeners();
             }
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+            this.state = "listen";
+            this.waitCounter -= 1;
             return;
         }
         
         if (this.stopped !== true)
         {
+            setTimeout(function () { self.toggleSavegameMenu(); }, 20);
             return;
         }
         
-        this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+        this.state = "pause";
+        this.waitCounter += 1;
         
         this.savegameMenuVisible = true;
-        this.game.unsubscribeListeners();
+//         this.game.unsubscribeListeners();
         
         menu = document.createElement("div");
         menu.innerHTML = "";
@@ -1855,8 +1872,19 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             message: "Please enter a name for the savegame:",
                             callback: function (data)
                             {
+                                if (data === null)
+                                {
+                                    return;
+                                }
                                 if (!data)
                                 {
+                                    out.tools.ui.alert(
+                                        self,
+                                        {
+                                            title: "Error",
+                                            message: "The savegame name cannot be empty!"
+                                        }
+                                    );
                                     return;
                                 }
                                 self.toggleSavegameMenu();
@@ -1933,8 +1961,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     }
                     self.stage.removeChild(document.getElementById(id));
                     self.savegameMenuVisible = false;
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                    self.waitCounter -= 1;
 //                     console.log("numberOfFunctionsToWaitFor before loading:", self.numberOfFunctionsToWaitFor);
+                    self.state = "listen";
                     self.load(savegameName);
                 };
                 out.tools.ui.confirm(
@@ -1966,7 +1995,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
                 if (listenerStatus === true)
                 {
-                    self.game.subscribeListeners();
+//                     self.game.subscribeListeners();
                 }
                 self.savegameMenuVisible = false;
             },
@@ -2154,6 +2183,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             fn = function ()
             {
+                if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
+                {
+                    return;
+                }
                 self.interpreter.next();
             };
         }
@@ -2296,7 +2329,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2309,7 +2342,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     onFinish: !isAnimation ? function ()
                     {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        self.interpreter.waitCounter -= 1;
                     } : null,
                     duration: duration,
                     easing: easing
@@ -2321,7 +2354,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2334,7 +2367,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     onFinish: !isAnimation ? function ()
                     {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        self.interpreter.waitCounter -= 1;
                     } : null,
                     duration: duration,
                     easing: easing
@@ -2346,7 +2379,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2359,7 +2392,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     onFinish: !isAnimation ? function ()
                     {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        self.interpreter.waitCounter -= 1;
                     } : null,
                     duration: duration,
                     easing: easing
@@ -2405,7 +2438,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         if (!isAnimation) 
         {
-            bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            self.interpreter.waitCounter += 1;
         }
             
         out.fx.transform(
@@ -2430,7 +2463,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             duration: (duration / 3) * 2,
                             onFinish: !isAnimation ? function ()
                             {
-                                bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                                self.interpreter.waitCounter -= 1;
                             } : null,
                             easing: out.fx.easing.easeInQuad
                         }
@@ -2496,7 +2529,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         if (!isAnimation) 
         {
-            bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            self.interpreter.waitCounter += 1;
         }
             
         fn = function ()
@@ -2531,7 +2564,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                                     }
                                     if (!isAnimation)
                                     {
-                                        bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                                        self.interpreter.waitCounter -= 1;
                                     }
                                 },
                                 easing: out.fx.easing.easeInQuad
@@ -2554,7 +2587,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.assets.mixins.show = function (command, args)
     {
         var self, duration, wait, effect, direction, ox, oy, prop, 
-            bus, stage, element, isAnimation, easing, easingType;
+            bus, stage, element, isAnimation, easing, easingType, interpreter;
 
         args = args || {};
         self = this;
@@ -2578,6 +2611,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
 //         console.log("CSS ID: " + this.cssid, element);
         
+        interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         easingType = command.getAttribute("easing") || "sineEaseOut";
@@ -2615,7 +2649,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             
             if (!isAnimation) 
             {
-                bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2628,7 +2662,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     duration: duration,
                     onFinish: !isAnimation ? function ()
                     {
-                        bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        interpreter.waitCounter -= 1;
                     } : null,
                     easing: easing
                 }
@@ -2638,7 +2672,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2652,7 +2686,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     duration: duration,
                     onFinish: !isAnimation ? function ()
                     {
-                        bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        interpreter.waitCounter -= 1;
                     } : null,
                     easing: easing
                 }
@@ -2710,7 +2744,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             
             if (!isAnimation) 
             {
-                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2726,7 +2760,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     {
                         if (!isAnimation) 
                         {
-                            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                            self.interpreter.waitCounter -= 1;
                         }
                         
                         element.style.opacity = 0;
@@ -2754,7 +2788,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             out.fx.transform(
@@ -2770,7 +2804,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     {
                         if (!isAnimation) 
                         {
-                            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                            self.interpreter.waitCounter -= 1;
                         }
                         
                         element.style.opacity = 0;
@@ -2828,6 +2862,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.name = asset.getAttribute("name");
         this.id = out.tools.getUniqueId();
         this.cssid = "wse_imagepack_" + this.id;
+        this.interpreter = interpreter;
 
         self = this;
         images = {};
@@ -2966,7 +3001,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         if (!isAnimation) 
         {
-            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+            self.interpreter.waitCounter += 1;
         }
         
         out.fx.transform(
@@ -2983,7 +3018,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 {
                     if (!isAnimation) 
                     {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                        self.interpreter.waitCounter -= 1;
                     }
                 }
             }
@@ -2993,7 +3028,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             if (!isAnimation) 
             {
-                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
+                self.interpreter.waitCounter += 1;
             }
             
             setTimeout(
@@ -3013,7 +3048,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             {
                                 if (!isAnimation) 
                                 {
-                                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
+                                    self.interpreter.waitCounter -= 1;
                                 }
                             },
                             easing: out.fx.easing.linear
@@ -3053,15 +3088,22 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             assetType: "Imagepack",
             current: name,
             cssid: this.cssid,
-            images: images
+            images: images,
+            z: this.z
         };
         this.bus.trigger("wse.assets.imagepack.save", { subject: this, saves: obj });
     };
     
     out.assets.Imagepack.prototype.restore = function (obj)
     {
-        var name;
-        name = obj[this.id].current;
+        var name, save;
+        save = obj[this.id];
+        name = save.current;
+        
+        this.cssid = save.cssid;
+        this.z = save.z;
+        
+        document.getElementById(this.cssid).style.zIndex = this.z;
         
         if (name !== null && this.images[name] !== null)
         {
@@ -3088,6 +3130,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.type = asset.getAttribute("behaviour") || "adv";
+        this.z = asset.getAttribute("z") || 5000;
         this.showNames = asset.getAttribute("names") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
         this.id = out.tools.getUniqueId();
@@ -3122,8 +3165,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             element.style.top = y;
         }
         
-        z = asset.getAttribute("z") || 5000;
-        element.style.zIndex = z;
+        element.style.zIndex = this.z;
 
         width = asset.getAttribute("width");
         if (width)
@@ -3176,11 +3218,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         text = out.tools.replaceVariables(text, this.interpreter);
         text = out.tools.textToHtml(text, this.nltobr);
         
-        this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+        self.interpreter.waitCounter += 1;
 
         if (this.type === "adv")
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+            self.interpreter.waitCounter += 1;
             out.fx.transform(
                 function (v)
                 {
@@ -3192,7 +3234,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     duration: 50,
                     onFinish: function ()
                     {
-                        self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                        self.interpreter.waitCounter -= 1;
                     }
                 }
             );
@@ -3212,7 +3254,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         if (this.type === "adv")
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+            self.interpreter.waitCounter += 1;
             setTimeout(
                 function ()
                 {
@@ -3229,7 +3271,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             duration: 50,
                             onFinish: function ()
                             {
-                                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                                self.interpreter.waitCounter -= 1;
                             }
                         }
                     );
@@ -3239,20 +3281,20 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }
         else
         {
-            this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase", null, false);
+            self.interpreter.waitCounter += 1;
             setTimeout(
                 function ()
                 {
                     textElement.innerHTML += "<p>" + namePart + text + "</p>";
                     nameElement.innerHTML = name;
-                    self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                    self.interpreter.waitCounter -= 1;
                 }, 
                 200
             );
         }
         
         this.bus.trigger("wse.assets.textbox.put", this, false);
-        this.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+        self.interpreter.waitCounter -= 1;
 
         return {
             doNext: false
@@ -3278,7 +3320,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             nltobr: this.nltobr,
             cssid: this.cssid,
             nameElement: this.nameElement,
-            textElement: this.textElement
+            textElement: this.textElement,
+            z: this.z
         };
     };
     
@@ -3291,6 +3334,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.cssid = save.cssid;
         this.nameElement = save.nameElement;
         this.textElement = save.textElement;
+        this.z = save.z;
+        
+        document.getElementById(this.cssid).style.zIndex = this.z;
     };
 
 
@@ -3856,6 +3902,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.element.style.height = this.stage.offsetHeight + "px";
         this.element.style.opacity = 0;
         this.element.style.backgroundColor = this.color;
+        this.element.style.zIndex = this.z;
         
         this.stage.appendChild(this.element);
     };
@@ -3874,14 +3921,18 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.assets.Curtain.prototype.save = function (obj)
     {
-        obj[this.id].color = this.color;
-        obj[this.id].cssid = this.cssid;
+        obj[this.id] = {
+            color: this.color,
+            cssid: this.cssid,
+            z: this.z
+        };
     };
     
     out.assets.Curtain.prototype.restore = function (obj)
     {
         this.color = obj[this.id].color;
         this.cssid = obj[this.id].cssid;
+        this.z = obj[this.id].z;
         try
         {
             this.element = document.getElementById(this.cssid);
@@ -3895,6 +3946,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return;
         }
         this.element.style.backgroundColor = this.color;
+        this.element.style.zIndex = this.z;
     };
     
     
@@ -4016,10 +4068,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         confirm: function (interpreter, args)
         {
             var title, message, trueText, falseText, callback, root, dialog;
-            var tEl, mEl, yesEl, noEl, container;
+            var tEl, mEl, yesEl, noEl, container, pause, oldState, doNext;
             
-            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            interpreter.keysDisabled += 1;
+            interpreter.waitCounter += 1;
+//             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Confirm?";
@@ -4028,6 +4080,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             falseText = args.falseText || "No";
             callback = typeof args.callback === "function" ? args.callback : function () {};
             root = args.parent || interpreter.stage;
+            pause = args.pause === true ? true : false;
+            oldState = interpreter.state;
+            doNext = args.doNext === true ? true : false;
+            
+            if (pause === true)
+            {
+                interpreter.state = "pause";
+            }
             
             container = document.createElement("div");
             container.setAttribute("class", "WSEUIContainer");
@@ -4054,9 +4114,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     ev.stopPropagation();
                     ev.preventDefault();
                     root.removeChild(container);
-                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    interpreter.keysDisabled -= 1;
+                    interpreter.waitCounter -= 1;
+                    //                     interpreter.keysDisabled -= 1;
+                    if (pause === true)
+                    {
+                        interpreter.state = oldState;
+                    }
                     callback(true);
+                    if (doNext === true)
+                    {
+                        setTimeout(function () { interpreter.next(); }, 0);
+                    }
                 }
             );
             
@@ -4071,9 +4139,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     ev.stopPropagation();
                     ev.preventDefault();
                     root.removeChild(container);
-                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    interpreter.keysDisabled -= 1;
+                    interpreter.waitCounter -= 1;
+                    //                     interpreter.keysDisabled -= 1;
+                    if (pause === true)
+                    {
+                        interpreter.state = oldState;
+                    }
                     callback(false);
+                    if (doNext === true)
+                    {
+                        setTimeout(function () { interpreter.next(); }, 0);
+                    }
                 }
             );
             
@@ -4090,10 +4166,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         alert: function (interpreter, args)
         {
             var title, message, okText, callback, root, dialog;
-            var tEl, mEl, buttonEl, container;
+            var tEl, mEl, buttonEl, container, pause, oldState, doNext;
             
-            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            interpreter.keysDisabled += 1;
+            interpreter.waitCounter += 1;
+//             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Alert!";
@@ -4101,6 +4177,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             okText = args.okText || "OK";
             callback = typeof args.callback === "function" ? args.callback : function () {};
             root = args.parent || interpreter.stage;
+            pause = args.pause === true ? true : false;
+            oldState = interpreter.state;
+            doNext = args.doNext === true ? true : false;
+            
+            if (pause === true)
+            {
+                interpreter.state = "pause";
+            }
             
             container = document.createElement("div");
             container.setAttribute("class", "WSEUIContainer");
@@ -4127,9 +4211,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     ev.stopPropagation();
                     ev.preventDefault();
                     root.removeChild(container);
-                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    interpreter.keysDisabled -= 1;
+                    interpreter.waitCounter -= 1;
+                    //                     interpreter.keysDisabled -= 1;
+                    if (pause === true)
+                    {
+                        interpreter.state = oldState;
+                    }
                     callback(true);
+                    if (doNext === true)
+                    {
+                        setTimeout(function () { interpreter.next(); }, 0);
+                    }
                 }
             );
             
@@ -4144,11 +4236,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         prompt: function (interpreter, args)
         {
-            var title, message, submitText, cancelText, callback, root, dialog;
-            var tEl, mEl, buttonEl, cancelEl, inputEl, container, defaultValue;
+            var title, message, submitText, cancelText, callback, root, dialog, oldState;
+            var tEl, mEl, buttonEl, cancelEl, inputEl, container, defaultValue, pause, doNext;
             
-            interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.increase");
-            interpreter.keysDisabled += 1;
+            interpreter.waitCounter += 1;
+//             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Input required";
@@ -4158,6 +4250,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             defaultValue = args.defaultValue || "";
             callback = typeof args.callback === "function" ? args.callback : function () {};
             root = args.parent || interpreter.stage;
+            pause = args.pause === true ? true : false;
+            oldState = interpreter.state;
+            doNext = args.doNext === true ? true : false;
+            
+            if (pause === true)
+            {
+                interpreter.state = "pause";
+            }
             
             container = document.createElement("div");
             container.setAttribute("class", "WSEUIContainer");
@@ -4190,9 +4290,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     ev.stopPropagation();
                     ev.preventDefault();
                     root.removeChild(container);
-                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    interpreter.keysDisabled -= 1;
+                    interpreter.waitCounter -= 1;
+//                     interpreter.keysDisabled -= 1;
+                    if (pause === true)
+                    {
+                        interpreter.state = oldState;
+                    }
                     callback(val);
+                    if (doNext === true)
+                    {
+                        setTimeout(function () { interpreter.next(); }, 0);
+                    }
                 }
             );
             
@@ -4207,9 +4315,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     ev.stopPropagation();
                     ev.preventDefault();
                     root.removeChild(container);
-                    interpreter.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease");
-                    interpreter.keysDisabled -= 1;
+                    interpreter.waitCounter -= 1;
+                    //                     interpreter.keysDisabled -= 1;
+                    if (pause === true)
+                    {
+                        interpreter.state = oldState;
+                    }
                     callback(null);
+                    if (doNext === true)
+                    {
+                        setTimeout(function () { interpreter.next(); }, 0);
+                    }
                 }
             );
             
@@ -4226,7 +4342,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
     };
     
-    
+    out.commands = out.Interpreter.prototype.commands;
 
     return out;
 
@@ -4235,3 +4351,80 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     typeof MO5 === "undefined" ? false : MO5, 
     typeof STEINBECK === "undefined" ? false : STEINBECK
 ));
+
+
+(function (module)
+{
+    var makeInputFn = function (type)
+    {
+        return function (command, interpreter)
+        {
+            var title, message, scope, container, key, doNext;
+            title = command.getAttribute("title") || "Input required...";
+            message = command.getAttribute("message") || "Your input is required:";
+            key = command.getAttribute("var") || null;
+            scope = command.getAttribute("scope") || "run";
+            doNext = command.getAttribute("next") === "false" ? false : true;
+            
+            if (key === null)
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {element: command, message: "No 'var' attribute defined on " + type + " command. Command ignored."}
+                );
+                return {
+                    doNext: true
+                };
+            }
+            
+            if (scope !== "global" && scope !== "run")
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {element: command, message: "Unknown scope defined. Ignored."}
+                );
+                return {
+                    doNext: true
+                };
+            }
+            
+            container = scope === "run" ? interpreter.runVars : interpreter.globalVars;
+            
+            module.tools.ui[type](
+                interpreter, 
+                {
+                    title: title, 
+                    message: message,
+                    pause: true,
+                    doNext: doNext,
+                    callback: function (decision)
+                    {
+                        container[key] = "" + decision;
+                    }
+                }
+            );
+            return {doNext: true};
+        };
+    }; 
+    
+    module.commands.alert = function (command, interpreter)
+    {
+        var title, message, doNext;
+        title = command.getAttribute("title") || "Alert!";
+        message = command.getAttribute("message") || "Alert!";
+        doNext = command.getAttribute("next") === "false" ? false : true;
+        module.tools.ui.alert(
+            interpreter, 
+            {
+                title: title, 
+                message: message,
+                pause: true,
+                doNext: doNext
+            }
+        );
+        return {doNext: true};
+    };
+    
+    module.commands.confirm = makeInputFn("confirm");
+    module.commands.prompt = makeInputFn("prompt");
+}(WSE));
