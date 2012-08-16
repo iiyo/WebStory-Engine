@@ -95,7 +95,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn;
         self = this;
         ws = this.ws;
-        stageElements = ws.getElementsByTagName("stage");
+        try
+        {
+            stageElements = ws.getElementsByTagName("stage");
+        }
+        catch (e) 
+        {
+            console.log(e);
+        }
         width = "800px";
         height = "480px";
         id = "Stage";
@@ -154,6 +161,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         };*/
         fn = function ()
         {
+            console.log("Next triggered by user...");
             self.interpreter.next();
         };
         this.subscribeListeners = function ()
@@ -177,6 +185,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.Interpreter = function (game)
     {
+        var datasource, key;
+        
         if (!(this instanceof out.Interpreter))
         {
             return new out.Interpreter(game);
@@ -193,13 +203,35 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.assetsLoaded = 0;
         this.startTime = 0;
         this.runVars = {};
-        this.globalVars = {};
         this.callStack = [];
         this.keysDisabled = 0; // if this is > 0, key triggers should be disabled
         this.state = "listen";
         this.waitCounter = 0;
         
-        this.datasource = new out.datasources.LocalStorage();
+        datasource = new out.datasources.LocalStorage();
+        this.datasource = datasource;
+        key = "wse_globals_" + this.game.url + "_";
+        
+        this.globalVars = {
+            set: function (name, value)
+            {
+                datasource.set(key + name, value);
+            },
+           
+            get: function (name)
+            {
+                return datasource.get(key + name);
+            },
+           
+            has: function (name)
+            {
+                if (datasource.get(key + name) === null)
+                {
+                    return false;
+                }
+                return true;
+            }
+        };
     };
 
     out.Interpreter.prototype.buildLoadingScreen = function ()
@@ -529,6 +561,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.currentElement = top.currentElement;
         this.currentCommands = this.currentScene.childNodes;
         
+        console.log("top:", top);
+        
         //console.log(this.currentCommands);
     };
     
@@ -560,7 +594,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return scene;
     };
 
-    out.Interpreter.prototype.next = function (triggeredByUser)
+    out.Interpreter.prototype.next = function ()
     {
         var nodeName, command, check, self;
         
@@ -575,7 +609,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         if (this.waitCounter > 0)
         {
-            setTimeout(function () { self.next(); }, 10);
+            setTimeout(function () { self.next(); }, 0);
             return;
         }
         
@@ -633,7 +667,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         check = this.runCommand(this.currentCommands[this.index]);
 
         check = check || {};
-        check.doNext = (typeof check.doNext !== "undefined" && check.doNext === false) ? false : true;
+        check.doNext = check.doNext === false ? false : true;
         check.wait = check.wait === true ? true : false;
         check.changeScene = check.changeScene || null;
 
@@ -667,27 +701,28 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.Interpreter.prototype.runCommand = function (command)
     {
-        var tagName, ifkey, ifval, ifscope, varContainer;
+        var tagName, ifvar, ifval, ifscope, varContainer, assetName;
         
         this.bus.trigger("wse.interpreter.runcommand.before", {interpreter: this, command: command}, false);
         
         tagName = command.tagName;
+        assetName = command.getAttribute("asset") || null;
         
-        ifkey = command.getAttribute("ifkey") || null;
+        ifvar = command.getAttribute("ifvar") || null;
         ifval = command.getAttribute("ifvalue") || null;
         ifscope = command.getAttribute("ifscope") || "run";
         
-        if (ifkey !== null && ifval !== null)
+        if (ifvar !== null && ifval !== null)
         {
             varContainer = ifscope === "run" ? this.runVars : this.globalVars;
             
-            if (!(ifkey in varContainer))
+            if (!(ifvar in varContainer))
             {
                 this.bus.trigger(
                     "wse.interpreter.warning", 
                     {
                         element: command,
-                        message: "Unknown key '" + ifkey + "' (" + ifscope + " scope) used in condition. Ignoring command."
+                        message: "Unknown variable '" + ifvar + "' (" + ifscope + " scope) used in condition. Ignoring command."
                     }
                 );
                 this.bus.trigger("wse.interpreter.runcommand.after.condition.error.key", {interpreter: this, command: command}, false);
@@ -696,7 +731,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 };
             }
             
-            if (("" + varContainer[ifkey]) !== ifval)
+            if (("" + varContainer[ifvar]) !== ifval)
             {
                 this.bus.trigger("wse.interpreter.message", "Conidition not met.");
                 this.bus.trigger("wse.interpreter.runcommand.after.condition.false", {interpreter: this, command: command}, false);
@@ -714,6 +749,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             this.bus.trigger("wse.interpreter.runcommand.after.command", {interpreter: this, command: command}, false);
             return this.commands[tagName](command, this);
         }
+        else if (
+            assetName !== null && 
+            assetName in this.assets && 
+            typeof this.assets[assetName][tagName] === "function" &&
+            tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
+        )
+        {
+            return this.assets[assetName][tagName](command, this);
+        }
         else
         {
             this.bus.trigger("wse.interpreter.warning", {
@@ -727,9 +771,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.Interpreter.prototype.commands = {};
     
-    out.Interpreter.prototype.commands.stop = function (command, interpreter)
+    out.Interpreter.prototype.commands["break"] = function (command, interpreter)
     {
-        interpreter.bus.trigger("wse.interpreter.commands.stop", {interpreter: interpreter, command: command}, false);
+        interpreter.bus.trigger("wse.interpreter.commands.break", {interpreter: interpreter, command: command}, false);
 //         interpreter.game.subscribeListeners();
         return {
             doNext: false,
@@ -737,36 +781,76 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         };
     };
     
-    out.Interpreter.prototype.commands.fire = function (command, interpreter)
+    out.Interpreter.prototype.commands.fn = function (command, interpreter)
     {
-        var eventName;
+        var name, varName, ret;
+        name = command.getAttribute("name") || null;
+        varName = command.getAttribute("tovar") || null;
         
-        interpreter.bus.trigger("wse.interpreter.commands.fire", {interpreter: interpreter, command: command}, false);
-        
-        eventName = command.getAttribute("event") || null;
-        
-        if (eventName === null)
+        if (typeof out.functions[name] !== "function")
         {
             interpreter.bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
-                    message: "No event specified on trigger element."
+                    message: "No name supplied on fn element."
                 }
             );
-            return { doNext: true };
+            return {doNext: true};
         }
         
-        interpreter.bus.trigger(
-            "wse.interpreter.message",
-            "Triggering event '" + eventName + "'.",
-            false
-        );
+        if (typeof out.functions[name] !== "function")
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Unknown function '" + name + "'."
+                }
+            );
+            return {doNext: true};
+        }
         
-        interpreter.bus.trigger(eventName, command, false);
+        ret = out.functions[name](interpreter);
         
-        return { doNext: true };
+        if (varName !== null)
+        {
+            interpreter.runVars[varName] = "" + ret;
+        }
+        
+        return {doNext: true};
     };
+    
+//     out.Interpreter.prototype.commands.fire = function (command, interpreter)
+//     {
+//         var eventName;
+//         
+//         interpreter.bus.trigger("wse.interpreter.commands.fire", {interpreter: interpreter, command: command}, false);
+//         
+//         eventName = command.getAttribute("event") || null;
+//         
+//         if (eventName === null)
+//         {
+//             interpreter.bus.trigger(
+//                 "wse.interpreter.warning",
+//                 {
+//                     element: command,
+//                     message: "No event specified on trigger element."
+//                 }
+//             );
+//             return { doNext: true };
+//         }
+//         
+//         interpreter.bus.trigger(
+//             "wse.interpreter.message",
+//             "Triggering event '" + eventName + "'.",
+//             false
+//         );
+//         
+//         interpreter.bus.trigger(eventName, command, false);
+//         
+//         return { doNext: true };
+//     };
     
     out.Interpreter.prototype.commands.trigger = function (command, interpreter)
     {
@@ -832,11 +916,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.Interpreter.prototype.commands.sub = function (command, interpreter)
     {
-        var sceneId, scene;
+        var sceneId, scene, doNext;
         
         interpreter.bus.trigger("wse.interpreter.commands.sub", {interpreter: interpreter, command: command}, false);
         
         sceneId = command.getAttribute("scene") || null;
+        doNext = command.getAttribute("next") === false ? false : true;
+        
+        console.log("doNext in .sub() is: ", doNext);
         
         if (sceneId === null)
         {
@@ -865,7 +952,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         interpreter.currentElement = 0;
         
         return {
-            doNext: true
+            doNext: doNext
         };
     };
     
@@ -889,6 +976,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         interpreter.log = [];
         interpreter.visitedScenes = [];
         interpreter.startTime = Math.round(+new Date() / 1000);
+        interpreter.waitCounter = 0;
+        interpreter.state = "listen";
+        interpreter.stage.innerHTML = "";
+        
+        this.assets = {};
+        interpreter.buildAssets();
         
         return {
             doNext: true,
@@ -898,13 +991,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.Interpreter.prototype.commands["var"] = function (command, interpreter)
     {
-        var key, val, scope, action, container;
+        var key, val, action, container;
         
         interpreter.bus.trigger("wse.interpreter.commands.var", {interpreter: interpreter, command: command}, false);
         
-        key = command.getAttribute("key") || null;
+        key = command.getAttribute("name") || null;
         val = command.getAttribute("value") || null;
-        scope = command.getAttribute("scope") || null;
         action = command.getAttribute("action") || "set";
         
         if (key === null)
@@ -913,19 +1005,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 "wse.interpreter.warning", 
                 {
                     element: command,
-                    message: "Command 'var' must have a 'key' attribute."
-                }
-            );
-            return { doNext: true };
-        }
-        
-        if (action === "set" && scope !== null && scope !== "run" && scope !== "global")
-        {
-            interpreter.bus.trigger(
-                "wse.interpreter.warning", 
-                {
-                    element: command,
-                    message: "Unknown scope defined on 'var' command."
+                    message: "Command 'var' must have a 'name' attribute."
                 }
             );
             return { doNext: true };
@@ -943,42 +1023,17 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return { doNext: true };
         }
         
-        if (scope === null)
-        {
-            if (key in interpreter.runVars)
-            {
-                scope = "run";
-            }
-            else if (key in interpreter.globalVars)
-            {
-                scope = "global";
-            }
-            else
-            {
-                scope = "run";
-            }
-        }
+        container = interpreter.runVars;
         
-        container = scope === "run" ? interpreter.runVars : interpreter.globalVars;
-        
-        if (action !== "set" && !command.getAttribute("ifstate") && !(key in container))
+        if (action !== "set" && !(key in container))
         {
             interpreter.bus.trigger(
                 "wse.interpreter.warning", 
                 {
                     element: command,
-                    message: "Unknown key used in 'var' command."
+                    message: "Undefined variable."
                 }
             );
-            return { doNext: true };
-        }
-        
-        if (command.getAttribute("ifstate") === "unset" && key in container)
-        {
-            return { doNext: true };
-        }
-        else if (command.getAttribute("ifstate") === "set" && !(key in container))
-        {
             return { doNext: true };
         }
         
@@ -996,7 +1051,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             case "print":
                 interpreter.bus.trigger(
                     "wse.interpreter.message",
-                    "Variable '" + key + "' (" + scope + " scope) is: " + container[key]
+                    "Variable '" + key + "' is: " + container[key]
                 );
                 break;
             default:
@@ -1004,6 +1059,112 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }
         
         return { doNext: true };
+    };
+    
+    out.Interpreter.prototype.commands.localize = function (command, interpreter)
+    {
+        var key;
+        
+        key = command.getAttribute("name") || null;
+        
+        if (key === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No variable name defined on localize element."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        if (!interpreter.globalVars.has(key))
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Undefined global variable."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        interpreter.runVars[key] = interpreter.globalVars.get(key);
+        
+        return {doNext: true};
+    };
+    
+    out.Interpreter.prototype.commands.globalize = function (command, interpreter)
+    {
+        var key;
+        
+        key = command.getAttribute("name") || null;
+        
+        if (key === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No variable name defined on globalize element."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        if (typeof interpreter.runVars[key] === "undefined" || interpreter.runVars[key] === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Undefined local variable."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        interpreter.globalVars.set(key, interpreter.runVars[key]);
+        
+        return {doNext: true};
+    };
+    
+    out.Interpreter.prototype.commands.global = function (command, interpreter)
+    {
+        var name, value;
+        
+        name = command.getAttribute("name") || null;
+        value = command.getAttribute("value") || null;
+        
+        if (name === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No name defined on element 'global'."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        if (value === null)
+        {
+            interpreter.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No value defined on element 'global'."
+                }
+            );
+            return {doNext: true};
+        }
+        
+        interpreter.globalVars.set(name, value);
+        
+        return {doNext: true};
     };
 
     out.Interpreter.prototype.commands.wait = function (command, interpreter)
@@ -1041,10 +1202,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     {
         var menuElement, buttons, children, len, i, current, duration, 
             currentButton, scenes, self, j, jlen, currentScene, sceneName,
-            makeButtonClickFn;
+            makeButtonClickFn, oldState, cssid;
             
         interpreter.bus.trigger("wse.interpreter.commands.choice", {interpreter: interpreter, command: command}, false);
 
+        oldState = interpreter.state;
+        interpreter.state = "pause";
+        
         buttons = [];
         scenes = [];
         self = interpreter;
@@ -1052,16 +1216,24 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         len = children.length;
         duration = command.getAttribute("duration") || 500;
         duration = parseInt(duration, 10);
+        cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
 
         makeButtonClickFn = function (cur, me, sc)
         {
             sc = sc || null;
-            return function ()
+            return function (ev)
             {
+                var noHide;
+                
+                noHide = cur.getAttribute("hide") === "false" ? true : false;
+                
+                ev.stopPropagation();
+                ev.preventDefault();
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len;
+                        var cmds, i, len, noNext;
+                        noNext = cur.getAttribute("next") === "false" ? true : false;
                         cmds = cur.getElementsByTagName("var");
                         len = cmds.length;
                         
@@ -1076,12 +1248,24 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                             return;
                         }
                         
+                        if (noNext === true)
+                        {
+                            return;
+                        }
+                        
                         self.next();
                     }, 
                     0
                 );
+                
+                if (noHide === true)
+                {
+                    return;
+                }
+                
                 self.stage.removeChild(me);
                 interpreter.waitCounter -= 1;
+                interpreter.state = oldState;
             };
         };
         
@@ -1095,6 +1279,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         menuElement = document.createElement("div");
         menuElement.setAttribute("class", "menu");
+        menuElement.setAttribute("id", cssid);
         
         // associate HTML element with XML element; used when loading savegames:
         menuElement.setAttribute("data-wse-index", interpreter.index);
@@ -1521,7 +1706,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegame.saveTime = Math.round(+new Date() / 1000);
         savegame.screenContents = this.stage.innerHTML;
         savegame.runVars = this.runVars;
-        savegame.globalVars = this.globalVars;
         savegame.name = name;
         savegame.log = this.log;
         savegame.visitedScenes = this.visitedScenes;
@@ -1533,6 +1717,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegame.sceneId = this.sceneId;
         savegame.listenersSubscribed = this.game.listenersSubscribed;
         savegame.callStack = this.callStack;
+        savegame.waitCounter = this.waitCounter;
         
         key = this.buildSavegameId(name);
         
@@ -1633,7 +1818,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.startTime = savegame.startTime;
         this.stage.innerHTML = savegame.screenContents;
         this.runVars = savegame.runVars;
-        this.globalVars = savegame.globalVars;
         this.log = savegame.log;
         this.visitedScenes = savegame.visitedScenes;
         this.index = savegame.index;
@@ -1641,6 +1825,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.waitForTimer = savegame.waitForTimer;
         this.currentElement = savegame.currentElement;
         this.callStack = savegame.callStack;
+        this.waitCounter = savegame.waitCounter;
+        this.state = "listen";
         
         sceneId = savegame.sceneId;
         this.sceneId = sceneId;
@@ -1714,6 +1900,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 console.log("Re-inserting choice menu: ", com);
                 interpreter.stage.removeChild(cur);
                 interpreter.commands.choice(com, interpreter);
+                interpreter.waitCounter -= 1;
 //                 interpreter.game.unsubscribeListeners();
             }
         }(this));
@@ -1760,7 +1947,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     {
         var menu, deleteButton, loadButton, saveButton, self;
         var savegames, i, len, buttonPanel, resumeButton, id, sgList;
-        var cur, curEl, makeClickFn, listenerStatus, curElapsed;
+        var cur, curEl, makeClickFn, listenerStatus, curElapsed, oldState;
         
         self = this;
         id = "WSESaveGameMenu_" + this.game.url;
@@ -1784,7 +1971,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 this.savegameMenuVisible = false;
 //                 this.game.subscribeListeners();
             }
-            this.state = "listen";
+            this.state = this.oldStateInSavegameMenu;
             this.waitCounter -= 1;
             return;
         }
@@ -1795,6 +1982,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return;
         }
         
+        oldState = this.state;
+        this.oldStateInSavegameMenu = oldState;
         this.state = "pause";
         this.waitCounter += 1;
         
@@ -1963,7 +2152,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     self.savegameMenuVisible = false;
                     self.waitCounter -= 1;
 //                     console.log("numberOfFunctionsToWaitFor before loading:", self.numberOfFunctionsToWaitFor);
-                    self.state = "listen";
+                    self.state = oldState;
                     self.load(savegameName);
                 };
                 out.tools.ui.confirm(
@@ -1993,11 +2182,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 ev.preventDefault();
                 self.stage.removeChild(document.getElementById(id));
                 self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
-                if (listenerStatus === true)
-                {
-//                     self.game.subscribeListeners();
-                }
                 self.savegameMenuVisible = false;
+                self.waitCounter -= 1;
+                self.state = oldState;
             },
             false
         );
@@ -2114,7 +2301,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.name = trigger.getAttribute("name") || null;
         this.event = trigger.getAttribute("event") || null;
         this.special = trigger.getAttribute("special") || null;
-        this.sub = trigger.getAttribute("sub") || null;
+        this.fnName = trigger.getAttribute("function") || null;
         this.interpreter = interpreter;
         this.isSubscribed = false;
         
@@ -2142,7 +2329,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return;
         }
         
-        if (this.special === null && this.sub === null)
+        if (this.special === null && this.fnName === null)
         {
             interpreter.bus.trigger(
                 "wse.interpreter.warning",
@@ -2157,17 +2344,23 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         this.isKeyEvent = false;
         this.key = null;
         
-        if (this.sub !== null)
-        {
-            fn = function ()
-            {
-                var sub = interpreter.game.ws.createElement("sub");
-                sub.setAttribute("scene", self.sub);
-                interpreter.commands.sub(sub, interpreter);
-            };
-        }
+//         if (this.sub !== null)
+//         {
+//             fn = function ()
+//             {
+//                 if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
+//                 {
+//                     return;
+//                 }
+//                 var sub = interpreter.game.ws.createElement("sub");
+//                 sub.setAttribute("scene", self.sub);
+// //                 sub.setAttribute("next", "false");
+//                 interpreter.commands.sub(sub, interpreter);
+//                 interpreter.next();
+//             };
+//         }
         
-        if (this.special !== null && this.special !== "next" && this.special !== "savegames")
+        if (this.special !== null && this.special !== "next")
         {
             interpreter.bus.trigger(
                 "wse.interpreter.warning",
@@ -2191,11 +2384,22 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             };
         }
         
-        if (this.special === "savegames")
+        if (this.fnName !== null)
         {
+            if (typeof out.functions[this.fnName] !== "function")
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: trigger,
+                        message: "Unknown function specified on trigger element '" + this.name + "'."
+                    }
+                );
+                return;
+            }
             fn = function ()
             {
-                self.interpreter.toggleSavegameMenu();
+                out.functions[self.fnName](self.interpreter);
             };
         }
         
@@ -2482,7 +2686,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.assets.mixins.flicker = function (command, args)
     {
-        var self, duration, wait, bus, stage, times, step, element, 
+        var self, duration, bus, stage, times, step, element, 
             isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
         
         args = args || {};
@@ -2574,7 +2778,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     easing: out.fx.easing.easeInQuad
                 }
             );
-        }
+        };
         fn();
         
         bus.trigger("wse.assets.mixins.flicker", this);
@@ -3123,7 +3327,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return new out.assets.Textbox(asset, interpreter);
         }
 
-        var element, nameElement, textElement, cssid, x, y, z, width, height;
+        var element, nameElement, textElement, cssid, x, y, width, height;
 
         this.interpreter = interpreter;
         this.name = asset.getAttribute("name");
@@ -3519,7 +3723,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
             if (fade === true)
             {
-                self.current.volume = 0;
+                self.current.volume = 0.0001;
                 self.current.play();
                 self.fadeIn();
             }
@@ -3529,6 +3733,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             }
             
             this.bus.trigger("wse.assets.audio.play", this);
+            
+            return {doNext: true};
         };
 
         this.stop = function ()
@@ -3539,20 +3745,19 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                     element: asset,
                     message: "No track set for audio element '" + this.name + "'."
                 });
-                return;
+                return {doNext: true};
             }
             if (self.fade === true)
             {
-                self.fadeOut();
-                setTimeout(
-
-                function ()
-                {
-                    self.current.pause();
-                    self.currentTime = 0.1;
-                    self.renewCurrent();
-                    self.isPlaying = false;
-                }, 1000);
+                self.fadeOut(
+                    function ()
+                    {
+                        self.current.pause();
+                        self.currentTime = 0.1;
+                        self.renewCurrent();
+                        self.isPlaying = false;
+                    }
+                );
             }
             else
             {
@@ -3562,65 +3767,73 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 self.isPlaying = false;
             }
             this.bus.trigger("wse.assets.audio.play", this);
+            return {doNext: true};
+        };
+        
+        this.pause = function ()
+        {
+            this.current.pause();
+            return {doNext: true};
         };
 
         this.fadeIn = function ()
         {
-            var timer, fn;
+            var fn;
             fn = function ()
             {
                 if (self.current.volume > 0.99)
                 {
                     self.current.volume = 1;
-                    clearInterval(timer);
-                    timer = null;
                     return;
                 }
                 self.current.volume += 0.01;
+                setTimeout(fn, 10);
             };
-            timer = setInterval(fn, 5);
-            return timer;
+            setTimeout(fn, 10);
+            return {doNext: true};
         };
 
-        this.fadeOut = function ()
+        this.fadeOut = function (cb)
         {
-            var timer, fn;
+            var fn;
+            cb = typeof cb === "function" ? cb : function () {};
+            
             fn = function ()
             {
                 if (self.current.volume < 0.01)
                 {
                     self.current.volume = 0;
-                    clearInterval(timer);
-                    timer = null;
+                    cb();
                     return;
                 }
                 self.current.volume -= 0.01;
+                setTimeout(fn, 10);
             };
-            timer = setInterval(fn, 5);
-            return;
+            
+            setTimeout(fn, 10);
+            return {doNext: true};
         };
 
         if (this.autopause === false)
         {
+            console.log("autopause is false");
             return;
         }
 
         out.tools.attachEventListener(
-        self.stage, 'blur', function ()
+        window, 'blur', function ()
         {
+            console.log("onblur function for audio called");
             if (self.isPlaying === true)
             {
-                self.fadeOut();
-                setTimeout(function ()
-                {
-                    self.current.pause();
-                }, 1000);
+                self.fadeOut(function () { self.current.pause(); });
             }
         });
 
         out.tools.attachEventListener(
-        self.stage, 'focus', function ()
+        window, 'focus', function ()
         {
+            console.log("onfocus function for audio called");
             if (self.isPlaying === true)
             {
                 self.current.play();
@@ -3645,7 +3858,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 element: command,
                 message: "Unknown track '" + name + "' in audio element '" + this.name + "'."
             });
-            return;
+            return {doNext: true};
         }
 
         if (this.isPlaying === true)
@@ -3671,6 +3884,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             }
         }
         this.bus.trigger("wse.assets.audio.set", this);
+        return {doNext: true};
     };
     
     out.assets.Audio.prototype.save = function (obj)
@@ -4003,6 +4217,18 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.tools.replaceVariables = function (text, interpreter)
     {
         text = text.replace(
+            /\{\$\$([a-zA-Z0-9_]+)\}/g,
+            function () 
+            {
+                var name = arguments[1];
+                if (interpreter.globalVars.has(name))
+                {
+                    return "" + interpreter.globalVars.get(name);
+                }
+                return "";
+            }
+        );
+        text = text.replace(
             /\{\$([a-zA-Z0-9_]+)\}/g,
             function () 
             {
@@ -4010,10 +4236,6 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 if (name in interpreter.runVars)
                 {
                     return "" + interpreter.runVars[name];
-                }
-                else if (name in interpreter.globalVars)
-                {
-                    return "" + interpreter.globalVars[name];
                 }
                 return "";
             }
@@ -4342,6 +4564,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
     };
     
+    out.functions = {
+        
+        savegames: function (interpreter)
+        {
+            interpreter.toggleSavegameMenu();
+        }
+        
+    };
+    
     out.commands = out.Interpreter.prototype.commands;
 
     return out;
@@ -4355,15 +4586,16 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
 (function (module)
 {
+    "use strict";
+    
     var makeInputFn = function (type)
     {
         return function (command, interpreter)
         {
-            var title, message, scope, container, key, doNext;
+            var title, message, container, key, doNext;
             title = command.getAttribute("title") || "Input required...";
             message = command.getAttribute("message") || "Your input is required:";
             key = command.getAttribute("var") || null;
-            scope = command.getAttribute("scope") || "run";
             doNext = command.getAttribute("next") === "false" ? false : true;
             
             if (key === null)
@@ -4377,18 +4609,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 };
             }
             
-            if (scope !== "global" && scope !== "run")
-            {
-                interpreter.bus.trigger(
-                    "wse.interpreter.warning",
-                    {element: command, message: "Unknown scope defined. Ignored."}
-                );
-                return {
-                    doNext: true
-                };
-            }
-            
-            container = scope === "run" ? interpreter.runVars : interpreter.globalVars;
+            container = interpreter.runVars;
             
             module.tools.ui[type](
                 interpreter, 
