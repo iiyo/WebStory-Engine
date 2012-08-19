@@ -1305,6 +1305,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
+            currentButton.setAttribute("value", current.getAttribute("label"));
             currentButton.value = current.getAttribute("label");
             
             sceneName = current.getAttribute("scene") || null;
@@ -2917,7 +2918,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.assets.mixins.hide = function (command, args)
     {
         var self, duration, wait, effect, direction, 
-            ox, oy, to, prop, isAnimation, element;
+            ox, oy, to, prop, isAnimation, element, easingType, easing;
 
         self = this;
         wait = command.getAttribute("wait") === "yes" ? true : false;
@@ -4343,6 +4344,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             mEl.setAttribute("class", "message");
             
             yesEl = document.createElement("input");
+            yesEl.setAttribute("value", trueText);
             yesEl.value = trueText;
             yesEl.setAttribute("class", "true button");
             yesEl.setAttribute("type", "button");
@@ -4368,6 +4370,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             );
             
             noEl = document.createElement("input");
+            noEl.setAttribute("value", falseText);
             noEl.value = falseText;
             noEl.setAttribute("class", "false button");
             noEl.setAttribute("type", "button");
@@ -4440,6 +4443,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             mEl.setAttribute("class", "message");
             
             buttonEl = document.createElement("input");
+            buttonEl.setAttribute("value", okText);
             buttonEl.value = okText;
             buttonEl.setAttribute("class", "true button");
             buttonEl.setAttribute("type", "button");
@@ -4513,11 +4517,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             mEl.setAttribute("class", "message");
             
             inputEl = document.createElement("input");
+            inputEl.setAttribute("value", defaultValue);
             inputEl.value = defaultValue;
             inputEl.setAttribute("class", "input text");
             inputEl.setAttribute("type", "text");
             
             buttonEl = document.createElement("input");
+            buttonEl.setAttribute("value", submitText);
             buttonEl.value = submitText;
             buttonEl.setAttribute("class", "submit button");
             buttonEl.setAttribute("type", "button");
@@ -4544,6 +4550,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             );
             
             cancelEl = document.createElement("input");
+            cancelEl.setAttribute("value", cancelText);
             cancelEl.value = cancelText;
             cancelEl.setAttribute("class", "cancel button");
             cancelEl.setAttribute("type", "button");
