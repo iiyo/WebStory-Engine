@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <ws>
     <settings>
-        <stage width="900px" height="460px" id="Stage" create="yes" center="yes" />
+        <stage width="900px" height="460px" create="yes" center="yes" />
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
             <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
@@ -10,20 +10,19 @@
         </triggers>
     </settings>
     <assets>
-        <textbox name="tb_main" behaviour="adv" cssid="MainTb" names="no" 
-            x="5px" y="355px" width="890px" height="100px"></textbox>
+        <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px"></textbox>
             
         <textbox name="tb_nvl" behaviour="nvl" cssid="NvlTb" names="no" 
             width="890px" height="450px" x="5px" y="5px"></textbox>
         
-        <audio name="music" loop="true" fade="false" autopause="false">
+        <audio name="music" loop="true" fade="true">
             <track title="legend">
                 <source href="/Desktop/wlegend.mp3" type="mp3" />
                 <source href="/Desktop/wlegend.ogg" type="ogg" />
             </track>
         </audio>
         
-        <character name="n" textbox="tb_nvl"></character>
+        <character name="n" textbox="tb_main"></character>
         
         <imagepack name="backgrounds" x="0" y="0" z="0">
             <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
@@ -71,7 +70,7 @@
                 </option>
             </choice>
             
-            <show asset="tb_nvl" />
+            <show asset="tb_main" />
             
             <globalize name="main_menu_choice" />
             <global name="globals_test" value="worked" />
@@ -92,8 +91,8 @@
                 Localize (after): {$globals_test}
             </line>
             
-            <hide asset="tb_nvl" />
-            <clear asset="tb_nvl" />
+            <hide asset="tb_main" />
+            <clear asset="tb_main" />
             <trigger name="game_menu_key_trigger" action="activate" />
             
             <goto scene="game_start" />
@@ -118,37 +117,37 @@
             
             <play asset="music" />
             <show asset="backgrounds" duration="500" />
-            <show asset="tb_nvl" effect="slide" direction="bottom" easing="easeOutBounce"  />
+            <show asset="tb_main" effect="slide" direction="bottom" easing="easeOutBounce"  />
             
             <wait />
             <wait duration="1000" /> <!-- Waits another second after all effects are finished. -->
             
-<!--             <prompt title="Who are you?" message="Please enter your name:" var="player_name" /> -->
+            <prompt title="Who are you?" message="Please enter your name:" var="player_name" />
             
-<!--             <wait /> -->
+             <wait />
+             
+             <line s="n">Hello, {$player_name}!</line>
             
-<!--             <line s="n">Hello, {$player_name}!</line> -->
+            <confirm title="Really?" message="Is this really your name? Are you sure?" var="player_name_is_correct" />
             
-<!--             <confirm title="Really?" message="Is this really your name? Are you sure?" var="player_name_is_correct" /> -->
+            <wait />
             
-<!--             <wait /> -->
+            <prompt ifvar="player_name_is_correct" ifvalue="false" title="What's your REAL name?"
+                message="Please enter your real name now. Don't lie! Lies are bad." var="player_name" />
             
-<!--             <prompt ifvar="player_name_is_correct" ifvalue="false" title="What's your REAL name?"  -->
-<!--                 message="Please enter your real name now. Don't lie! Lies are bad." var="player_name" /> -->
+            <wait />
             
-<!--             <wait /> -->
-            
-<!--             <line s="n">Hello again, {$player_name}!</line> -->
+            <line s="n">Hello again, {$player_name}!</line>
             
             <flash asset="flash" duration="500" />
             
             <wait />
             
-            <hide asset="tb_nvl" effect="slide" direction="bottom" />
+            <hide asset="tb_main" effect="slide" direction="bottom" />
             
             <wait />
             
-            <show asset="tb_nvl" effect="slide" direction="bottom" easing="easeOutBounce" />
+            <show asset="tb_main" effect="slide" direction="bottom" easing="easeOutBounce" />
             <var name="increase_test" action="increase" />
             
             <line s="n">
@@ -170,17 +169,17 @@
             
             <sub scene="sub_scene_test" />
             <var name="increase_test" action="increase" />
-            <clear asset="tb_nvl" />
+            <clear asset="tb_main" />
             
             <line s="n">
                 To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
             </line>
             
-            <hide asset="tb_nvl" effect="slide" direction="bottom" />
+            <hide asset="tb_main" effect="slide" direction="bottom" />
             
             <wait />
             
-            <show asset="tb_nvl" effect="slide" direction="bottom" easing="easeOutBounce" />
+            <show asset="tb_main" effect="slide" direction="bottom" easing="easeOutBounce" />
             
             <line s="n" stop="false">
                 What are you interested in?
@@ -207,6 +206,7 @@
         </scene>
         
         <scene id="sub_scene_test">
+            <wait />
             <show asset="fog" effect="slide" direction="right" />
             
             <wait />
@@ -262,7 +262,7 @@
             
             <wait />
             
-            <clear asset="tb_nvl" />
+            <clear asset="tb_main" />
             <move asset="backgrounds" x="0" y="0" duration="0" />
             <stop asset="sounds" />
             <stop asset="anim" />

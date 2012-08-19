@@ -98,7 +98,7 @@ img
     font-weight: bolder;
 }
 
-#MainTb, #NvlTb
+.WSEStage .textbox, #NvlTb
 {
     position: absolute;
     background: rgb(0, 0, 0);
@@ -138,7 +138,7 @@ img
     margin-bottom: 10px;
 }
 
-#MainTb .name
+.WSEStage .textbox .name
 {
     position: absolute;
     top: -40px;
@@ -235,7 +235,7 @@ img
     border: 1px solid white;
 }
 
-#Stage
+.WSEStage
 {
     line-height: 1.5em;
     -moz-border-radius: 10px;

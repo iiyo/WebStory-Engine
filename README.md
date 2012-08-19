@@ -4,13 +4,26 @@ The WebStory Engine is an engine for interactive web stories (e.g. visual
 novels). WebStories are written in an easy-to-use yet powerful XML format
 and run directly in the browser.
 
-Example at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
+Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
+
+## Attributions ##
+
+The full package of the engine may contain sounds and images. These are in the public domain.
+
+The engine uses the MO5 JavaScript animation library (BSD License), which itself uses
+[Robert Penner's easing equations](http://www.robertpenner.com/easing/) (BSD License).
+ 
+The ease-out bounce function has been ported (also under BSD License) to JavaScript by 
+[George McGinley Smith](http://gsgd.co.uk/sandbox/jquery/easing/). 
+
+The license agreements are contained within the source code.
+
 
 ## License Agreement ##
 
 License: BSD 3-Clause License.
 
-    Copyright (c) 2012 Jonathan Steinbeck
+    Copyright (c) 2012 The WebStory Engine Contributors
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

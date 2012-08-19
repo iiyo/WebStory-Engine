@@ -124,6 +124,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         {
             stage = document.getElementById(id);
         }
+        stage.setAttribute("class", "WSEStage");
 
         alignFn = function ()
         {
@@ -161,6 +162,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         };*/
         fn = function ()
         {
+            if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
+            {
+                return;
+            }
             console.log("Next triggered by user...");
             self.interpreter.next();
         };
@@ -607,7 +612,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             return;
         }
         
-        if (this.waitCounter > 0)
+        if (this.wait === true && this.waitCounter > 0)
         {
             setTimeout(function () { self.next(); }, 0);
             return;
@@ -624,12 +629,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 //             return;
 //         }
 
-//         if (this.wait === true && this.numberOfFunctionsToWaitFor < 1)
-//         {
-//             //         console.log("Waiting stopped.");
-//             this.wait = false;
-//             this.game.subscribeListeners();
-//         }
+        if (this.wait === true && this.numberOfFunctionsToWaitFor < 1)
+        {
+            this.wait = false;
+        }
         
         this.stopped = false;
 //         this.game.unsubscribeListeners();
@@ -671,10 +674,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         check.wait = check.wait === true ? true : false;
         check.changeScene = check.changeScene || null;
 
-//         if (check.wait === true)
-//         {
-//             this.wait = true;
-//         }
+        if (check.wait === true)
+        {
+            this.wait = true;
+        }
 
         this.index += 1;
 
@@ -701,7 +704,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.Interpreter.prototype.runCommand = function (command)
     {
-        var tagName, ifvar, ifval, ifscope, varContainer, assetName;
+        var tagName, ifvar, ifval, ifnot, varContainer, assetName;
         
         this.bus.trigger("wse.interpreter.runcommand.before", {interpreter: this, command: command}, false);
         
@@ -709,12 +712,12 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         assetName = command.getAttribute("asset") || null;
         
         ifvar = command.getAttribute("ifvar") || null;
-        ifval = command.getAttribute("ifvalue") || null;
-        ifscope = command.getAttribute("ifscope") || "run";
+        ifval = command.getAttribute("ifvalue");
+        ifnot = command.getAttribute("ifnot");
         
-        if (ifvar !== null && ifval !== null)
+        if (ifvar !== null || ifval !== null || ifnot !== null)
         {
-            varContainer = ifscope === "run" ? this.runVars : this.globalVars;
+            varContainer = this.runVars;
             
             if (!(ifvar in varContainer))
             {
@@ -731,7 +734,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 };
             }
             
-            if (("" + varContainer[ifvar]) !== ifval)
+            if (ifnot !== null && ("" + varContainer[ifvar] === "" + ifnot))
+            {
+                this.bus.trigger("wse.interpreter.message", "Conidition not met. " + ifvar + "==" + ifnot);
+                this.bus.trigger("wse.interpreter.runcommand.after.condition.false", {interpreter: this, command: command}, false);
+                return {
+                    doNext: true
+                };
+            }
+            else if (ifval !== null && ("" + varContainer[ifvar]) !== "" + ifval)
             {
                 this.bus.trigger("wse.interpreter.message", "Conidition not met.");
                 this.bus.trigger("wse.interpreter.runcommand.after.condition.false", {interpreter: this, command: command}, false);
@@ -947,9 +958,9 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         scene = interpreter.getSceneById(sceneId);
         
         interpreter.currentCommands = scene.childNodes;
-        interpreter.index = 0;
+        interpreter.index = -1;
         interpreter.sceneId = sceneId;
-        interpreter.currentElement = 0;
+        interpreter.currentElement = -1;
         
         return {
             doNext: doNext
@@ -1055,7 +1066,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 );
                 break;
             default:
-                container[key] = val;
+                container[key] = "" + val;
         }
         
         return { doNext: true };
@@ -1415,7 +1426,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 }
                 try
                 {
-                    speakerName = current.getElementsByTagName("name")[0].childNodes[0].nodeValue;
+                    speakerName = current.getElementsByTagName("displayname")[0].childNodes[0].nodeValue;
                 }
                 catch (e)
                 {}
@@ -2275,22 +2286,21 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     
     out.datasources.LocalStorage = function ()
     {
-        this.ls = localStorage;
     };
     
     out.datasources.LocalStorage.prototype.set = function (key, value)
     {
-        this.ls.setItem(key, value);
+        localStorage.setItem(key, value);
     };
     
     out.datasources.LocalStorage.prototype.get = function (key)
     {
-        return this.ls.getItem(key);
+        return localStorage.getItem(key);
     };
     
     out.datasources.LocalStorage.prototype.remove = function (key)
     {
-        return this.ls.removeItem(key);
+        return localStorage.removeItem(key);
     };
     
     
@@ -3696,8 +3706,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 return;
             }
 
-            self.stop(command);
-
+            if (self.isPlaying === true)
+            {
+                self.stop(command);
+            }
+            
             self.isPlaying = true;
 
             if (self.loop === true)
@@ -4569,6 +4582,16 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         savegames: function (interpreter)
         {
             interpreter.toggleSavegameMenu();
+        },
+        
+        stageclick_disable: function (interpreter)
+        {
+            interpreter.game.unsubscribeListeners();
+        },
+        
+        stageclick_enable: function (interpreter)
+        {
+            interpreter.game.subscribeListeners();
         }
         
     };
