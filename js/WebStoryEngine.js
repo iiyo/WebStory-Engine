@@ -2926,6 +2926,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         direction = command.getAttribute("direction") || "left";
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
+        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easing = (typeof out.fx.easing[easingType] !== null) ? out.fx.easing[easingType] : out.fx.easing.sineEaseOut;
 
         if (effect === "slide")
         {
@@ -2970,6 +2972,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 to, 
                 {
                     duration: duration,
+                    easing: easing,
                     onFinish: function ()
                     {
                         if (!isAnimation) 
@@ -3014,6 +3017,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
                 0, 
                 {
                     duration: duration,
+                    easing: easing,
                     onFinish: function ()
                     {
                         if (!isAnimation) 
