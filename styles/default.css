@@ -50,11 +50,11 @@ html, body
 }
 
 * 
-{
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    -webkit-box-sizing: border-box;
-    -o-box-sizing: border-box;
+* {
+*    box-sizing: border-box;
+*    -moz-box-sizing: border-box;
+*    -webkit-box-sizing: border-box;
+*    -o-box-sizing: border-box;
 }
 
 b
@@ -105,16 +105,15 @@ img
     background: rgba(0, 0, 0, 0.8);
     padding: 10px;
     box-shadow: 10px 10px 40px black;
-/*     left: 10px; */
+    /*     left: 10px; */
     border: 1px solid gray;
     border: 1px solid rgba(200, 200, 200, 0.8);
     border-left: 1px solid white;
     border-top: 1px solid white;
     border-left: 1px solid rgba(255, 255, 255, 0.8);
     border-top: 1px solid  rgba(255, 255, 255, 0.8);
-/*     width: 620px; */
-/*     height: 100px; */
-    border-radius: 5px;
+    /*     width: 620px; */
+    /*     height: 100px; */
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -122,15 +121,15 @@ img
     user-select: none;
 }
 /*
-#MainTb
-{
-    top: 250px;
-}*/
+ * #MainTb
+ * {
+ *    top: 250px;
+ }*/
 
 #NvlTb
 {
-/*     height: 340px; */
-/*     top: 10px; */
+    /*     height: 340px; */
+    /*     top: 10px; */
 }
 
 #NvlTb p
@@ -157,7 +156,6 @@ img
     width: 100px;
     height: 30px;
     font-size: 12px;
-    border-radius: 5px;
 }
 
 .menu
@@ -218,7 +216,6 @@ img
 {
     width: 100%;
     margin-bottom: 5%;
-    border-radius: 5px;
     background: rgba(0, 0, 0, 0.8);
     padding: 10px;
     padding-top: 3px;
@@ -238,8 +235,6 @@ img
 .WSEStage
 {
     line-height: 1.5em;
-    -moz-border-radius: 10px;
-    -webkit-border-radius: 10px;
     background: black;
     overflow: hidden;
     position: absolute;
@@ -307,7 +302,6 @@ img
     top: 5px;
     bottom: 5px;
     left: 200px;
-    border-radius: 5px;
     overflow-y: auto !important;
 }
 
@@ -317,7 +311,6 @@ img
     padding: 3px;
     background: rgba(0, 0, 0, 0.4);
     margin-bottom: 5px;
-    border-radius: 5px;
     cursor: pointer;
 }
 
@@ -382,7 +375,6 @@ img
 {
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid white;
-    border-radius: 5px;
     padding: 20px;
     width: 50%;
     margin: auto;
@@ -394,7 +386,6 @@ img
 {
     background: rgba(0, 0, 0, 0.6);
     border: 1px solid white;
-    border-radius: 5px;
     padding: 10px;
     margin-right: 10px;
     color: white;
@@ -431,6 +422,5 @@ img
     background: black;
     color: white;
 }
-
 
 
