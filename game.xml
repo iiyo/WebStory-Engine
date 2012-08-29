@@ -8,9 +8,12 @@
             <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
             <trigger name="sub_scene_by_key" event="keyup" key="UP_ARROW" sub="custom_event_scene" />
         </triggers>
+        <setting name="host.stage.resize" value="true" />
+        <setting name="host.inspector.enable" value="true" />
     </settings>
     <assets>
         <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px"></textbox>
+        <textbox name="tb_top" x="0" y="0" z="30000" width="100%" height="100%" cssid="bla"></textbox>
             
         <textbox name="tb_nvl" behaviour="nvl" cssid="NvlTb" names="no" 
             width="890px" height="450px" x="5px" y="5px"></textbox>
@@ -23,6 +26,7 @@
         </audio>
         
         <character name="n" textbox="tb_main"></character>
+        <character name="nn" textbox="tb_top"></character>
         
         <imagepack name="backgrounds" x="0" y="0" z="0">
             <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
@@ -40,8 +44,10 @@
         <animation name="anim">
             <group>
                 <do asset="backgrounds" action="move" x="-300px" y="-200px" duration="2000" easing="easeOutBounce" />
+                <transform asset="tb_main" property="border-top-width" from="1" to="5" unit="px" />
             </group>
             <group>
+                <transform asset="tb_main" property="border-top-width" from="5" to="1" unit="px" />
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
             </group>
             <group>
@@ -81,6 +87,14 @@
                 Globals test: {$$globals_test}
             </line>
             
+            <show asset="tb_top" />
+            
+            <line s="nn">
+                WebStoryEngine Docs: {a href="http://webstoryengine.org"}Click here{/a}
+            </line>
+            
+            <hide asset="tb_top" />
+            
             <line s="n">
                 Localize (before): {$globals_test}
             </line>
@@ -108,7 +122,7 @@
             
 <!--             <alert title="A test alert" message="This is a test alert!" /> -->
             <var name="demo_started" value="true" />
-            <var ifstate="unset" name="increase_test" value="0" scope="global" />
+            <var ifstate="unset" name="increase_test" value="0" />
             
             <set asset="backgrounds" image="clouds02" duration="0" />
             <set asset="music" track="legend" />

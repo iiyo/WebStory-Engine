@@ -1317,7 +1317,7 @@ MO5.canvas.ImagePack.prototype.animate = function(args)
                 imageArr.length - 1,
                 {
                     duration: duration,
-                    function: MO5.easing.linear
+                    easing: MO5.easing.linear
                 }
             );
             return [t0];
