@@ -179,22 +179,22 @@ var MO5 = (function ()
      *                
      *                The options are:
      *                
-     * duration: 
+     *                * duration: 
      *                    [Number] How long the transformation shall take 
      *                    (in milliseconds). Default: 1000
      *                
-     * log: 
+     *                * log: 
      *                    [Boolean] Log each calculated value to the browser's 
      *                    console?
      *                
-     * function: 
+     *                * function: 
      *                    [Function] The function to actually calculate the values.
      *                    It must conform to this signature [Number] function(d, t)
      *                    where d is the full duration of the transformation and
      *                    t is the time the transformation took up to that point. 
      *                    Default: MO5.functions.sine
      *                
-     * onFinish:
+     *                * onFinish:
      *                    [Function] Callback that gets executed once the
      *                    transformation is finished.
      *                    
@@ -229,17 +229,7 @@ var MO5 = (function ()
             onFinish = args.onFinish || function ()
             {};
 
-        if (!Date.now)
-        {
-            now = function ()
-            {
-                return +(new Date());
-            };
-        }
-        else
-        {
-            now = Date.now;
-        }
+        now = Date.now || function () { return +(new Date()); };
 
         f = args.easing || out.easing.sineEaseOut;
 

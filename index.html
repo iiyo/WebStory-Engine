@@ -10,8 +10,10 @@
         <script src="js/libs/STEINBECK.Keys.js"></script>
         <script src="js/libs/MO5.js"></script>
         <script src="js/WebStoryEngine.js"></script>
+        <script src="extensions/hello.js"></script>
+        <script src="extensions/colored-rectangle.js"></script>
         <script>
-            var game = new WSE.Game({ url: "game.xml", host: HOST || false });
+            var game = new WSE.Game({ url: "game.xml", host: typeof HOST === "undefined" ? false : HOST });
             game.start();
         </script>
     </body>
