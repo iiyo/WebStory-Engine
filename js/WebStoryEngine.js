@@ -14,6 +14,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
     out.ajax = {};
 
+    /**
+     * Function to asynchronously load the WebStory file.
+     * @param url The URL that locates the WebStory file.
+     * @param cb A callback function to execute when the file has been fetched.
+     */
     out.ajax.get = function (url, cb)
     {
         url = url + "?random=" + Math.random();
@@ -40,6 +45,21 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         http.send();
     };
 
+    /**
+     * Constructor used to create instances of games.
+     * 
+     * You can configure the game instance using the config object
+     * that can be supplied as a parameter to the constructor function.
+     * 
+     * The options are:
+     *  - url: [string] The URL of the WebStory file.
+     *  - debug: [bool] Should the game be run in debug mode? (not used yet)
+     *  - host: [object] The HOST object for the LocalContainer 
+     *      version. Optional.
+     * 
+     * @event wse.game.constructor@WSE.bus
+     * @param args A config object. See above for details.
+     */
     out.Game = function (args)
     {
         var host;
@@ -104,6 +124,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         );
     };
 
+    /**
+     * Loads the WebStory file using the AJAX function and triggers
+     * the game initialization.
+     */
     out.Game.prototype.load = function ()
     {
         //console.log("Loading game file...");
@@ -118,10 +142,13 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         out.ajax.get(this.url, fn);
     };
 
+    /**
+     * Initializes the game instance.
+     */
     out.Game.prototype.init = function ()
     {
         //console.log("Initializing game...");
-        var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn;
+        var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn, resizeFn;
         
         self = this;
         ws = this.ws;
@@ -149,6 +176,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         height = stageInfo.getAttribute("height") || height;
         id = stageInfo.getAttribute("id") || id;
         
+        // Create the stage element or inject into existing one?
         if (stageInfo.getAttribute("create") === "yes")
         {
             stage = document.createElement("div");
@@ -162,20 +190,36 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         
         stage.setAttribute("class", "WSEStage");
 
+        stage.style.width = width;
+        stage.style.height = height;
+
+        // Aligns the stage to be always in the center of the browser window.
+        // Must be specified in the game file.
         alignFn = function ()
         {
             var dim = out.fx.getWindowDimensions();
             stage.style.left = (dim.width / 2) - (parseInt(width, 10) / 2) + 'px';
             stage.style.top = (dim.height / 2) - (parseInt(height, 10) / 2) + 'px';
         };
-
-        stage.style.width = width;
-        stage.style.height = height;
-
+        
         if (stageInfo.getAttribute("center") === "yes")
         {
             out.tools.attachEventListener(window, 'resize', alignFn);
             alignFn();
+        }
+        
+        // Resizes the stage to fit the browser window dimensions. Must be
+        // specified in the game file.
+        resizeFn = function ()
+        {
+            console.log("Resizing...");
+            out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
+        };
+        
+        if (stageInfo.getAttribute("resize") === "yes")
+        {
+            out.tools.attachEventListener(window, 'resize', resizeFn);
+            resizeFn();
         }
         
         this.stage = stage;
@@ -183,6 +227,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         this.applySettings();
 
+        // This section only applies when the engine is used inside
+        // the local container app.
         if (this.host)
         {
             this.host.window.width = parseInt(width, 10);
@@ -208,6 +254,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }
     };
 
+    /**
+     * Returns the value of a setting as specified in the WebStory file.
+     * @param name [string] The name of the setting.
+     * @return [mixed] The value of the setting or null.
+     */
     out.Game.prototype.getSetting = function (name)
     {
         var ret, settings, i, len, cur, curName;
@@ -243,6 +294,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         }
     };
 
+    /**
+     * Use this method to start the game. The WebStory file must have
+     * been successfully loaded for this to work.
+     */
     out.Game.prototype.start = function ()
     {
         var fn, self;
@@ -265,6 +320,10 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
          *    self.bus.trigger("wse.game.next", this);
          *    self.interpreter.next(true);
          };*/
+        
+        // Listener that sets the interpreter's state machine to the next state
+        // if the current state is not pause or wait mode.
+        // This function gets executed when a user clicks on the stage.
         fn = function ()
         {
             if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
@@ -292,7 +351,15 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     };
 
 
-
+    /**
+     * Constructor to create an instance of the engine's interpreter.
+     * Each game has it's own interpreter instance. The interpreter
+     * reads the information in the WebStory file and triggers the execution
+     * of the appropriate commands.
+     * 
+     * @event
+     * @param game [object] The WSE.Game instance the interpreter belongs to.
+     */
     out.Interpreter = function (game)
     {
         var datasource, key;
@@ -306,25 +373,64 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 
         this.game = game;
         this.assets = {};
+        
+        /** @var Index of the currently examined element inside the active scene. */
         this.index = 0;
         this.visitedScenes = [];
+        
+        /** @var A text log of everything that has been shown on text boxes. */
         this.log = [];
         this.waitForTimer = false;
+        
+        /** @var Number of assets that are currently being fetched from the server. */
         this.assetsLoading = 0;
+        
+        /** @var Total number of assets to load. */
         this.assetsLoadingMax = 0;
+        
+        /** @var Number of assets already fetched from the server. */
         this.assetsLoaded = 0;
+        
+        /** @var The timestamp from when the game starts. Used for savegames. */
         this.startTime = 0;
+        
+        /** @var Holds 'normal' variables. These are only remembered for the current route. */
         this.runVars = {};
+        
+        /** @var The call stack for sub scenes. */
         this.callStack = [];
         this.keysDisabled = 0; // if this is > 0, key triggers should be disabled
+        
+        /** @var The current state of the interpreter's state machine. 
+         *   'listen' means that clicking on the stage or going to the next line
+         *   is possible. 
+         */
         this.state = "listen";
+        
+        /** @var All functions that require the interpreter's state machine
+         *   to wait. The game will only continue when this is set to 0.
+         *   This can be used to prevent e.g. that the story continues in
+         *   the background while a dialog is displayed in the foreground.
+         */
         this.waitCounter = 0;
+        
+        /** @var Should the game be run in debug mode? (not used yet) */
         this.debug = game.debug === true ? true : false;
 
+        // The datasource to use for saving games and global variables.
+        // Hardcoded to localStorage for now.
         datasource = new out.datasources.LocalStorage();
         this.datasource = datasource;
+        
+        // Each game must have it's own unique storage key so that multiple
+        // games can be run on the same web page.
         key = "wse_globals_" + this.game.url + "_";
 
+        /** @var Stores global variables. That is, variables that will
+         *   be remembered independently of the current state of the game.
+         *   Can be used for unlocking hidden features after the first
+         *   playthrough etc.
+         */
         this.globalVars = {
             set: function (name, value)
             {
@@ -347,6 +453,11 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         };
     };
 
+    /**
+     * Inserts the loading screen that is shown on startup to give
+     * the player a feedback that the game still does something
+     * and that they have to be patient.
+     */
     out.Interpreter.prototype.buildLoadingScreen = function ()
     {
         var loadScreen, self, fn;
