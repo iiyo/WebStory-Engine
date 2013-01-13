@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     /**
      * The <flash> effect. Can be mixed into all visible assets.
      * 

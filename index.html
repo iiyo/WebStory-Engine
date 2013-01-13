@@ -6,12 +6,13 @@
         <link rel="stylesheet" href="styles/default.css" type="text/css" />
     </head>
     <body>
-        <script src="js/libs/Squiddle.js"></script>
-        <script src="js/libs/STEINBECK.Keys.js"></script>
-        <script src="js/libs/MO5.js"></script>
-        <script src="js/WebStoryEngine.js"></script>
+        <script src="releases/current/WebStoryEngine.js"></script>
+
+        <!-- Extensions -->
         <script src="js/extensions/hello.js"></script>
         <script src="js/extensions/colored-rectangle.js"></script>
+        <script src="js/extensions/button.js"></script>
+
         <script>
             var game = new WSE.Game({ url: "game.xml", host: typeof HOST === "undefined" ? false : HOST });
             game.start();

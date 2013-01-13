@@ -1,6 +1,6 @@
 (function (out)
 {
-    
+    "use strict";
 
     /**
      * Constructor to create an instance of the engine's interpreter.
@@ -741,7 +741,7 @@
     };
 
     out.Interpreter.prototype.commands = {};
-    
+    out.commands = out.Interpreter.prototype.commands;
 
     out.Interpreter.prototype.createTriggers = function ()
     {

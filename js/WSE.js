@@ -44,6 +44,25 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         http.send();
     };
     
+    out.functions = {
+        
+        savegames: function (interpreter)
+        {
+            interpreter.toggleSavegameMenu();
+        },
+        
+        stageclick_disable: function (interpreter)
+        {
+            interpreter.game.unsubscribeListeners();
+        },
+        
+        stageclick_enable: function (interpreter)
+        {
+            interpreter.game.subscribeListeners();
+        }
+        
+    };
+    
     return out;
 
 }(

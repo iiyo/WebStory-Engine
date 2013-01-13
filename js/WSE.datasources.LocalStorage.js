@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.datasources = {};
     
     out.datasources.LocalStorage = function ()

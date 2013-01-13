@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.assets.mixins.move = function (command, args)
     {
         var x, y, z, element, self,

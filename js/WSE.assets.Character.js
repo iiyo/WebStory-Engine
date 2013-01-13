@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.assets.Character = function (asset, interpreter)
     {
         this.asset = asset;

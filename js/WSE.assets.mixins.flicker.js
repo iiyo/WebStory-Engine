@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.assets.mixins.flicker = function (command, args)
     {
         var self, duration, bus, stage, times, step, element;

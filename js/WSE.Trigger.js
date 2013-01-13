@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.Trigger = function (trigger, interpreter)
     {
         var self = this, fn;

@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.assets.mixins.show = function (command, args)
     {
         var self, duration, wait, effect, direction, ox, oy, prop,

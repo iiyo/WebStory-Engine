@@ -1,0 +1,43 @@
+{
+    "files": [
+        "js/libs/Squiddle.js",
+        "js/libs/STEINBECK.Keys.js",
+        "js/libs/MO5.js",
+
+        "js/WSE.js",
+        "js/WSE.tools.js",
+        "js/WSE.datasources.LocalStorage.js",
+        "js/WSE.Trigger.js",
+        "js/WSE.Game.js",
+        "js/WSE.Interpreter.js",
+        "js/WSE.tools.ui.js",
+
+        "js/WSE.assets.mixins.flash.js",
+        "js/WSE.assets.mixins.flicker.js",
+        "js/WSE.assets.mixins.hide.js",
+        "js/WSE.assets.mixins.move.js",
+        "js/WSE.assets.mixins.show.js",
+
+        "js/WSE.assets.Animation.js",
+        "js/WSE.assets.Audio.js",
+        "js/WSE.assets.Character.js",
+        "js/WSE.assets.Curtain.js",
+        "js/WSE.assets.ImagePack.js",
+        "js/WSE.assets.Textbox.js",
+
+        "js/WSE.commands.break.js",
+        "js/WSE.commands.choice.js",
+        "js/WSE.commands.do.js",
+        "js/WSE.commands.fn.js",
+        "js/WSE.commands.global.js",
+        "js/WSE.commands.globalize.js",
+        "js/WSE.commands.goto.js",
+        "js/WSE.commands.line.js",
+        "js/WSE.commands.localize.js",
+        "js/WSE.commands.restart.js",
+        "js/WSE.commands.sub.js",
+        "js/WSE.commands.trigger.js",
+        "js/WSE.commands.var.js",
+        "js/WSE.commands.wait.js"
+    ]
+}

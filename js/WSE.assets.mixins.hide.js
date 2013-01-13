@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     out.assets.mixins.hide = function (command, args)
     {
         var self, duration, wait, effect, direction,

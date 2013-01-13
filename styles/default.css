@@ -423,4 +423,11 @@ img
     color: white;
 }
 
+.WSEButton
+{
+    border: 1px solid white !important;
+    padding: 3px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.8);
+}
 

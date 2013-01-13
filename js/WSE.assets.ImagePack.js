@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     /**
      * Constructor function for ImagePacks.
      * 

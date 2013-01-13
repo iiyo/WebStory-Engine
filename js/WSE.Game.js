@@ -1,5 +1,7 @@
 (function (out)
 {
+    "use strict";
+    
     /**
      * Constructor used to create instances of games.
      * 
@@ -36,10 +38,10 @@
             {
                 var xml, parser;
                 
-                parser = new DOMParser(),
-                       xml = host.get(url);
+                parser = new DOMParser();
+                xml = host.get(url);
                        
-                       return parser.parseFromString(xml, "application/xml");
+                return parser.parseFromString(xml, "application/xml");
             }(this.url));
             
             this.init();
