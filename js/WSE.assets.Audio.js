@@ -1,5 +1,44 @@
+/*
+    Copyright (c) 2012, 2013 The WebStory Engine Contributors
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+    
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+    * Neither the name WebStory Engine nor the names of its contributors 
+      may be used to endorse or promote products derived from this software 
+      without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 (function (out)
 {
+    "use strict";
+    
+    /**
+     * Constructor for the <audio> asset.
+     * 
+     * @param asset [XML DOM Element] The asset definition.
+     * @param interpreter [object] The interpreter instance.
+     * @trigger wse.interpreter.warning@interpreter
+     * @trigger wse.assets.audio.constructor@interpreter
+     */
     out.assets.Audio = function (asset, interpreter)
     {
         var self, sources, i, len, j, jlen, current, track, trackName;
@@ -24,17 +63,20 @@
 
         if (len < 1)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                element: asset,
-                message: "No tracks defined for audio element '" + this.name + "'."
-            });
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: asset,
+                    message: "No tracks defined for audio element '" + this.name + "'."
+                }
+            );
             
             return {
                 doNext: true
             };
         }
 
+        // check all sources and create <audio> elements:
         for (i = 0; i < len; i += 1)
         {
             current = tracks[i];
@@ -43,11 +85,13 @@
 
             if (jlen < 1)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No sources defined for track '" + trackName + "' in audio element '" + this.name + "'."
-                });
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "No sources defined for track '" + trackName + "' in audio element '" + this.name + "'."
+                    }
+                );
                 continue;
             }
 
@@ -58,11 +102,13 @@
 
             if (trackName === null)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No title defined for track '" + trackName + "' in audio element '" + this.name + "'."
-                });
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "No title defined for track '" + trackName + "' in audio element '" + this.name + "'."
+                    }
+                );
                 continue;
             }
 
@@ -74,21 +120,29 @@
 
                 if (href === null)
                 {
-                    this.bus.trigger("wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No href defined for source in track '" + trackName + "' in audio element '" + this.name + "'."
-                    });
+                    this.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            element: asset,
+                            message: "No href defined for source in track '" +
+                                trackName + "' in audio element '" + 
+                                this.name + "'."
+                        }
+                    );
                     continue;
                 }
 
                 if (type === null)
                 {
-                    this.bus.trigger("wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No type defined for source in track '" + trackName + "' in audio element '" + this.name + "'."
-                    });
+                    this.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            element: asset,
+                            message: "No type defined for source in track '" + 
+                                trackName + "' in audio element '" + 
+                                this.name + "'."
+                        }
+                    );
                     continue;
                 }
 
@@ -100,7 +154,10 @@
              * this.bus.trigger("wse.assets.loading.increase");
              * out.tools.attachEventListener(track, 'load', function() { self.bus.trigger("wse.assets.loading.decrease"); });*/
 
-            if (track.canPlayType("audio/mpeg") && typeof trackFiles.mp3 !== "undefined")
+            if (
+                track.canPlayType("audio/mpeg") 
+                && typeof trackFiles.mp3 !== "undefined"
+            )
             {
                 track.src = trackFiles.mp3;
             }
@@ -108,11 +165,15 @@
             {
                 if (typeof trackFiles.ogg === "undefined")
                 {
-                    this.bus.trigger("wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No usable source found for track '" + trackName + "' in audio element '" + this.name + "'."
-                    });
+                    this.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            element: asset,
+                            message: "No usable source found for track '" + 
+                                trackName + "' in audio element '" + 
+                                this.name + "'."
+                        }
+                    );
                     continue;
                 }
                 track.src = trackFiles.ogg;
@@ -149,6 +210,12 @@
             document.body.appendChild(dupl);
         };
 
+        /**
+         * Starts playing the current track.
+         * 
+         * @param command [XML DOM Element] The command as written in the WebStory.
+         * @return [object] Object that determines the next state of the interpreter.
+         */
         this.play = function (command)
         {
             command = command || document.createElement("div");
@@ -156,11 +223,13 @@
 
             if (self.current === null)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No usable source found for track '" + trackName + "' in audio element '" + this.name + "'."
-                });
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "No usable source found for track '" + trackName + "' in audio element '" + this.name + "'."
+                    }
+                );
                 return;
             }
 
@@ -174,22 +243,31 @@
             if (self.loop === true)
             {
                 out.tools.attachEventListener(
-                self.current, 'ended', function ()
-                {
-                    self.renewCurrent();
-                    setTimeout(function ()
+                    self.current, 
+                    'ended', 
+                    function ()
                     {
-                        self.play();
-                    }, 0);
-                });
+                        self.renewCurrent();
+                        setTimeout(
+                            function ()
+                            {
+                                self.play();
+                            }, 
+                            0
+                        );
+                    }
+                );
             }
             else
             {
                 out.tools.attachEventListener(
-                self.current, 'ended', function ()
-                {
-                    self.isPlaying = false;
-                });
+                    self.current, 
+                    'ended', 
+                    function ()
+                    {
+                        self.isPlaying = false;
+                    }
+                );
             }
 
             if (fade === true)
@@ -210,15 +288,21 @@
             };
         };
 
+        /**
+         * Stops playing the current track.
+         */
         this.stop = function ()
         {
             if (self.current === null)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No track set for audio element '" + this.name + "'."
-                });
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "No track set for audio element '" + 
+                            this.name + "'."
+                    }
+                );
                 
                 return {
                     doNext: true
@@ -252,6 +336,11 @@
             };
         };
 
+        /**
+         * Pauses playing the curren track.
+         * 
+         * @return [object] Object that determines the next state of the interpreter.
+         */
         this.pause = function ()
         {
             this.current.pause();
@@ -316,32 +405,47 @@
         }
 
         out.tools.attachEventListener(
-        window, 'blur', function ()
-        {
-            //console.log("onblur function for audio called");
-            if (self.isPlaying === true)
+            window, 
+            'blur', 
+            function ()
             {
-                self.fadeOut(function ()
+                //console.log("onblur function for audio called");
+                if (self.isPlaying === true)
                 {
-                    self.current.pause();
-                });
+                    self.fadeOut(
+                        function ()
+                        {
+                            self.current.pause();
+                        }
+                    );
+                }
             }
-        });
+        );
 
         out.tools.attachEventListener(
-        window, 'focus', function ()
-        {
-            //console.log("onfocus function for audio called");
-            if (self.isPlaying === true)
+            window, 
+            'focus', 
+            function ()
             {
-                self.current.play();
-                self.fadeIn();
+                //console.log("onfocus function for audio called");
+                if (self.isPlaying === true)
+                {
+                    self.current.play();
+                    self.fadeIn();
+                }
             }
-        });
+        );
 
         this.bus.trigger("wse.assets.audio.constructor", this);
     };
 
+    /**
+     * Changes the currently active track.
+     * 
+     * @param command [DOM Element] The command as specified in the WebStory.
+     * @trigger wse.interpreter.warning@interpreter
+     * @trigger wse.assets.audio.set@interpreter
+     */
     out.assets.Audio.prototype.set = function (command)
     {
         var name, isPlaying, self;
@@ -352,11 +456,13 @@
 
         if (typeof this.tracks[name] === "undefined" || this.tracks[name] === null)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                element: command,
-                message: "Unknown track '" + name + "' in audio element '" + this.name + "'."
-            });
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Unknown track '" + name + "' in audio element '" + this.name + "'."
+                }
+            );
             
             return {
                 doNext: true
@@ -375,10 +481,13 @@
         {
             if (this.fade === true)
             {
-                setTimeout(function ()
-                {
-                    self.play();
-                }, 1010);
+                setTimeout(
+                    function ()
+                    {
+                        self.play();
+                    }, 
+                    1010
+                );
             }
             else
             {
@@ -393,6 +502,11 @@
         };
     };
 
+    /**
+     * Gathers the data to put into a savegame.
+     * 
+     * @param obj [object] The savegame object.
+     */
     out.assets.Audio.prototype.save = function (obj)
     {
         obj[this.id] = {
@@ -411,6 +525,12 @@
         this.bus.trigger("wse.assets.audio.save", this);
     };
 
+    /**
+     * Restore function for loading the state from a savegame.
+     * 
+     * @param obj [object] The savegame data.
+     * @trigger wse.assets.audio.restore@interpreter
+     */
     out.assets.Audio.prototype.restore = function (obj)
     {
         var vals;

@@ -1,3 +1,32 @@
+/*
+    Copyright (c) 2012, 2013 The WebStory Engine Contributors
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+    
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+    * Neither the name WebStory Engine nor the names of its contributors 
+      may be used to endorse or promote products derived from this software 
+      without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+    ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+    WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 (function (out)
 {
     "use strict";
@@ -11,18 +40,20 @@
     out.assets.Imagepack = function (asset, interpreter)
     {
         var element, images, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn;
+        var src, image, self, triggerDecreaseFn, width, height;
 
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.name = asset.getAttribute("name");
         this.id = out.tools.getUniqueId();
-        this.cssid = "wse_imagepack_" + this.id;
+        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.id;
         this.interpreter = interpreter;
 
         self = this;
         images = {};
         element = document.createElement("div");
+        width = asset.getAttribute('width');
+        height = asset.getAttribute('height');
 
         element.style.opacity = 0;
         element.draggable = false;
@@ -49,7 +80,8 @@
                     "wse.interpreter.warning",
                     {
                         element: asset,
-                        message: "Image without name in imagepack '" + this.name + "'."
+                        message: "Image without name in imagepack '" + 
+                            this.name + "'."
                     }
                 );
                 continue;
@@ -61,7 +93,8 @@
                     "wse.interpreter.warning",
                     {
                         element: asset,
-                        message: "Image without src in imagepack '" + this.name + "'."
+                        message: "Image without src in imagepack '" + 
+                            this.name + "'."
                     }
                 );
                 continue;
@@ -76,6 +109,16 @@
             image.style.opacity = 0;
             image.style.position = "absolute";
             image.draggable = false;
+            
+            if (width !== null)
+            {
+                image.setAttribute('width', width);
+            }
+            
+            if (height !== null)
+            {
+                image.setAttribute('height', height);
+            }
 
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
@@ -117,7 +160,8 @@
                 "wse.interpreter.warning",
                 {
                     element: command,
-                    message: "Missing attribute 'image' on 'do' element referencing imagepack '" + this.name + "'."
+                    message: "Missing attribute 'image' on 'do' element " +
+                        "referencing imagepack '" + this.name + "'."
                 }
             );
             return {
@@ -133,7 +177,8 @@
                 "wse.interpreter.warning",
                 {
                     element: command,
-                    message: "Unknown image name on 'do' element referencing imagepack '" + this.name + "'."
+                    message: "Unknown image name on 'do' element referencing " +
+                        "imagepack '" + this.name + "'."
                 }
             );
             return {
@@ -158,7 +203,8 @@
                         "wse.interpreter.warning",
                         {
                             element: command,
-                            message: "Trying to set the image that is already set on imagepack '" + this.name + "'."
+                            message: "Trying to set the image that is " +
+                                "already set on imagepack '" + this.name + "'."
                         }
                     );
                     
@@ -253,6 +299,7 @@
     out.assets.Imagepack.prototype.save = function (obj)
     {
         var cur, key, images, name;
+        
         images = this.images;
         cur = this.current || null;
         name = null;

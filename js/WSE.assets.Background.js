@@ -27,60 +27,80 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-(function (out)
+(function (engine)
 {
     "use strict";
     
-    out.assets.Curtain = function (asset, interpreter)
+    function resize (ev)
     {
+        this.element.setAttribute("width", this.stage.offsetWidth);
+        this.element.setAttribute("height", this.stage.offsetHeight);
+    }
+    
+    function styleElement ()
+    {
+        var s = this.element.style;
+        
+        this.element.setAttribute("id", this.cssid);
+        this.element.setAttribute("class", "WSEBackground");
+        this.element.style.position = "absolute";
+        s.left = 0;
+        s.top = 0;
+        s.opacity = 0;
+        s.zIndex = this.z;
+    }
+    
+    engine.assets.Background = function (asset, interpreter)
+    {
+        var self = this;
+        
         this.asset = asset;
         this.interpreter = interpreter;
         this.bus = interpreter.bus;
         this.stage = interpreter.stage;
-        this.color = asset.getAttribute("color") || "black";
-        this.z = asset.getAttribute("z") || 20000;
-        this.id = out.tools.getUniqueId();
-        this.cssid = "WSECurtain_" + this.id;
-        this.element = document.createElement("div");
-
-        this.element.setAttribute("id", this.cssid);
-        this.element.setAttribute("class", "WSECurtain");
-        this.element.style.position = "absolute";
-        this.element.style.left = 0;
-        this.element.style.top = 0;
-        this.element.style.width = this.stage.offsetWidth + "px";
-        this.element.style.height = this.stage.offsetHeight + "px";
-        this.element.style.opacity = 0;
-        this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
+        this.z = asset.getAttribute("z") || 10;
+        this.id = engine.tools.getUniqueId();
+        this.cssid = "WSEBackground_" + this.id;
+        this.element = document.createElement("img");
+        this.src = asset.getAttribute('src');
+        
+        if (!this.src)
+        {
+            this.bus.trigger(
+                'wse.interpreter.warning',
+                {
+                    element: asset,
+                    message: 'No source defined on background asset.'
+                }
+            );
+            
+            return;
+        }
+        
+        this.element.setAttribute('src', this.src);
+        styleElement.call(this);
+        resize.call(this);
+        window.addEventListener('resize', function () { resize.call(self); });
 
         this.stage.appendChild(this.element);
     };
 
-    out.assets.Curtain.prototype.set = function (asset)
-    {
-        this.color = asset.getAttribute("color") || "black";
-        this.element.style.backgroundColor = this.color;
-    };
+    engine.assets.Background.prototype.show = engine.assets.mixins.show;
+    engine.assets.Background.prototype.hide = engine.assets.mixins.hide;
+    engine.assets.Background.prototype.move = engine.assets.mixins.move;
+    engine.assets.Background.prototype.flash = engine.assets.mixins.flash;
+    engine.assets.Background.prototype.flicker = engine.assets.mixins.flicker;
 
-    out.assets.Curtain.prototype.show = out.assets.mixins.show;
-    out.assets.Curtain.prototype.hide = out.assets.mixins.hide;
-    out.assets.Curtain.prototype.move = out.assets.mixins.move;
-    out.assets.Curtain.prototype.flash = out.assets.mixins.flash;
-    out.assets.Curtain.prototype.flicker = out.assets.mixins.flicker;
-
-    out.assets.Curtain.prototype.save = function (obj)
+    engine.assets.Background.prototype.save = function (obj)
     {
         obj[this.id] = {
-            color: this.color,
             cssid: this.cssid,
             z: this.z
         };
     };
 
-    out.assets.Curtain.prototype.restore = function (obj)
+    engine.assets.Background.prototype.restore = function (obj)
     {
-        this.color = obj[this.id].color;
         this.cssid = obj[this.id].cssid;
         this.z = obj[this.id].z;
         
@@ -90,15 +110,16 @@
         }
         catch (e)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                message: "Element with CSS ID '" + this.cssid + "' could not be found."
-            });
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    message: "Element with CSS ID '" + this.cssid + 
+                        "' could not be found."
+                }
+            );
+            
             return;
         }
-        
-        this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
     };
     
 }(WSE));
