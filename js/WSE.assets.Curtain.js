@@ -53,6 +53,7 @@
         this.element.style.opacity = 0;
         this.element.style.backgroundColor = this.color;
         this.element.style.zIndex = this.z;
+        out.tools.applyAssetUnits(this, asset);
 
         this.stage.appendChild(this.element);
     };

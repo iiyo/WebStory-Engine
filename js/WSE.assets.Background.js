@@ -77,6 +77,7 @@
             return;
         }
         
+        engine.tools.applyAssetUnits(this, asset);
         this.element.setAttribute('src', this.src);
         styleElement.call(this);
         resize.call(this);

@@ -33,8 +33,9 @@
     
     out.assets.mixins.hide = function (command, args)
     {
-        var self, duration, wait, effect, direction,
-        ox, oy, to, prop, isAnimation, element, easingType, easing;
+        var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
+        var ox, oy, to, prop, isAnimation, element, easingType, easing, stage;
+        var xUnit, yUnit;
 
         self = this;
         wait = command.getAttribute("wait") === "yes" ? true : false;
@@ -44,34 +45,59 @@
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
         easingType = command.getAttribute("easing") || "sineEaseOut";
-        easing = (typeof out.fx.easing[easingType] !== null) ? out.fx.easing[easingType] : out.fx.easing.sineEaseOut;
+        easing = (typeof out.fx.easing[easingType] !== null) ? 
+            out.fx.easing[easingType] : 
+            out.fx.easing.sineEaseOut;
+        stage = this.stage;
+        xUnit = this.xUnit || 'px';
+        yUnit = this.yUnit || 'px';
 
         if (effect === "slide")
         {
-            ox = element.offsetLeft;
-            oy = element.offsetTop;
             element.style.opacity = 1;
+            
+            if (xUnit === '%')
+            {
+                ox = element.offsetLeft / (stage.offsetWidth / 100);
+                offsetWidth = 100;
+            }
+            else
+            {
+                ox = element.offsetLeft;
+                offsetWidth = stage.offsetWidth;
+            }
+            
+            if (yUnit === '%')
+            {
+                oy = element.offsetTop / (stage.offsetHeight / 100);
+                offsetHeight = 100;
+            }
+            else
+            {
+                oy = element.offsetTop;
+                offsetHeight = stage.offsetHeight;
+            }
             
             switch (direction)
             {
                 case "left":
-                    to = ox - this.stage.offsetWidth;
+                    to = ox - offsetWidth;
                     prop = "left";
                     break;
                 case "right":
-                    to = ox + this.stage.offsetWidth;
+                    to = ox + offsetWidth;
                     prop = "left";
                     break;
                 case "top":
-                    to = oy - this.stage.offsetHeight;
+                    to = oy - offsetHeight;
                     prop = "top";
                     break;
                 case "bottom":
-                    to = oy + this.stage.offsetHeight;
+                    to = oy + offsetHeight;
                     prop = "top";
                     break;
                 default:
-                    to = ox - this.stage.offsetWidth;
+                    to = ox - offsetWidth;
                     prop = "left";
             }
 
@@ -86,7 +112,7 @@
                 
                 valFn = function (v)
                 {
-                    element.style[prop] = v + "px";
+                    element.style[prop] = v + (prop === 'left' ? xUnit : yUnit);
                 };
                 
                 from = (prop === "left" ? ox : oy);
@@ -104,16 +130,16 @@
                     {
                         case "left":
                         case "right":
-                            element.style.left = ox + "px";
+                            element.style.left = ox + xUnit;
                             prop = "left";
                             break;
                         case "top":
                         case "bottom":
-                            element.style.top = oy + "px";
+                            element.style.top = oy + yUnit;
                             prop = "top";
                             break;
                         default:
-                            element.style.left = ox + "px";
+                            element.style.left = ox + xUnit;
                             prop = "left";
                     }
                 };

@@ -19,6 +19,7 @@
         z = asset.getAttribute("z") || 10000;
         color = asset.getAttribute("color") || "red";
         cssid = asset.getAttribute("cssid") || "WseRectangle" + id;
+        engine.tools.applyAssetUnits(this, asset);
         
         el = document.createElement("div");
         

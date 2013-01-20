@@ -17,6 +17,7 @@
         z = asset.getAttribute("z") || 10000;
         cssid = asset.getAttribute("cssid") || "WSEButton" + id;
         text = asset.getAttribute("text") || "";
+        engine.tools.applyAssetUnits(this, asset);
         
         el = document.createElement("div");
         

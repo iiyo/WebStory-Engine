@@ -56,6 +56,24 @@
     };
     
     /**
+     * Sets the x and y units on an asset object according
+     * to it's definition in the WebStory.
+     * @param obj The JavaScript object asset.
+     * @param asset The XML Element with the asset's information.
+     */
+    out.tools.applyAssetUnits = function (obj, asset)
+    {
+        var x, y;
+        
+        x = asset.getAttribute('x') || "";
+        y = asset.getAttribute('y') || "";
+        obj.xUnit = x.replace(/^.*(px|%)$/, '$1');
+        obj.xUnit = obj.xUnit || 'px';
+        obj.yUnit = y.replace(/^.*(px|%)$/, '$1');
+        obj.yUnit = obj.yUnit || 'px';
+    };
+    
+    /**
      * Removes a DOM Event from a DOM Element.
      */
     out.tools.removeEventListener = function (elem, type, listener)

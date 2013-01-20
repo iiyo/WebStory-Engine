@@ -48,6 +48,7 @@
         this.id = out.tools.getUniqueId();
         this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.id;
         this.interpreter = interpreter;
+        out.tools.applyAssetUnits(this, asset);
 
         self = this;
         images = {};

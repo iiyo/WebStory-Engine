@@ -53,6 +53,7 @@
         this.cssid = "wse_textbox_" + this.id;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 20;
+        out.tools.applyAssetUnits(this, asset);
 
         if (this.type === "nvl")
         {
@@ -84,14 +85,14 @@
         }
 
         element.style.zIndex = this.z;
-
         width = asset.getAttribute("width");
+        height = asset.getAttribute("height");
+        
         if (width)
         {
             element.style.width = width;
         }
-
-        height = asset.getAttribute("height");
+        
         if (height)
         {
             element.style.height = height;
