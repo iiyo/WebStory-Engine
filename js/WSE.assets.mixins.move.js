@@ -34,7 +34,7 @@
     out.assets.mixins.move = function (command, args)
     {
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
-        var easing, waitX, waitY, waitZ, isAnimation;
+        var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
 
         self = this;
         element = document.getElementById(this.cssid);
@@ -47,6 +47,7 @@
             out.fx.easing[easingType] : 
             out.fx.easing.sineEaseOut;
         isAnimation = args.animation === true ? true : false;
+        stage = this.interpreter.stage;
 
         if (x !== null)
         {
@@ -80,6 +81,15 @@
 
         if (x !== null)
         {
+            if (xUnit === '%')
+            {
+                ox = element.offsetLeft / (stage.offsetWidth / 100);
+            }
+            else
+            {
+                ox = element.offsetLeft;
+            }
+            
             if (!isAnimation)
             {
                 self.interpreter.waitCounter += 1;
@@ -90,7 +100,7 @@
                 {
                     element.style.left = v + xUnit;
                 },
-                element.offsetLeft,
+                ox,
                 x,
                 {
                     onFinish: !isAnimation ? 
@@ -106,7 +116,16 @@
         }
 
         if (y !== null)
-        {
+        {   
+            if (yUnit === '%')
+            {
+                oy = element.offsetTop / (stage.offsetHeight / 100);
+            }
+            else
+            {
+                oy = element.offsetTop;
+            }
+            
             if (!isAnimation)
             {
                 self.interpreter.waitCounter += 1;
@@ -117,7 +136,7 @@
                 {
                     element.style.top = v + yUnit;
                 },
-                element.offsetTop,
+                oy,
                 y,
                 {
                     onFinish: !isAnimation ? 
