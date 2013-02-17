@@ -31,7 +31,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 {
     "use strict";
     
-    var out = {};
+    var out = {}, version = 3000;
     
     out.fx = MO5;
     out.Keys = STEINBECK.Keys;
@@ -40,7 +40,14 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
     out.ajax = {};
     out.datasources = {};
     out.assets = {};
-    out.assets.mixins = {};
+    out.assets.mixins = {
+        displayable: {}
+    };
+    
+    out.getVersion = function ()
+    {
+        return version;
+    };
     
     /**
      * Function to asynchronously load the WebStory file.
