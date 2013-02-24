@@ -191,4 +191,17 @@
         return "" + input.charAt(0).toUpperCase() + input.replace(/^.{1}/, "");
     };
     
+    out.tools.mixin = function (source, target)
+    {
+        var key;
+        
+        for (key in source)
+        {
+            if (source.hasOwnProperty(key))
+            {
+                target[key] = source[key];
+            }
+        }
+    };
+    
 }(WSE));
