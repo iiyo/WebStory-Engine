@@ -47,16 +47,46 @@
         this.bus = interpreter.bus;
         this.type = asset.getAttribute("behaviour") || "adv";
         this.z = asset.getAttribute("z") || 5000;
-        this.showNames = asset.getAttribute("names") === "yes" ? true : false;
+        this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
         this.id = out.tools.getUniqueId();
         this.cssid = "wse_textbox_" + this.id;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
-        out.tools.applyAssetUnits(this, asset);
-        
         this.speed = parseInt(this.speed, 10);
+        
+        out.tools.applyAssetUnits(this, asset);
 
+        (function (ctx)
+        {
+            var el, i, len, elms;
+            
+            try 
+            {
+                elms = asset.childNodes;
+                
+                for (i = 0, len = elms.length; i < len; i += 1)
+                {
+                    if (elms[i].nodeType === 1 && elms[i].tagName === 'nameTemplate')
+                    {
+                        el = elms[i];
+                        break;
+                    }
+                }
+                
+                if (!el)
+                {
+                    throw new Error('No nameTemplate found.');
+                }
+                
+                ctx.nameTemplate = new XMLSerializer().serializeToString(el);
+            }
+            catch (e) 
+            {
+                ctx.nameTemplate = '{name}: ';
+            }
+        }(this));
+        
         if (this.type === "nvl")
         {
             this.showNames = false;
@@ -137,7 +167,7 @@
 
         self.interpreter.waitCounter += 1;
 
-        if (this.type === "adv" && (this.effectType !== "typewriter" || this.speed < 1))
+        if (this.speed < 1)
         {
             self.interpreter.waitCounter += 1;
             
@@ -162,14 +192,17 @@
                 
                 out.fx.transform(valFn, 1, 0, options);
             }());
-            
+        }
+
+        if (this.type === 'adv')
+        {
             textElement.innerHTML = "";
         }
 
         namePart = "";
         if (this.showNames === false && !(!name))
         {
-            namePart = name + ": ";
+            namePart = this.nameTemplate.replace(/\{name\}/g, name);
         }
 
         if (name === null)
@@ -177,71 +210,63 @@
             name = "";
         }
 
-        if (this.type === "adv")
+        if (this.speed > 0)
         {
-            if (this.effectType === "typewriter" && this.speed > 0)
+            (function ()
             {
-                (function ()
-                {
-                    var container;
-                    
-                    textElement.innerHTML = '';
-                    container = document.createElement('div');
-                    textElement.appendChild(container);
-                    container.innerHTML = text;
-                    self.interpreter.waitCounter += 1;
-                    
-                    out.fx.dom.effects.typewriter(
-                        container, 
-                        { 
-                            speed: self.speed, 
-                            onFinish: function () 
-                            { 
-                                self.interpreter.waitCounter -= 1; 
-                            }
-                        }
-                    );
-                }());
-            }
-            else
-            {
+                var container;
+                
+                container = document.createElement('div');
+                container.setAttribute('class', 'line');
+                textElement.appendChild(container);
+                container.innerHTML = namePart + text;
+                nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
                 self.interpreter.waitCounter += 1;
-                setTimeout(
-                    function ()
-                    {
-                        textElement.innerHTML += namePart + text;
-                        nameElement.innerHTML = name;
-                        out.fx.transform(
-                            function (v)
-                            {
-                                textElement.style.opacity = v;
-                            },
-                            0,
-                            1,
-                            {
-                                duration: 50,
-                                onFinish: function ()
-                                {
-                                    self.interpreter.waitCounter -= 1;
-                                }
-                            }
-                        );
-                    },
-                    50
+                
+                out.fx.dom.effects.typewriter(
+                    container, 
+                    { 
+                        speed: self.speed, 
+                        onFinish: function () 
+                        { 
+                            self.interpreter.waitCounter -= 1; 
+                        }
+                    }
                 );
-            }
+            }());
         }
         else
         {
             self.interpreter.waitCounter += 1;
+            
             setTimeout(
                 function ()
                 {
-                    textElement.innerHTML += "<p>" + namePart + text + "</p>";
-                    nameElement.innerHTML = name;
-                    self.interpreter.waitCounter -= 1;
+                    textElement.innerHTML += namePart + text;
+                    nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
+                    
+                    if (self.type === 'nvl')
+                    {
+                        textElement.innerHTML = '<div>' + textElement.innerHTML + '</div>';
+                    }
+                    
+                    out.fx.transform(
+                        function (v)
+                        {
+                            textElement.style.opacity = v;
+                        },
+                        0,
+                        1,
+                        {
+                            duration: 50,
+                            onFinish: function ()
+                            {
+                                self.interpreter.waitCounter -= 1;
+                            }
+                        }
+                    );
                 },
-                200
+                50
             );
         }
 
