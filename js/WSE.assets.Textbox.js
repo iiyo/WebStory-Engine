@@ -52,8 +52,10 @@
         this.id = out.tools.getUniqueId();
         this.cssid = "wse_textbox_" + this.id;
         this.effectType = asset.getAttribute("effect") || "typewriter";
-        this.speed = asset.getAttribute("speed") || 20;
+        this.speed = asset.getAttribute("speed") || 0;
         out.tools.applyAssetUnits(this, asset);
+        
+        this.speed = parseInt(this.speed, 10);
 
         if (this.type === "nvl")
         {
@@ -118,11 +120,7 @@
         this.bus.trigger("wse.assets.textbox.constructor", this);
     };
 
-    out.assets.Textbox.prototype.show = out.assets.mixins.show;
-    out.assets.Textbox.prototype.hide = out.assets.mixins.hide;
-    out.assets.Textbox.prototype.move = out.assets.mixins.move;
-    out.assets.Textbox.prototype.flash = out.assets.mixins.flash;
-    out.assets.Textbox.prototype.flicker = out.assets.mixins.flicker;
+    out.tools.mixin(out.assets.mixins.displayable, out.assets.Textbox.prototype);
 
     out.assets.Textbox.prototype.put = function (text, name)
     {
@@ -135,11 +133,11 @@
         nameElement = document.getElementById(this.nameElement);
 
         text = out.tools.replaceVariables(text, this.interpreter);
-        text = out.tools.textToHtml(text, this.nltobr);
+        //text = out.tools.textToHtml(text, this.nltobr);
 
         self.interpreter.waitCounter += 1;
 
-        if (this.type === "adv" && this.effectType !== "typewriter")
+        if (this.type === "adv" && (this.effectType !== "typewriter" || this.speed < 1))
         {
             self.interpreter.waitCounter += 1;
             
@@ -181,67 +179,28 @@
 
         if (this.type === "adv")
         {
-            if (this.effectType === "typewriter")
+            if (this.effectType === "typewriter" && this.speed > 0)
             {
-                textElement.innerHTML = "";
                 (function ()
                 {
-                    var content, cancelFn, charCount, curCharIndex, dur, isCanceled;
-                    var elapsed, timePool, runFn;
-
+                    var container;
+                    
+                    textElement.innerHTML = '';
+                    container = document.createElement('div');
+                    textElement.appendChild(container);
+                    container.innerHTML = text;
                     self.interpreter.waitCounter += 1;
-
-                    isCanceled = false;
-                    content = namePart + text.replace(/ +/g, ' ');
-                    curCharIndex = 0;
-                    charCount = content.length;
-
-                    //console.log("dur: " + dur + "; speed: " + self.speed);
-
-                    cancelFn = function (stopObj)
-                    {
-                        self.interpreter.bus.unsubscribe(cancelFn, "wse.interpreter.next.user");
-
-                        if (isCanceled === true)
-                        {
-                            return;
+                    
+                    out.fx.dom.effects.typewriter(
+                        container, 
+                        { 
+                            speed: self.speed, 
+                            onFinish: function () 
+                            { 
+                                self.interpreter.waitCounter -= 1; 
+                            }
                         }
-
-                        self.interpreter.waitCounter -= 1;
-                        runFn = function () {};
-                        textElement.innerHTML = content;
-                        isCanceled = true;
-                        stopObj.stop = true;
-                    };
-
-                    self.interpreter.bus.subscribe(cancelFn, "wse.interpreter.next.user")
-
-                    runFn = function ()
-                    {
-                        if (isCanceled === true)
-                        {
-                            return;
-                        }
-
-                        if (curCharIndex >= charCount)
-                        {
-                            textElement.innerHTML = content;
-                            self.interpreter.waitCounter -= 1;
-                            self.interpreter.bus.unsubscribe(cancelFn, "wse.interpreter.next.user");
-                            return;
-                        }
-
-                        var curChar = content.charAt(curCharIndex);
-
-                        //console.log("curChar is:", curChar);
-
-                        textElement.innerHTML += curChar;
-                        curCharIndex += 1;
-
-                        setTimeout(runFn, self.speed);
-                    };
-
-                    runFn();
+                    );
                 }());
             }
             else
