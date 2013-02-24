@@ -295,9 +295,9 @@
         };
     };
 
-    out.assets.Imagepack.prototype.save = function (obj)
+    out.assets.Imagepack.prototype.save = function ()
     {
-        var cur, key, images, name;
+        var cur, key, images, name, obj;
         
         images = this.images;
         cur = this.current || null;
@@ -314,7 +314,7 @@
             }
         }
 
-        obj[this.id] = {
+        obj = {
             assetType: "Imagepack",
             current: name,
             cssid: this.cssid,
@@ -329,13 +329,14 @@
                 saves: obj
             }
         );
+        
+        return obj;
     };
 
-    out.assets.Imagepack.prototype.restore = function (obj)
+    out.assets.Imagepack.prototype.restore = function (save)
     {
-        var name, save;
+        var name;
         
-        save = obj[this.id];
         name = save.current;
         this.cssid = save.cssid;
         this.z = save.z;
@@ -351,7 +352,7 @@
             "wse.assets.imagepack.restore",
             {
                 subject: this,
-                saves: obj
+                saves: save
             }
         );
     };

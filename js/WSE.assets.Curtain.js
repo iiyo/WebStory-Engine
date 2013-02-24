@@ -42,6 +42,7 @@
         this.id = out.tools.getUniqueId();
         this.cssid = "WSECurtain_" + this.id;
         this.element = document.createElement("div");
+        this.name = asset.getAttribute('name');
 
         this.element.setAttribute("id", this.cssid);
         this.element.setAttribute("class", "WSECurtain");
@@ -66,9 +67,9 @@
 
     out.tools.mixin(out.assets.mixins.displayable, out.assets.Curtain.prototype);
 
-    out.assets.Curtain.prototype.save = function (obj)
+    out.assets.Curtain.prototype.save = function ()
     {
-        obj[this.id] = {
+        return {
             color: this.color,
             cssid: this.cssid,
             z: this.z
@@ -77,9 +78,9 @@
 
     out.assets.Curtain.prototype.restore = function (obj)
     {
-        this.color = obj[this.id].color;
-        this.cssid = obj[this.id].cssid;
-        this.z = obj[this.id].z;
+        this.color = obj.color;
+        this.cssid = obj.cssid;
+        this.z = obj.z;
         
         try
         {
@@ -87,10 +88,13 @@
         }
         catch (e)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                message: "Element with CSS ID '" + this.cssid + "' could not be found."
-            });
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    message: "Element with CSS ID '" + this.cssid + "' could not be found."
+                }
+            );
+            
             return;
         }
         

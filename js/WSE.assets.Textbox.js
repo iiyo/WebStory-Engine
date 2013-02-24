@@ -264,9 +264,9 @@
         };
     };
 
-    out.assets.Textbox.prototype.save = function (obj)
+    out.assets.Textbox.prototype.save = function ()
     {
-        obj[this.id] = {
+        return {
             assetType: "Textbox",
             type: this.type,
             showNames: this.showNames,
@@ -278,10 +278,8 @@
         };
     };
 
-    out.assets.Textbox.prototype.restore = function (obj)
+    out.assets.Textbox.prototype.restore = function (save)
     {
-        var save = obj[this.id];
-        
         this.type = save.type;
         this.showNames = save.showNames;
         this.nltobr = save.nltobr;

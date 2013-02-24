@@ -197,9 +197,9 @@
         this.bus.trigger("wse.assets.animation.stopped", this);
     };
 
-    out.assets.Animation.prototype.save = function (obj)
+    out.assets.Animation.prototype.save = function ()
     {
-        obj[this.id] = {
+        var obj = {
             assetType: "Animation",
             isRunning: this.isRunning,
             index: this.anim.index
@@ -212,11 +212,13 @@
                 saves: obj
             }
         );
+        
+        return obj;
     };
 
     out.assets.Animation.prototype.restore = function (obj)
     {
-        this.isRunning = obj[this.id].isRunning;
+        this.isRunning = obj.isRunning;
 
         if (this.isRunning === true)
         {

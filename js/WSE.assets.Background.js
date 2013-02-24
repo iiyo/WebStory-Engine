@@ -63,6 +63,7 @@
         this.cssid = "WSEBackground_" + this.id;
         this.element = document.createElement("img");
         this.src = asset.getAttribute('src');
+        this.name = asset.getAttribute('name');
         
         if (!this.src)
         {
@@ -88,9 +89,9 @@
 
     engine.tools.mixin(engine.assets.mixins.displayable, engine.assets.Background.prototype);
 
-    engine.assets.Background.prototype.save = function (obj)
+    engine.assets.Background.prototype.save = function ()
     {
-        obj[this.id] = {
+        return {
             cssid: this.cssid,
             z: this.z
         };
@@ -98,8 +99,8 @@
 
     engine.assets.Background.prototype.restore = function (obj)
     {
-        this.cssid = obj[this.id].cssid;
-        this.z = obj[this.id].z;
+        this.cssid = obj.cssid;
+        this.z = obj.z;
         
         try
         {

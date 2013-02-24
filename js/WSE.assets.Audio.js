@@ -507,9 +507,9 @@
      * 
      * @param obj [object] The savegame object.
      */
-    out.assets.Audio.prototype.save = function (obj)
+    out.assets.Audio.prototype.save = function ()
     {
-        obj[this.id] = {
+        var obj = {
             assetType: "Audio",
             isPlaying: this.isPlaying,
             fade: this.fade,
@@ -519,10 +519,12 @@
         
         if (this.isPlaying)
         {
-            obj[this.id].currentTime = this.current.currentTime;
+            obj.currentTime = this.current.currentTime;
         }
         
         this.bus.trigger("wse.assets.audio.save", this);
+        
+        return obj;
     };
 
     /**
@@ -531,11 +533,8 @@
      * @param obj [object] The savegame data.
      * @trigger wse.assets.audio.restore@interpreter
      */
-    out.assets.Audio.prototype.restore = function (obj)
+    out.assets.Audio.prototype.restore = function (vals)
     {
-        var vals;
-        
-        vals = obj[this.id];
         this.isPlaying = vals.isPlaying;
         this.fade = vals.fade;
         this.currentIndex = vals.currentIndex;

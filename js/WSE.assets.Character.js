@@ -37,6 +37,7 @@
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.id = out.tools.getUniqueId();
+        this.name = asset.getAttribute('name');
         this.bus.trigger("wse.assets.character.constructor", this);
     };
 
@@ -46,9 +47,9 @@
         this.bus.trigger("wse.assets.character.settextbox", this);
     };
 
-    out.assets.Character.prototype.save = function (obj)
+    out.assets.Character.prototype.save = function ()
     {
-        obj[this.id] = {
+        var obj = {
             assetType: "Character",
             textboxName: this.asset.getAttribute("textbox")
         };
@@ -60,11 +61,13 @@
                 saves: obj
             }
         );
+        
+        return obj;
     };
 
     out.assets.Character.prototype.restore = function (obj)
     {
-        this.asset.setAttribute("textbox", obj[this.id].textboxName);
+        this.asset.setAttribute("textbox", obj.textboxName);
         this.bus.trigger(
             "wse.assets.character.restore",
             {

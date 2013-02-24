@@ -976,7 +976,7 @@
             {
                 try
                 {
-                    assets[key].save(saves);
+                    saves[key] = assets[key].save();
                 }
                 catch (e)
                 {
@@ -999,7 +999,7 @@
         {
             if (assets.hasOwnProperty(key))
             {
-                assets[key].restore(saves);
+                assets[key].restore(saves[key]);
             }
         }
     };
