@@ -49,6 +49,8 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         return version;
     };
     
+    console.log('WebStory Engine version ' + out.getVersion() + ' starting up...');
+    
     /**
      * Function to asynchronously load the WebStory file.
      * @param url The URL that locates the WebStory file.
