@@ -34,9 +34,9 @@
     out.commands.line = function (command, interpreter)
     {
         var speakerId, speakerName, textboxName, i, len, current;
-        var assetElements, text, doNext;
+        var assetElements, text, doNext, bus = interpreter.bus;
 
-        interpreter.bus.trigger(
+        bus.trigger(
             "wse.interpreter.commands.line",
             {
                 interpreter: interpreter,
@@ -45,14 +45,12 @@
             false
         );
 
-        //         interpreter.game.subscribeListeners();
-
         speakerId = command.getAttribute("s");
         doNext = command.getAttribute("stop") === "false" ? true : false;
 
         if (speakerId === null)
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -78,7 +76,7 @@
                 
                 if (typeof textboxName === "undefined" || textboxName === null)
                 {
-                    interpreter.bus.trigger(
+                    bus.trigger(
                         "wse.interpreter.warning",
                         {
                             element: command,
@@ -103,7 +101,7 @@
 
         if (typeof interpreter.assets[textboxName] === "undefined")
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -116,7 +114,19 @@
             };
         }
 
-        text = command.childNodes[0].nodeValue;
+        //text = new XMLSerializer().serializeToString(command);//command.childNodes[0].nodeValue;
+        
+        (function ()
+        {
+            var ser = new XMLSerializer(), nodes = command.childNodes, i, len;
+            
+            text = '';
+            
+            for (i = 0, len = nodes.length; i < len; i += 1)
+            {
+                text += ser.serializeToString(nodes[i]);
+            }
+        }());
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName);
