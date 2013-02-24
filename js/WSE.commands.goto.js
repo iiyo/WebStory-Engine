@@ -33,9 +33,9 @@
     
     out.commands.goto = function (command, interpreter)
     {
-        var scene, sceneName, i, len, current;
+        var scene, sceneName, i, len, current, bus = interpreter.bus;
 
-        interpreter.bus.trigger(
+        bus.trigger(
             "wse.interpreter.commands.goto",
             {
                 interpreter: interpreter,
@@ -48,7 +48,7 @@
 
         if (sceneName === null)
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.error",
                 {
                     message: "Element 'goto' misses attribute 'scene'."
@@ -69,7 +69,7 @@
 
         if (typeof scene === "undefined")
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.error",
                 {
                     message: "Unknown scene '" + sceneName + "'."

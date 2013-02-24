@@ -33,11 +33,11 @@
     
     out.commands["do"] = function (command, interpreter, args)
     {
-        var assetName, action, isAnimation;
+        var assetName, action, isAnimation, bus = interpreter.bus, assets = interpreter.assets;
         
         args = args || {};
 
-        interpreter.bus.trigger(
+        bus.trigger(
             "wse.interpreter.commands.do",
             {
                 interpreter: interpreter,
@@ -52,7 +52,7 @@
 
         if (assetName === null)
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -65,7 +65,7 @@
 
         if (action === null)
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -76,9 +76,9 @@
             return;
         }
 
-        if (typeof interpreter.assets[assetName] === "undefined" || interpreter.assets[assetName] === null)
+        if (typeof assets[assetName] === "undefined" || assets[assetName] === null)
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -91,9 +91,9 @@
             };
         }
 
-        if (typeof interpreter.assets[assetName][action] === "undefined")
+        if (typeof assets[assetName][action] === "undefined")
         {
-            interpreter.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -106,6 +106,6 @@
             };
         }
 
-        return interpreter.assets[assetName][action](command, args);
+        return assets[assetName][action](command, args);
     };    
 }(WSE));

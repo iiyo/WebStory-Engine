@@ -169,7 +169,7 @@
         menuElement.style.opacity = 0;
         interpreter.stage.appendChild(menuElement);
 
-        out.assets.mixins.show(
+        out.assets.mixins.displayable.show(
             command,
             {
                 element: menuElement,
