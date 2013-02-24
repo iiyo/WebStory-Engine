@@ -31,31 +31,48 @@
 {
     "use strict";
     
-    out.assets.mixins.hide = function (command, args)
+    out.assets.mixins.displayable.show = function (command, args)
     {
-        var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
-        var ox, oy, to, prop, isAnimation, element, easingType, easing, stage;
-        var xUnit, yUnit;
+        var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
+        var bus, stage, element, isAnimation, easing, easingType, interpreter;
+        var offsetWidth, offsetHeight, startX, startY, fx = out.fx;
 
+        args = args || {};
         self = this;
         wait = command.getAttribute("wait") === "yes" ? true : false;
         duration = command.getAttribute("duration") || 500;
         effect = command.getAttribute("effect") || "fade";
-        direction = command.getAttribute("direction") || "left";
-        isAnimation = args.animation === true ? true : false;
-        element = document.getElementById(this.cssid);
-        easingType = command.getAttribute("easing") || "sineEaseOut";
-        easing = (typeof out.fx.easing[easingType] !== null) ? 
-            out.fx.easing[easingType] : 
-            out.fx.easing.sineEaseOut;
-        stage = this.stage;
+        direction = command.getAttribute("direction") || "right";
+        element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
 
+        if (!element)
+        {
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "DOM Element for asset is missing!"
+                }
+            );
+            
+            return;
+        }
+
+        //         console.log("CSS ID: " + this.cssid, element);
+
+        interpreter = args.interpreter || this.interpreter;
+        bus = args.bus || this.bus;
+        stage = args.stage || this.stage;
+        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easing = (typeof fx.easing[easingType] !== null) ? 
+            fx.easing[easingType] : 
+            fx.easing.sineEaseOut;
+        isAnimation = args.animation === true ? true : false;
+
         if (effect === "slide")
         {
-            element.style.opacity = 1;
-            
             if (xUnit === '%')
             {
                 ox = element.offsetLeft / (stage.offsetWidth / 100);
@@ -81,118 +98,110 @@
             switch (direction)
             {
                 case "left":
-                    to = ox - offsetWidth;
+                    element.style.left = ox + offsetWidth + xUnit;
                     prop = "left";
                     break;
                 case "right":
-                    to = ox + offsetWidth;
+                    element.style.left = ox - offsetWidth + xUnit;
                     prop = "left";
                     break;
                 case "top":
-                    to = oy - offsetHeight;
+                    element.style.top = oy + offsetHeight + yUnit;
                     prop = "top";
                     break;
                 case "bottom":
-                    to = oy + offsetHeight;
+                    element.style.top = oy - offsetHeight + yUnit;
                     prop = "top";
                     break;
                 default:
-                    to = ox - offsetWidth;
+                    element.style.left = ox - offsetWidth + xUnit;
                     prop = "left";
+                    break;
             }
+            element.style.opacity = 1;
 
             if (!isAnimation)
             {
-                self.interpreter.waitCounter += 1;
+                interpreter.waitCounter += 1;
             }
-
-            (function ()
+            
+            if (xUnit === '%')
             {
-                var valFn, from, finishFn, options;
-                
-                valFn = function (v)
+                startX = element.offsetLeft / (stage.offsetWidth / 100);
+            } 
+            else 
+            {
+                startX = element.offsetLeft;
+            }
+            
+            if (yUnit === '%')
+            {
+                startY = element.offsetTop / (stage.offsetHeight / 100);
+            } 
+            else 
+            {
+                startY = element.offsetTop;
+            }
+            
+//             console.log('direction: ' + direction);
+//             console.log('prop: ' + prop);
+//             console.log('xUnit: ' + xUnit);
+//             console.log('yUnit: ' + yUnit);
+//             console.log('startX: ' + startX);
+//             console.log('startY: ' + startY);
+//             console.log('offsetWidth: ' + offsetWidth);
+//             console.log('offsetHeight: ' + offsetHeight);
+
+            fx.transform(
+                function (v)
                 {
                     element.style[prop] = v + (prop === 'left' ? xUnit : yUnit);
-                };
-                
-                from = (prop === "left" ? ox : oy);
-                
-                finishFn = function ()
+                }, 
+                (prop === "left" ? startX : startY), 
+                (prop === "left" ? ox : oy),
                 {
-                    if (!isAnimation)
-                    {
-                        self.interpreter.waitCounter -= 1;
-                    }
-                    
-                    element.style.opacity = 0;
-                    
-                    switch (direction)
-                    {
-                        case "left":
-                        case "right":
-                            element.style.left = ox + xUnit;
-                            prop = "left";
-                            break;
-                        case "top":
-                        case "bottom":
-                            element.style.top = oy + yUnit;
-                            prop = "top";
-                            break;
-                        default:
-                            element.style.left = ox + xUnit;
-                            prop = "left";
-                    }
-                };
-                
-                options = {
                     duration: duration,
-                    easing: easing,
-                    onFinish: finishFn
-                };
-                
-                out.fx.transform(valFn, from, to, options);
-            }());
+                    onFinish: !isAnimation ? 
+                        function ()
+                        {
+                            interpreter.waitCounter -= 1;
+                        } : 
+                        null,
+                    easing: easing
+                }
+            );
         }
         else
         {
             if (!isAnimation)
             {
-                self.interpreter.waitCounter += 1;
+                interpreter.waitCounter += 1;
             }
-            
-            (function ()
-            {
-                var valFn, options, finishFn;
-                
-                valFn = function (v)
+
+            fx.transform(
+                function (v)
                 {
                     element.style.opacity = v;
-                };
-                
-                finishFn = function ()
+                },
+                0,
+                1,
                 {
-                    if (!isAnimation)
-                    {
-                        self.interpreter.waitCounter -= 1;
-                    }
-                    
-                    element.style.opacity = 0;
-                };
-                
-                options = {
                     duration: duration,
-                    easing: easing,
-                    onFinish: finishFn
-                };
-                
-                out.fx.transform(valFn, 1, 0, options);
-            }());
+                    onFinish: !isAnimation ? 
+                        function ()
+                        {
+                            interpreter.waitCounter -= 1;
+                        } : 
+                        null,
+                    easing: easing
+                }
+            );
         }
 
-        this.bus.trigger("wse.assets.mixins.hide", this);
+        bus.trigger("wse.assets.mixins.show", this);
 
         return {
             doNext: true
         };
-    };    
+    };
 }(WSE));

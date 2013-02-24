@@ -31,11 +31,12 @@
 {
     "use strict";
     
-    out.assets.mixins.move = function (command, args)
+    out.assets.mixins.displayable.move = function (command, args)
     {
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
-        var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
+        var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage, fx = out.fx;
 
+        args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
         x = command.getAttribute("x");
@@ -43,9 +44,9 @@
         z = command.getAttribute("z");
         duration = command.getAttribute("duration") || 500;
         easingType = command.getAttribute("easing") || "sineEaseOut";
-        easing = (typeof out.fx.easing[easingType] !== null) ? 
-            out.fx.easing[easingType] : 
-            out.fx.easing.sineEaseOut;
+        easing = (typeof fx.easing[easingType] !== null) ? 
+            fx.easing[easingType] : 
+            fx.easing.sineEaseOut;
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
 
@@ -95,7 +96,7 @@
                 self.interpreter.waitCounter += 1;
             }
 
-            out.fx.transform(
+            fx.transform(
                 function (v)
                 {
                     element.style.left = v + xUnit;
@@ -131,7 +132,7 @@
                 self.interpreter.waitCounter += 1;
             }
 
-            out.fx.transform(
+            fx.transform(
                 function (v)
                 {
                     element.style.top = v + yUnit;
@@ -158,7 +159,7 @@
                 self.interpreter.waitCounter += 1;
             }
 
-            out.fx.transform(
+            fx.transform(
                 function (v)
                 {
                     element.style.zIndex = v;

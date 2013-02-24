@@ -31,29 +31,19 @@
 {
     "use strict";
     
-    /**
-     * The <flash> effect. Can be mixed into all visible assets.
-     * 
-     * The function has a config object as it's second argument.
-     * It provides the following options:
-     * 
-     *  * args.animation: [bool] Is this effect part of an animation asset? If so,
-     *      the engine does not need to wait for the effect to finish before
-     *      executing the next commands.
-     * 
-     * @param command The DOM element of the command.
-     * @param args Additional arguments. See above for details. Optional.
-     */
-    out.assets.mixins.flash = function (command, args)
+    out.assets.mixins.displayable.flicker = function (command, args)
     {
-        var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
+        var self, duration, bus, stage, times, step, element, fx = out.fx;
+        var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
         duration = command.getAttribute("duration") || 500;
+        times = command.getAttribute("times") || 10;
         maxOpacity = command.getAttribute("opacity") || 1;
         element = args.element || document.getElementById(this.cssid);
+        step = duration / times;
+        iteration = 0;
 
         if (!element)
         {
@@ -68,6 +58,21 @@
             return;
         }
 
+        if (!(parseInt(element.style.opacity, 10)))
+        {
+            val1 = 0;
+            val2 = maxOpacity;
+            dur1 = step / 3;
+            dur2 = dur1 * 2;
+        }
+        else
+        {
+            val2 = 0;
+            val1 = maxOpacity;
+            dur2 = step / 3;
+            dur1 = dur2 * 2;
+        }
+
         //         console.log("CSS ID: " + this.cssid, element);
 
         bus = args.bus || this.bus;
@@ -79,42 +84,52 @@
             self.interpreter.waitCounter += 1;
         }
 
-        out.fx.transform(
-            function (v)
-            {
-                element.style.opacity = v;
-            },
-            0,
-            maxOpacity,
-            {
-                duration: duration / 3,
-                onFinish: function ()
+        fn = function ()
+        {
+            iteration += 1;
+            fx.transform(
+                function (v)
                 {
-                    var tranformFn, finishFn, argsObj;
-                
-                    tranformFn = function (v)
-                    {
-                        element.style.opacity = v;
-                    };
-                
-                    finishFn = function ()
-                    {
-                            self.interpreter.waitCounter -= 1;
-                    };
-                
-                    argsObj = {
-                        duration: (duration / 3) * 2,
-                        onFinish: !isAnimation ? finishFn : null,
-                        easing: out.fx.easing.easeInQuad
-                    };
-                
-                    out.fx.transform(tranformFn, maxOpacity, 0, argsObj);
+                    element.style.opacity = v;
                 },
-                easing: out.fx.easing.easeInQuad
-            }
-        );
+                val1,
+                val2,
+                {
+                    duration: dur1,
+                    onFinish: function ()
+                    {
+                        fx.transform(
+                            function (v)
+                            {
+                                element.style.opacity = v;
+                            },
+                            val2,
+                            val1,
+                            {
+                                duration: dur2,
+                                onFinish: function ()
+                                {
+                                    if (iteration <= times)
+                                    {
+                                        setTimeout(fn, 0);
+                                        return;
+                                    }
+                                    if (!isAnimation)
+                                    {
+                                        self.interpreter.waitCounter -= 1;
+                                    }
+                                },
+                                easing: fx.easing.easeInQuad
+                            }
+                        );
+                    },
+                    easing: fx.easing.easeInQuad
+                }
+            );
+        };
+        fn();
 
-        bus.trigger("wse.assets.mixins.flash", this);
+        bus.trigger("wse.assets.mixins.flicker", this);
 
         return {
             doNext: true
