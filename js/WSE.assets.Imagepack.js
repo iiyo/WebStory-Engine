@@ -139,15 +139,11 @@
         this.bus.trigger("wse.assets.imagepack.constructor", this);
     };
 
-    out.assets.Imagepack.prototype.move = out.assets.mixins.move;
-    out.assets.Imagepack.prototype.show = out.assets.mixins.show;
-    out.assets.Imagepack.prototype.hide = out.assets.mixins.hide;
-    out.assets.Imagepack.prototype.flash = out.assets.mixins.flash;
-    out.assets.Imagepack.prototype.flicker = out.assets.mixins.flicker;
+    out.tools.mixin(out.assets.mixins.displayable, out.assets.Imagepack.prototype);
 
     out.assets.Imagepack.prototype.set = function (command, args)
     {
-        var image, name, self, old, duration, isAnimation;
+        var image, name, self, old, duration, isAnimation, bus = this.bus;
 
         args = args || {};
         self = this;
@@ -157,7 +153,7 @@
 
         if (name === null)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -165,6 +161,7 @@
                         "referencing imagepack '" + this.name + "'."
                 }
             );
+            
             return {
                 doNext: true
             };
@@ -174,7 +171,7 @@
 
         if (typeof image === "undefined" || image === null)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: command,
@@ -182,6 +179,7 @@
                         "imagepack '" + this.name + "'."
                 }
             );
+            
             return {
                 doNext: true
             };
@@ -200,7 +198,7 @@
                 
                 if (key === old)
                 {
-                    this.bus.trigger(
+                    bus.trigger(
                         "wse.interpreter.warning",
                         {
                             element: command,
