@@ -94,7 +94,7 @@
          */
         this.waitCounter = 0;
         
-        /** @var Should the game be run in debug mode? (not used yet) */
+        /** @var Should the game be run in debug mode? */
         this.debug = game.debug === true ? true : false;
 
         // The datasource to use for saving games and global variables.
@@ -131,6 +131,11 @@
                 return true;
             }
         };
+        
+        if (this.debug === true)
+        {
+            this.game.bus.debug = true;
+        }
     };
 
     /**
@@ -196,7 +201,7 @@
 
     out.Interpreter.prototype.start = function ()
     {
-        var self, fn, makeKeyFn;
+        var self, fn, makeKeyFn, bus;
         
         this.story = this.game.ws;
         this.stage = this.game.stage;
@@ -210,6 +215,7 @@
         this.stopped = false;
 
         self = this;
+        bus = this.bus;
 
         this.buildLoadingScreen();
 
@@ -250,11 +256,11 @@
             console.log(msg);
         };
 
-        this.bus.subscribe(fn, "wse.interpreter.error");
-        this.bus.subscribe(fn, "wse.interpreter.warning");
-        this.bus.subscribe(fn, "wse.interpreter.message");
+        bus.subscribe(fn, "wse.interpreter.error");
+        bus.subscribe(fn, "wse.interpreter.warning");
+        bus.subscribe(fn, "wse.interpreter.message");
         
-        this.bus.subscribe(
+        bus.subscribe(
             function ()
             {
                 console.log("Game over.");
@@ -262,7 +268,7 @@
             "wse.interpreter.end"
         );
 
-        this.bus.subscribe(
+        bus.subscribe(
             function ()
             {
                 self.numberOfFunctionsToWaitFor += 1;
@@ -270,7 +276,7 @@
             "wse.interpreter.numberOfFunctionsToWaitFor.increase"
         );
 
-        this.bus.subscribe(
+        bus.subscribe(
             function ()
             {
                 self.numberOfFunctionsToWaitFor -= 1;
@@ -278,7 +284,7 @@
             "wse.interpreter.numberOfFunctionsToWaitFor.decrease"
         );
 
-        this.bus.subscribe(
+        bus.subscribe(
             function ()
             {
                 self.assetsLoading += 1;
@@ -287,7 +293,7 @@
             "wse.assets.loading.increase"
         );
 
-        this.bus.subscribe(
+        bus.subscribe(
             function ()
             {
                 self.assetsLoading -= 1;
@@ -325,7 +331,7 @@
                 //console.log("Hiding loading screen...");
             }
             
-            self.bus.subscribe(subscrFn, "wse.assets.loading.finished");
+            bus.subscribe(subscrFn, "wse.assets.loading.finished");
         }());
 
         this.buildAssets();
@@ -335,7 +341,7 @@
         {
             return function (ev)
             {
-                self.bus.trigger(
+                bus.trigger(
                     type,
                     {
                         event: ev,
@@ -410,9 +416,9 @@
 
     out.Interpreter.prototype.changeScene = function (scene)
     {
-        var len, id;
+        var len, id, bus = this.bus;
 
-        this.bus.trigger(
+        bus.trigger(
             "wse.interpreter.changescene.before",
             {
                 scene: scene,
@@ -423,7 +429,7 @@
 
         if (typeof scene === "undefined" || scene === null)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.error",
                 {
                     message: "Scene does not exist."
@@ -438,7 +444,7 @@
 
         if (id === null)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.error",
                 {
                     message: "Encountered scene without id attribute."
@@ -447,7 +453,7 @@
             return;
         }
 
-        this.bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
+        bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
         this.currentCommands = scene.childNodes;
         len = this.currentCommands.length;
         this.index = 0;
@@ -456,7 +462,7 @@
 
         if (len < 1)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     element: scene,
@@ -468,7 +474,7 @@
 
         this.numberOfFunctionsToWaitFor = 0;
 
-        this.bus.trigger(
+        bus.trigger(
             "wse.interpreter.changescene.after",
             {
                 scene: scene,
@@ -526,10 +532,12 @@
 
         if (scene === null)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                message: "Scene '" + sceneName + "' not found!"
-            });
+            this.bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    message: "Scene '" + sceneName + "' not found!"
+                }
+            );
         }
 
         return scene;
@@ -537,7 +545,7 @@
 
     out.Interpreter.prototype.next = function (triggeredByUser)
     {
-        var nodeName, command, check, self, stopObj;
+        var nodeName, command, check, self, stopObj, bus = this.bus;
 
         stopObj = {
             stop: false
@@ -545,17 +553,15 @@
 
         triggeredByUser = triggeredByUser === true ? true : false;
 
-        this.bus.trigger("wse.interpreter.next.before", this, false);
+        bus.trigger("wse.interpreter.next.before", this, false);
 
         if (triggeredByUser === true)
         {
-            console.log("triggeredByUser:", triggeredByUser);
-            this.bus.trigger("wse.interpreter.next.user", stopObj, false);
+            bus.trigger("wse.interpreter.next.user", stopObj, false);
         }
 
         if (stopObj.stop === true)
         {
-            //console.log("Stopping because stopObj.stop is true...");
             return;
         }
 
@@ -568,23 +574,9 @@
 
         if (this.wait === true && this.waitCounter > 0)
         {
-            setTimeout(function ()
-            {
-                self.next();
-            }, 0);
+            setTimeout(function () { self.next(); }, 0);
             return;
         }
-
-
-        //         if (this.waitForTimer === true || (this.wait === true && this.numberOfFunctionsToWaitFor > 0))
-        //         {
-        //             setTimeout(function ()
-        //             {
-        //                 self.next();
-        //             }, 10);
-        //             this.bus.trigger("wse.interpreter.next.after.postponed", this, false);
-        //             return;
-        //         }
 
         if (this.wait === true && this.numberOfFunctionsToWaitFor < 1)
         {
@@ -592,21 +584,17 @@
         }
 
         this.stopped = false;
-        //         this.game.unsubscribeListeners();
 
         if (this.index >= this.currentCommands.length)
         {
             if (this.callStack.length > 0)
             {
                 this.popFromCallStack();
-                setTimeout(function ()
-                {
-                    self.next();
-                }, 0);
+                setTimeout(function () { self.next(); }, 0);
                 return;
             }
-            this.bus.trigger("wse.interpreter.next.after.end", this, false);
-            this.bus.trigger("wse.interpreter.end", this);
+            bus.trigger("wse.interpreter.next.after.end", this, false);
+            bus.trigger("wse.interpreter.end", this);
             return;
         }
 
@@ -617,15 +605,12 @@
         if (nodeName === "#text" || nodeName === "#comment")
         {
             this.index += 1;
-            setTimeout(function ()
-            {
-                self.next();
-            }, 0);
-            this.bus.trigger("wse.interpreter.next.ignore", this, false);
+            setTimeout(function () { self.next(); }, 0);
+            bus.trigger("wse.interpreter.next.ignore", this, false);
             return;
         }
 
-        this.bus.trigger("wse.interpreter.next.command", command);
+        bus.trigger("wse.interpreter.next.command", command);
         this.currentElement += 1;
         check = this.runCommand(this.currentCommands[this.index]);
 
@@ -649,28 +634,28 @@
 
         if (check.doNext === true)
         {
-            setTimeout(function ()
-            {
-                self.next();
-            }, 0);
-            this.bus.trigger("wse.interpreter.next.after.donext", this, false);
+            setTimeout(function () { self.next(); }, 0);
+            bus.trigger("wse.interpreter.next.after.donext", this, false);
             return;
         }
 
         this.stopped = true;
 
-        this.bus.trigger("wse.interpreter.next.after.nonext", this, false);
+        bus.trigger("wse.interpreter.next.after.nonext", this, false);
     };
 
     out.Interpreter.prototype.runCommand = function (command)
     {
-        var tagName, ifvar, ifval, ifnot, varContainer, assetName;
+        var tagName, ifvar, ifval, ifnot, varContainer, assetName, bus = this.bus;
 
-        this.bus.trigger("wse.interpreter.runcommand.before",
-        {
-            interpreter: this,
-            command: command
-        }, false);
+        this.bus.trigger(
+            "wse.interpreter.runcommand.before", 
+            {
+                interpreter: this,
+                command: command
+            }, 
+            false
+        );
 
         tagName = command.tagName;
         assetName = command.getAttribute("asset") || null;
@@ -685,16 +670,24 @@
 
             if (!(ifvar in varContainer))
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown variable '" + ifvar + "' (" + ifscope + " scope) used in condition. Ignoring command."
-                });
-                this.bus.trigger("wse.interpreter.runcommand.after.condition.error.key",
-                {
-                    interpreter: this,
-                    command: command
-                }, false);
+                bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: command,
+                        message: "Unknown variable '" + ifvar + "' (" + ifscope + 
+                            " scope) used in condition. Ignoring command."
+                    }
+                );
+                
+                bus.trigger(
+                    "wse.interpreter.runcommand.after.condition.error.key",
+                    {
+                        interpreter: this,
+                        command: command
+                    }, 
+                    false
+                );
+                
                 return {
                     doNext: true
                 };
@@ -702,44 +695,62 @@
 
             if (ifnot !== null && ("" + varContainer[ifvar] === "" + ifnot))
             {
-                this.bus.trigger("wse.interpreter.message", "Conidition not met. " + ifvar + "==" + ifnot);
-                this.bus.trigger("wse.interpreter.runcommand.after.condition.false",
-                {
-                    interpreter: this,
-                    command: command
-                }, false);
+                bus.trigger("wse.interpreter.message", "Conidition not met. " + ifvar + "==" + ifnot);
+                bus.trigger(
+                    "wse.interpreter.runcommand.after.condition.false",
+                    {
+                        interpreter: this,
+                        command: command
+                    }, 
+                    false
+                );
+                
                 return {
                     doNext: true
                 };
             }
             else if (ifval !== null && ("" + varContainer[ifvar]) !== "" + ifval)
             {
-                this.bus.trigger("wse.interpreter.message", "Conidition not met.");
-                this.bus.trigger("wse.interpreter.runcommand.after.condition.false",
-                {
-                    interpreter: this,
-                    command: command
-                }, false);
+                bus.trigger("wse.interpreter.message", "Conidition not met.");
+                bus.trigger(
+                    "wse.interpreter.runcommand.after.condition.false",
+                    {
+                        interpreter: this,
+                        command: command
+                    }, 
+                    false
+                );
+                
                 return {
                     doNext: true
                 };
             }
 
-            this.bus.trigger("wse.interpreter.runcommand.condition.met",
-            {
-                interpreter: this,
-                command: command
-            }, false);
-            this.bus.trigger("wse.interpreter.message", "Conidition met.");
+            bus.trigger(
+                "wse.interpreter.runcommand.condition.met",
+                {
+                    interpreter: this,
+                    command: command
+                }, 
+                false
+            );
+            
+            bus.trigger("wse.interpreter.message", "Conidition met.");
         }
 
         if (tagName in this.commands)
         {
-            this.bus.trigger("wse.interpreter.runcommand.after.command",
-            {
-                interpreter: this,
-                command: command
-            }, false);
+            bus.trigger(
+                "wse.interpreter.runcommand.after.command",
+                {
+                    interpreter: this,
+                    command: command
+                }, 
+                false
+            );
+            
+            bus.trigger('game.commands.' + tagName);
+            
             return this.commands[tagName](command, this);
         }
         else if (
@@ -749,20 +760,29 @@
             && tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
         )
         {
+            bus.trigger('game.assets.' + assetName + '.' + tagName);
+            
             return this.assets[assetName][tagName](command, this);
         }
         else
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                element: command,
-                message: "Unknown element '" + tagName + "'."
-            });
-            this.bus.trigger("wse.interpreter.runcommand.after.error",
-            {
-                interpreter: this,
-                command: command
-            }, false);
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Unknown element '" + tagName + "'."
+                }
+            );
+            
+            bus.trigger(
+                "wse.interpreter.runcommand.after.error",
+                {
+                    interpreter: this,
+                    command: command
+                }, 
+                false
+            );
+            
             return {
                 doNext: true
             };
@@ -774,9 +794,9 @@
 
     out.Interpreter.prototype.createTriggers = function ()
     {
-        var triggers, i, len, cur, curName, self, curTrigger;
+        var triggers, i, len, cur, curName, self, curTrigger, bus = this.bus;
 
-        this.bus.trigger("wse.interpreter.triggers.create", this, false);
+        bus.trigger("wse.interpreter.triggers.create", this, false);
 
         self = this;
 
@@ -799,21 +819,27 @@
 
             if (curName === null)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: cur,
-                    message: "No name specified for trigger."
-                });
+                bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: cur,
+                        message: "No name specified for trigger."
+                    }
+                );
+                
                 continue;
             }
 
             if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null)
             {
-                this.bus.trigger("wse.interpreter.warning",
-                {
-                    element: cur,
-                    message: "A trigger with the name '" + curName + "' already exists."
-                });
+                bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: cur,
+                        message: "A trigger with the name '" + curName + "' already exists."
+                    }
+                );
+                
                 continue;
             }
 
@@ -828,9 +854,9 @@
 
     out.Interpreter.prototype.buildAssets = function ()
     {
-        var assets, len, i, cur;
+        var assets, len, i, cur, bus = this.bus;
 
-        this.bus.trigger("wse.assets.loading.started");
+        bus.trigger("wse.assets.loading.started");
 
         try
         {
@@ -838,10 +864,12 @@
         }
         catch (e)
         {
-            this.bus.trigger("wse.interpreter.error",
-            {
-                message: "Error while creating assets: " + e.getMessage()
-            });
+            bus.trigger(
+                "wse.interpreter.error",
+                {
+                    message: "Error while creating assets: " + e.getMessage()
+                }
+            );
         }
 
         len = assets.length;
@@ -849,23 +877,28 @@
         for (i = 0; i < len; i += 1)
         {
             cur = assets[i];
+            
             if (cur.nodeType !== 1)
             {
                 continue;
             }
+            
             this.createAsset(cur);
         }
     };
 
     out.Interpreter.prototype.createAsset = function (asset)
     {
-        var name, type, self;
+        var name, type, self, bus = this.bus;
 
-        this.bus.trigger("wse.interpreter.createasset",
-        {
-            interpreter: this,
-            asset: asset
-        }, false);
+        bus.trigger(
+            "wse.interpreter.createasset",
+            {
+                interpreter: this,
+                asset: asset
+            }, 
+            false
+        );
 
         name = asset.getAttribute("name");
         type = asset.tagName;
@@ -873,31 +906,39 @@
 
         if (name === null)
         {
-            this.game.bus.trigger("wse.interpreter.error",
-            {
-                element: asset,
-                message: "Expected attribute 'name'."
-            });
+            bus.trigger(
+                "wse.interpreter.error",
+                {
+                    element: asset,
+                    message: "Expected attribute 'name'."
+                }
+            );
+            
             return;
         }
 
         if (type === null)
         {
-            this.game.bus.trigger("wse.interpreter.warning",
-            {
-                element: asset,
-                message: "Expected attribute 'type' on asset '" + name + "'."
-            });
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: asset,
+                    message: "Expected attribute 'type' on asset '" + name + "'."
+                }
+            );
+            
             return;
         }
 
         if (typeof this.assets[name] !== "undefined")
         {
-            this.game.bus.trigger("wse.interpreter.warning",
-            {
-                element: asset,
-                message: "Trying to override existing asset '" + name + "'."
-            });
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: asset,
+                    message: "Trying to override existing asset '" + name + "'."
+                }
+            );
         }
 
         type = out.tools.firstLetterUppercase(type);
@@ -909,11 +950,15 @@
         }
         else
         {
-            this.game.bus.trigger("wse.interpreter.warning",
-            {
-                element: asset,
-                message: "Unknown asset type '" + type + "'."
-            });
+            console.log(out.assets);
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: asset,
+                    message: "Unknown asset type '" + type + "'."
+                }
+            );
+            
             return;
         }
     };
@@ -963,15 +1008,18 @@
     {
         name = name || "no name";
 
-        var savegame, json, key, savegameList, listKey, lastKey;
+        var savegame, json, key, savegameList, listKey, lastKey, bus = this.bus;
 
         savegame = {};
 
-        this.bus.trigger("wse.interpreter.save.before",
-        {
-            interpreter: this,
-            savegame: savegame
-        }, false);
+        bus.trigger(
+            "wse.interpreter.save.before",
+            {
+                interpreter: this,
+                savegame: savegame
+            }, 
+            false
+        );
 
         savegame.saves = this.createSaveGame();
         savegame.startTime = this.startTime;
@@ -1000,10 +1048,12 @@
         savegameList = JSON.parse(this.datasource.get(listKey));
         savegameList = savegameList || [];
         lastKey = savegameList.indexOf(key);
+        
         if (lastKey >= 0)
         {
             savegameList.splice(lastKey, 1);
         }
+        
         savegameList.push(key);
 
         try
@@ -1013,23 +1063,32 @@
         }
         catch (e)
         {
-            this.bus.trigger("wse.interpreter.warning",
-            {
-                message: "Savegame could not be created!"
-            });
-            this.bus.trigger("wse.interpreter.save.after.error",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, false);
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    message: "Savegame could not be created!"
+                }
+            );
+            
+            bus.trigger(
+                "wse.interpreter.save.after.error",
+                {
+                    interpreter: this,
+                    savegame: savegame
+                }, 
+                false
+            );
+            
             return false;
         }
 
-        this.bus.trigger("wse.interpreter.save.after.success",
-        {
-            interpreter: this,
-            savegame: savegame
-        });
+        bus.trigger(
+            "wse.interpreter.save.after.success",
+            {
+                interpreter: this,
+                savegame: savegame
+            }
+        );
 
         return true;
     };
@@ -1037,14 +1096,18 @@
     out.Interpreter.prototype.getSavegameList = function (reversed)
     {
         var json, key, names, i, len, out;
+        
         key = "wse_" + this.game.url + "_savegames_list";
         json = this.datasource.get(key);
+        
         if (json === null)
         {
             return [];
         }
+        
         names = JSON.parse(json);
         out = [];
+        
         for (i = 0, len = names.length; i < len; i += 1)
         {
             if (reversed === true)
@@ -1057,12 +1120,15 @@
             }
         }
 
-        this.bus.trigger("wse.interpreter.getsavegamelist",
-        {
-            interpreter: this,
-            list: out,
-            names: names
-        }, false);
+        this.bus.trigger(
+            "wse.interpreter.getsavegamelist",
+            {
+                interpreter: this,
+                list: out,
+                names: names
+            }, 
+            false
+        );
 
         return out;
     };
@@ -1070,21 +1136,25 @@
     out.Interpreter.prototype.buildSavegameId = function (name)
     {
         var vars = {};
+        
         vars.name = name;
         vars.id = "wse_" + this.game.url + "_savegame_" + name;
 
-        this.bus.trigger("wse.interpreter.save.before",
-        {
-            interpreter: this,
-            vars: vars
-        }, false);
+        this.bus.trigger(
+            "wse.interpreter.save.before",
+            {
+                interpreter: this,
+                vars: vars
+            }, 
+            false
+        );
 
         return vars.id;
     };
 
     out.Interpreter.prototype.load = function (name)
     {
-        var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId;
+        var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId, bus = this.bus;
         self = this;
 
         savegameId = this.buildSavegameId(name);
@@ -1092,7 +1162,7 @@
         ds = this.datasource;
         savegame = ds.get(savegameId);
 
-        this.bus.trigger(
+        bus.trigger(
             "wse.interpreter.load.before",
             {
                 interpreter: this,
@@ -1103,7 +1173,7 @@
 
         if (!savegame)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.warning",
                 {
                     message: "Could not load savegame '" + savegameId + "'!"
@@ -1146,7 +1216,7 @@
 
         if (!scene)
         {
-            this.bus.trigger(
+            bus.trigger(
                 "wse.interpreter.error",
                 {
                     message: "Loading savegame '" + savegameId + "' failed: Scene not found!"
@@ -1217,7 +1287,7 @@
         //             this.game.subscribeListeners();
         //         }
 
-        this.bus.trigger("wse.interpreter.load.after",
+        bus.trigger("wse.interpreter.load.after",
         {
             interpreter: this,
             savegame: savegame
@@ -1288,10 +1358,13 @@
 
         if (this.stopped !== true)
         {
-            setTimeout(function ()
-            {
-                self.toggleSavegameMenu();
-            }, 20);
+            setTimeout(
+                function ()
+                {
+                    self.toggleSavegameMenu();
+                }, 20
+            );
+            
             return;
         }
 
@@ -1401,31 +1474,37 @@
                 });
                 return;
             }
+            
             savegameName = active.getAttribute("data-wse-savegame-name");
+            
             out.tools.ui.confirm(
-            self,
-            {
-                title: "Overwrite savegame?",
-                message: "You are about to overwrite an old savegame. Are you sure?",
-                trueText: "Yes",
-                falseText: "No",
-                callback: function (decision)
+                self,
                 {
-                    if (decision === false)
+                    title: "Overwrite savegame?",
+                    message: "You are about to overwrite an old savegame. Are you sure?",
+                    trueText: "Yes",
+                    falseText: "No",
+                    callback: function (decision)
                     {
-                        return;
+                        if (decision === false)
+                        {
+                            return;
+                        }
+                        
+                        self.toggleSavegameMenu();
+                        self.save(savegameName);
+                        self.toggleSavegameMenu();
+                        
+                        out.tools.ui.alert(
+                            self,
+                            {
+                                title: "Game saved",
+                                message: "Your game has been saved."
+                            }
+                        );
                     }
-                    self.toggleSavegameMenu();
-                    self.save(savegameName);
-                    self.toggleSavegameMenu();
-                    out.tools.ui.alert(
-                    self,
-                    {
-                        title: "Game saved",
-                        message: "Your game has been saved."
-                    });
                 }
-            });
+            );
         },
         false);
 
@@ -1439,20 +1518,25 @@
         function (ev)
         {
             var active, savegameName, fn;
+            
             ev.stopPropagation();
             ev.preventDefault();
             active = menu.querySelector(".active") || null;
+            
             if (active === null)
             {
                 return;
             }
+            
             savegameName = active.getAttribute("data-wse-savegame-name");
+            
             fn = function (decision)
             {
                 if (decision === false)
                 {
                     return;
                 }
+                
                 self.stage.removeChild(document.getElementById(id));
                 self.savegameMenuVisible = false;
                 self.waitCounter -= 1;
@@ -1460,13 +1544,15 @@
                 self.state = oldState;
                 self.load(savegameName);
             };
+            
             out.tools.ui.confirm(
-            self,
-            {
-                title: "Load game?",
-                message: "Loading a savegame will discard all unsaved progress. Continue?",
-                callback: fn
-            });
+                self,
+                {
+                    title: "Load game?",
+                    message: "Loading a savegame will discard all unsaved progress. Continue?",
+                    callback: fn
+                }
+            );
         },
         false);
 
@@ -1477,19 +1563,21 @@
         resumeButton.setAttribute("class", "button resume");
         resumeButton.setAttribute("type", "button");
         resumeButton.value = "Resume";
-        resumeButton.addEventListener("click",
-
-        function (ev)
-        {
-            ev.stopPropagation();
-            ev.preventDefault();
-            self.stage.removeChild(document.getElementById(id));
-            self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
-            self.savegameMenuVisible = false;
-            self.waitCounter -= 1;
-            self.state = oldState;
-        },
-        false);
+        
+        resumeButton.addEventListener(
+            "click",
+            function (ev)
+            {
+                ev.stopPropagation();
+                ev.preventDefault();
+                self.stage.removeChild(document.getElementById(id));
+                self.bus.trigger("wse.interpreter.numberOfFunctionsToWaitFor.decrease", null, false);
+                self.savegameMenuVisible = false;
+                self.waitCounter -= 1;
+                self.state = oldState;
+            },
+            false
+        );
 
         sgList = document.createElement("div");
         sgList.setAttribute("class", "list");
@@ -1505,11 +1593,14 @@
             return function (event)
             {
                 var old;
+                
                 event.stopPropagation();
                 event.preventDefault();
+                
                 try
                 {
                     old = sgList.querySelector(".active") || null;
+                    
                     if (old !== null)
                     {
                         old.setAttribute("class", old.getAttribute("class").replace(/active/, ""));
@@ -1519,6 +1610,7 @@
                 {
                     console.log(e);
                 }
+                
                 curEl.setAttribute("class", curEl.getAttribute("class") + " active");
                 loadButton.focus();
             };
@@ -1552,21 +1644,25 @@
             sgList.appendChild(curEl);
         }
 
-        menu.addEventListener("click",
-
-        function (ev)
-        {
-            var active;
-            ev.stopPropagation();
-            ev.preventDefault();
-            active = menu.querySelector(".active") || null;
-            if (active === null)
+        menu.addEventListener(
+            "click",
+            function (ev)
             {
-                return;
-            }
-            active.setAttribute("class", active.getAttribute("class").replace(/active/, ""));
-        },
-        false);
+                var active;
+            
+                ev.stopPropagation();
+                ev.preventDefault();
+                active = menu.querySelector(".active") || null;
+            
+                if (active === null)
+                {
+                    return;
+                }
+            
+                active.setAttribute("class", active.getAttribute("class").replace(/active/, ""));
+            },
+            false
+        );
 
         menu.appendChild(sgList);
 
