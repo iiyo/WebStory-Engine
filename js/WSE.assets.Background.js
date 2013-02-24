@@ -86,11 +86,7 @@
         this.stage.appendChild(this.element);
     };
 
-    engine.assets.Background.prototype.show = engine.assets.mixins.show;
-    engine.assets.Background.prototype.hide = engine.assets.mixins.hide;
-    engine.assets.Background.prototype.move = engine.assets.mixins.move;
-    engine.assets.Background.prototype.flash = engine.assets.mixins.flash;
-    engine.assets.Background.prototype.flicker = engine.assets.mixins.flicker;
+    engine.tools.mixin(engine.assets.mixins.displayable, engine.assets.Background.prototype);
 
     engine.assets.Background.prototype.save = function (obj)
     {

@@ -64,11 +64,7 @@
         this.element.style.backgroundColor = this.color;
     };
 
-    out.assets.Curtain.prototype.show = out.assets.mixins.show;
-    out.assets.Curtain.prototype.hide = out.assets.mixins.hide;
-    out.assets.Curtain.prototype.move = out.assets.mixins.move;
-    out.assets.Curtain.prototype.flash = out.assets.mixins.flash;
-    out.assets.Curtain.prototype.flicker = out.assets.mixins.flicker;
+    out.tools.mixin(out.assets.mixins.displayable, out.assets.Curtain.prototype);
 
     out.assets.Curtain.prototype.save = function (obj)
     {
