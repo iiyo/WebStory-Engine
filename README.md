@@ -6,7 +6,7 @@ and run directly in the browser.
 
 Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
 
-![WebStory Engine Structure](http://webstoryengine.org/_media/wiki:wse-structure.jpg?cache=&w=889&h=628)
+![WebStory Engine Structure](http://webstoryengine.org/_media/wiki:wse-structure.jpg)
 
 ## Attributions ##
 
