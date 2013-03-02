@@ -97,6 +97,12 @@
 
             track = new Audio();
             track.setAttribute("preload", "auto");
+            
+            if (this.loop)
+            {
+                track.loop = true;
+            }
+            
             trackFiles = {};
             trackName = current.getAttribute("title");
 
