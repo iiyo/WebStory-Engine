@@ -382,9 +382,9 @@
             
             return;
         }
+        
         this.bus.trigger("wse.assets.loading.finished");
 
-        //console.log("Running story...");
         scenes = this.story.getElementsByTagName("scene");
         this.scenes = scenes;
         len = scenes.length;
@@ -392,9 +392,11 @@
         for (i = 0; i < len; i += 1)
         {
             current = scenes[i];
+
             if (current.getAttribute("id") === "start")
             {
                 this.changeScene(current);
+                
                 return;
             }
         }
@@ -407,6 +409,7 @@
                     message: "No scenes found!"
                 }
             );
+            
             return;
         }
         
@@ -435,11 +438,11 @@
                     message: "Scene does not exist."
                 }
             );
+            
             return;
         }
 
         id = scene.getAttribute("id");
-
         this.visitedScenes.push(id);
 
         if (id === null)
@@ -450,6 +453,7 @@
                     message: "Encountered scene without id attribute."
                 }
             );
+
             return;
         }
 
@@ -469,6 +473,7 @@
                     message: "Scene '" + id + "' is empty."
                 }
             );
+            
             return;
         }
 
@@ -523,6 +528,7 @@
         for (i = 0, len = this.scenes.length; i < len; i += 1)
         {
             current = this.scenes[i];
+            
             if (current.getAttribute("id") === sceneName)
             {
                 scene = current;
@@ -575,6 +581,7 @@
         if (this.wait === true && this.waitCounter > 0)
         {
             setTimeout(function () { self.next(); }, 0);
+            
             return;
         }
 
@@ -591,10 +598,13 @@
             {
                 this.popFromCallStack();
                 setTimeout(function () { self.next(); }, 0);
+                
                 return;
             }
+            
             bus.trigger("wse.interpreter.next.after.end", this, false);
             bus.trigger("wse.interpreter.end", this);
+            
             return;
         }
 
@@ -607,6 +617,7 @@
             this.index += 1;
             setTimeout(function () { self.next(); }, 0);
             bus.trigger("wse.interpreter.next.ignore", this, false);
+            
             return;
         }
 
@@ -629,6 +640,7 @@
         if (check.changeScene !== null)
         {
             this.changeScene(check.changeScene);
+            
             return;
         }
 
@@ -636,6 +648,7 @@
         {
             setTimeout(function () { self.next(); }, 0);
             bus.trigger("wse.interpreter.next.after.donext", this, false);
+            
             return;
         }
 
@@ -1259,10 +1272,13 @@
 
                 if (index === null)
                 {
-                    interpreter.bus.trigger("wse.interpreter.warning",
-                    {
-                        message: "No data-wse-index found on element."
-                    });
+                    interpreter.bus.trigger(
+                        "wse.interpreter.warning",
+                        {
+                            message: "No data-wse-index found on element."
+                        }
+                    );
+                    
                     continue;
                 }
 
@@ -1273,25 +1289,20 @@
                     continue;
                 }
 
-                //console.log("Re-inserting choice menu: ", com);
                 interpreter.stage.removeChild(cur);
                 interpreter.commands.choice(com, interpreter);
                 interpreter.waitCounter -= 1;
-                //                 interpreter.game.unsubscribeListeners();
             }
         }(this));
 
-        //         if (savegame.listenersSubscribed)
-        //         {
-        //             console.log("Subscribing listeners after loading a savegame...");
-        //             this.game.subscribeListeners();
-        //         }
-
-        bus.trigger("wse.interpreter.load.after",
-        {
-            interpreter: this,
-            savegame: savegame
-        }, false);
+        bus.trigger(
+            "wse.interpreter.load.after",
+            {
+                interpreter: this,
+                savegame: savegame
+            }, 
+            false
+        );
 
         return true;
     };
@@ -1302,14 +1313,14 @@
 
         key = "wse_" + this.game.url + "_savegames_list";
         json = this.datasource.get(key);
+        
         if (json === null)
         {
             return false;
         }
+        
         sgs = JSON.parse(json);
-
         id = this.buildSavegameId(name);
-
         index = sgs.indexOf(id);
 
         if (index >= 0)
@@ -1317,6 +1328,7 @@
             sgs.splice(index, 1);
             this.datasource.set("wse_" + this.game.url + "_savegames_list", JSON.stringify(sgs));
             this.datasource.remove(id);
+            
             return true;
         }
 
@@ -1346,24 +1358,21 @@
             {
                 console.log(e);
             }
+            
             if (listenerStatus === true)
             {
                 this.savegameMenuVisible = false;
-                //                 this.game.subscribeListeners();
             }
+            
             this.state = this.oldStateInSavegameMenu;
             this.waitCounter -= 1;
+            
             return;
         }
 
         if (this.stopped !== true)
         {
-            setTimeout(
-                function ()
-                {
-                    self.toggleSavegameMenu();
-                }, 20
-            );
+            setTimeout(function () { self.toggleSavegameMenu(); }, 20);
             
             return;
         }
@@ -1372,9 +1381,7 @@
         this.oldStateInSavegameMenu = oldState;
         this.state = "pause";
         this.waitCounter += 1;
-
         this.savegameMenuVisible = true;
-        //         this.game.unsubscribeListeners();
 
         menu = document.createElement("div");
         menu.innerHTML = "";
@@ -1391,174 +1398,196 @@
         deleteButton.setAttribute("class", "button delete");
         deleteButton.setAttribute("type", "button");
         deleteButton.value = "Delete";
-        deleteButton.addEventListener("click",
-
-        function (ev)
-        {
-            var active, savegameName, fn;
-            ev.stopPropagation();
-            ev.preventDefault();
-            active = menu.querySelector(".active") || null;
-            if (active === null)
+        deleteButton.addEventListener(
+            "click",
+            function (ev)
             {
-                return;
-            }
-            savegameName = active.getAttribute("data-wse-savegame-name");
-            fn = function (decision)
-            {
-                if (decision === false)
+                var active, savegameName, fn;
+                
+                ev.stopPropagation();
+                ev.preventDefault();
+            
+                active = menu.querySelector(".active") || null;
+            
+                if (active === null)
                 {
                     return;
                 }
-                self.deleteSavegame(savegameName);
-                self.toggleSavegameMenu();
-                self.toggleSavegameMenu();
-            };
-            out.tools.ui.confirm(
-            self,
-            {
-                title: "Delete game?",
-                message: "Do you really want to delete savegame '" + savegameName + "'?",
-                callback: fn
-            });
-        },
-        false);
+                
+                savegameName = active.getAttribute("data-wse-savegame-name");
+            
+                fn = function (decision)
+                {
+                    if (decision === false)
+                    {
+                        return;
+                    }
+                    
+                    self.deleteSavegame(savegameName);
+                    self.toggleSavegameMenu();
+                    self.toggleSavegameMenu();
+                };
+                
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Delete game?",
+                        message: "Do you really want to delete savegame '" + savegameName + "'?",
+                        callback: fn
+                    }
+                );
+            },
+            false
+        );
 
         saveButton = document.createElement("input");
         saveButton.setAttribute("class", "button save");
         saveButton.setAttribute("type", "button");
         saveButton.value = "Save";
-        saveButton.addEventListener("click",
-
-        function (ev)
-        {
-            var active, savegameName;
-            ev.stopPropagation();
-            ev.preventDefault();
-            active = menu.querySelector(".active") || null;
-            if (active === null)
+        
+        saveButton.addEventListener(
+            "click",
+            function (ev)
             {
-                out.tools.ui.prompt(
-                self,
+                var active, savegameName;
+                
+                ev.stopPropagation();
+                ev.preventDefault();
+                
+                active = menu.querySelector(".active") || null;
+                
+                if (active === null)
                 {
-                    title: "New savegame",
-                    message: "Please enter a name for the savegame:",
-                    callback: function (data)
-                    {
-                        if (data === null)
-                        {
-                            return;
-                        }
-                        if (!data)
-                        {
-                            out.tools.ui.alert(
-                            self,
-                            {
-                                title: "Error",
-                                message: "The savegame name cannot be empty!"
-                            });
-                            return;
-                        }
-                        self.toggleSavegameMenu();
-                        self.game.listenersSubscribed = listenerStatus;
-                        self.save(data);
-                        self.toggleSavegameMenu();
-                        self.game.listenersSubscribed = false;
-                        out.tools.ui.alert(
+                    out.tools.ui.prompt(
                         self,
                         {
-                            title: "Game saved",
-                            message: "Your game has been saved."
-                        });
-                    }
-                });
-                return;
-            }
-            
-            savegameName = active.getAttribute("data-wse-savegame-name");
-            
-            out.tools.ui.confirm(
-                self,
-                {
-                    title: "Overwrite savegame?",
-                    message: "You are about to overwrite an old savegame. Are you sure?",
-                    trueText: "Yes",
-                    falseText: "No",
-                    callback: function (decision)
-                    {
-                        if (decision === false)
-                        {
-                            return;
-                        }
-                        
-                        self.toggleSavegameMenu();
-                        self.save(savegameName);
-                        self.toggleSavegameMenu();
-                        
-                        out.tools.ui.alert(
-                            self,
+                            title: "New savegame",
+                            message: "Please enter a name for the savegame:",
+                            callback: function (data)
                             {
-                                title: "Game saved",
-                                message: "Your game has been saved."
+                                if (data === null)
+                                {
+                                    return;
+                                }
+                                
+                                if (!data)
+                                {
+                                    out.tools.ui.alert(
+                                        self,
+                                        {
+                                            title: "Error",
+                                            message: "The savegame name cannot be empty!"
+                                        }
+                                    );
+                                    
+                                    return;
+                                }
+                                
+                                self.toggleSavegameMenu();
+                                self.game.listenersSubscribed = listenerStatus;
+                                self.save(data);
+                                self.toggleSavegameMenu();
+                                self.game.listenersSubscribed = false;
+                                
+                                out.tools.ui.alert(
+                                    self,
+                                    {
+                                        title: "Game saved",
+                                        message: "Your game has been saved."
+                                    }
+                                );
                             }
-                        );
-                    }
+                        }
+                    );
+                    
+                    return;
                 }
-            );
-        },
-        false);
+            
+                savegameName = active.getAttribute("data-wse-savegame-name");
+            
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Overwrite savegame?",
+                        message: "You are about to overwrite an old savegame. Are you sure?",
+                        trueText: "Yes",
+                        falseText: "No",
+                        callback: function (decision)
+                        {
+                            if (decision === false)
+                            {
+                                return;
+                            }
+                            
+                            self.toggleSavegameMenu();
+                            self.save(savegameName);
+                            self.toggleSavegameMenu();
+                            
+                            out.tools.ui.alert(
+                                self,
+                                {
+                                    title: "Game saved",
+                                    message: "Your game has been saved."
+                                }
+                            );
+                        }
+                    }
+                );
+            },
+            false
+        );
 
         loadButton = document.createElement("input");
         loadButton.setAttribute("class", "button load");
         loadButton.setAttribute("type", "button");
         loadButton.setAttribute("tabindex", 1);
         loadButton.value = "Load";
-        loadButton.addEventListener("click",
-
-        function (ev)
-        {
-            var active, savegameName, fn;
-            
-            ev.stopPropagation();
-            ev.preventDefault();
-            active = menu.querySelector(".active") || null;
-            
-            if (active === null)
+        loadButton.addEventListener(
+            "click",
+            function (ev)
             {
-                return;
-            }
-            
-            savegameName = active.getAttribute("data-wse-savegame-name");
-            
-            fn = function (decision)
-            {
-                if (decision === false)
+                var active, savegameName, fn;
+                
+                ev.stopPropagation();
+                ev.preventDefault();
+                
+                active = menu.querySelector(".active") || null;
+                
+                if (active === null)
                 {
                     return;
                 }
                 
-                self.stage.removeChild(document.getElementById(id));
-                self.savegameMenuVisible = false;
-                self.waitCounter -= 1;
-                // console.log("numberOfFunctionsToWaitFor before loading:", self.numberOfFunctionsToWaitFor);
-                self.state = oldState;
-                self.load(savegameName);
-            };
-            
-            out.tools.ui.confirm(
-                self,
+                savegameName = active.getAttribute("data-wse-savegame-name");
+                
+                fn = function (decision)
                 {
-                    title: "Load game?",
-                    message: "Loading a savegame will discard all unsaved progress. Continue?",
-                    callback: fn
-                }
-            );
-        },
-        false);
+                    if (decision === false)
+                    {
+                        return;
+                    }
+                    
+                    self.stage.removeChild(document.getElementById(id));
+                    self.savegameMenuVisible = false;
+                    self.waitCounter -= 1;
+                    self.state = oldState;
+                    self.load(savegameName);
+                };
+                
+                out.tools.ui.confirm(
+                    self,
+                    {
+                        title: "Load game?",
+                        message: "Loading a savegame will discard all unsaved progress. Continue?",
+                        callback: fn
+                    }
+                );
+            },
+            false
+        );
 
         buttonPanel = document.createElement("div");
         buttonPanel.setAttribute("class", "panel");
-
         resumeButton = document.createElement("input");
         resumeButton.setAttribute("class", "button resume");
         resumeButton.setAttribute("type", "button");
@@ -1626,6 +1655,7 @@
             curElapsed = cur.saveTime - cur.startTime;
             curEl.setAttribute("class", "button");
             curEl.setAttribute("data-wse-savegame-name", cur.name);
+            
             curEl.innerHTML = '' + 
                 '<p class="name">' + 
                     cur.name + 
@@ -1640,6 +1670,7 @@
                         new Date(cur.saveTime * 1000).toUTCString() + 
                     '</span>' + 
                 '</p>';
+            
             curEl.addEventListener("click", makeClickFn(curEl, cur), false);
             sgList.appendChild(curEl);
         }

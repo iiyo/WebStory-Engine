@@ -2,6 +2,8 @@
 {
     "use strict";
     
+    console.log('Loading extension button...');
+    
     engine.assets.Button = function (asset, interpreter)
     {
         var el, id, cssid, width, height, x, y, z, clickFn, text;
@@ -57,9 +59,9 @@
         interpreter.stage.appendChild(el);
     };
 
-    engine.assets.Button.prototype.save = function (obj)
+    engine.assets.Button.prototype.save = function ()
     {
-        obj[this.id] = {
+        return {
             assetType: "Button",
             cssid: this.cssid
         };
@@ -67,13 +69,8 @@
 
     engine.assets.Button.prototype.restore = function (obj)
     {
-        var save = obj[this.id];
-        this.cssid = save.cssid;
+        this.cssid = obj.cssid;
     };
-    
-    engine.assets.Button.prototype.show = engine.assets.mixins.show;
-    engine.assets.Button.prototype.hide = engine.assets.mixins.hide;
-    engine.assets.Button.prototype.move = engine.assets.mixins.move;
-    engine.assets.Button.prototype.flash = engine.assets.mixins.flash;
-    engine.assets.Button.prototype.flicker = engine.assets.mixins.flicker;
+
+    engine.tools.mixin(engine.assets.mixins.displayable, engine.assets.Button.prototype);
 }(WSE));

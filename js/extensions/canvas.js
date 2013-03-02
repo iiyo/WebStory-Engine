@@ -2,6 +2,8 @@
 {
     "use strict";
     
+    console.log('Loading extension canvas...');
+    
     (function ()
     {
         var fn;
@@ -65,4 +67,6 @@
         // the interpreter holds a reference to the stage element:
         interpreter.stage.appendChild(el);
     };
+
+    engine.tools.mixin(engine.assets.mixins.displayable, engine.assets.CanvasImagePack.prototype);
 }(WSE));

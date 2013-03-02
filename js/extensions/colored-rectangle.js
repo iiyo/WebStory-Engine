@@ -2,6 +2,8 @@
 {
     "use strict";
     
+    console.log('Loading extension colored-rectangle...');
+    
     // An asset constructor is given the XML element that defines the asset instance
     // and a reference to the interpreter object:
     engine.assets.Rectangle = function (asset, interpreter)
@@ -57,11 +59,11 @@
 
     // This function will be called when a savegame is created.
     // Use it to save whatever information needs to be saved.
-    engine.assets.Rectangle.prototype.save = function (obj)
+    engine.assets.Rectangle.prototype.save = function ()
     {
         // use the unique ID to identify the savegame data
         // for the current asset instance:
-        obj[this.id] = {
+        return {
             assetType: "Rectangle",
             cssid: this.cssid
         };
@@ -71,18 +73,11 @@
     // The function will be called when a user attempts to load a savegame.
     engine.assets.Rectangle.prototype.restore = function (obj)
     {
-        // Get the right savegame data by using the instance's unique ID:
-        var save = obj[this.id];
-        
         // restore whatever needs to be restored here...
-        this.cssid = save.cssid;
+        this.cssid = obj.cssid;
     };
     
     // Enable the new asset to be used like other displayable assets
     // by adding predefined mixin functions to it's prototype:
-    engine.assets.Rectangle.prototype.show = engine.assets.mixins.show;
-    engine.assets.Rectangle.prototype.hide = engine.assets.mixins.hide;
-    engine.assets.Rectangle.prototype.move = engine.assets.mixins.move;
-    engine.assets.Rectangle.prototype.flash = engine.assets.mixins.flash;
-    engine.assets.Rectangle.prototype.flicker = engine.assets.mixins.flicker;
+    engine.tools.mixin(engine.assets.mixins.displayable, engine.assets.Rectangle.prototype);
 }(WSE));

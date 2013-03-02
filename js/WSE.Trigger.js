@@ -39,6 +39,7 @@
         this.event = trigger.getAttribute("event") || null;
         this.special = trigger.getAttribute("special") || null;
         this.fnName = trigger.getAttribute("function") || null;
+        this.scene = trigger.getAttribute("scene") || null;
         this.interpreter = interpreter;
         this.isSubscribed = false;
 
@@ -68,7 +69,7 @@
             return;
         }
 
-        if (this.special === null && this.fnName === null)
+        if (this.special === null && this.fnName === null && this.scene === null)
         {
             interpreter.bus.trigger(
                 "wse.interpreter.warning",
@@ -78,6 +79,16 @@
                 }
             );
             
+            return;
+        }
+        
+        if (this.scene)
+        {
+            this.fn = function ()
+            {
+                console.log('Triggering event "' + self.event + '"...');
+                out.commands.sub(trigger, interpreter);
+            };
             return;
         }
 

@@ -2,6 +2,8 @@
 {
     "use strict";
     
+    console.log('Loading extension hello...');
+    
     // A command is given the XML element that triggered the command
     // and a reference to the interpreter object:
     engine.commands.hello = function (command, interpreter)
