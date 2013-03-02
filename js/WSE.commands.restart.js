@@ -53,7 +53,7 @@
         interpreter.state = "listen";
         interpreter.stage.innerHTML = "";
 
-        this.assets = {};
+        interpreter.assets = {};
         interpreter.buildAssets();
 
         return {
