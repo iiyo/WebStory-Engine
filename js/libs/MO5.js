@@ -226,8 +226,7 @@ var MO5 = (function ()
             diff = to - from,
             doLog = args.log || false,
             c = 0, // number of times func get's executed
-            onFinish = args.onFinish || function ()
-            {};
+            onFinish = args.onFinish || function () {};
 
         now = Date.now || function () { return +(new Date()); };
 
@@ -241,7 +240,6 @@ var MO5 = (function ()
             c += 1;
             t = now();
             tElapsed = t - tStart;
-            //         console.log("t: " + t + "; tStart: " + tStart + "; Elapsed: " + tElapsed + "; cv: " + cv + "; from: " + from + "; to: " + to, callback);
 
             if (tElapsed > dur)
             {
@@ -250,6 +248,7 @@ var MO5 = (function ()
                 clearInterval(timer);
                 delete out.timers[timer];
                 onFinish();
+                
                 return;
             }
 
@@ -270,6 +269,7 @@ var MO5 = (function ()
         //     timer = setInterval(func, 100);
         requestAnimationFrame(func);
         out.timers[timer] = true;
+        
         return timer;
     };
 
@@ -286,12 +286,12 @@ var MO5 = (function ()
         duration = duration < 0 ? 0 : duration;
 
         timer = setTimeout(
-
-        function ()
-        {
-            delete out.timers[timer];
-        },
-        duration);
+            function ()
+            {
+                delete out.timers[timer];
+            },
+            duration
+        );
 
         out.timers[timer] = true;
 
@@ -306,11 +306,13 @@ var MO5 = (function ()
     {
         var e = window,
             a = 'inner';
+        
         if (!('innerWidth' in e))
         {
             a = 'client';
             e = document.documentElement || document.body;
         }
+        
         return {
             width: e[a + 'Width'],
             height: e[a + 'Height']
@@ -365,6 +367,7 @@ var MO5 = (function ()
         var dx = this.x - otherPoint.x,
             dy = this.y - otherPoint.y,
             dist = Math.squrt(dx * dx + dy * dy);
+        
         return dist;
     };
 
@@ -407,6 +410,7 @@ var MO5 = (function ()
     {
         var s = Math.PI / (2 * d);
         var y = Math.abs(Math.sin(t * s));
+        
         return y;
     };
 
@@ -414,6 +418,7 @@ var MO5 = (function ()
     {
         var s = Math.PI / (2 * d);
         var y = Math.abs(-Math.cos(t * s) + 1);
+        
         return y;
     };
 
@@ -492,6 +497,7 @@ var MO5 = (function ()
         {
             return 1 - Math.pow(1 - (t / d), potency);
         };
+        
         return fn;
     };
 
@@ -501,6 +507,7 @@ var MO5 = (function ()
         {
             return Math.pow((t / d), potency);
         };
+        
         return fn;
     };
 
@@ -509,9 +516,11 @@ var MO5 = (function ()
         var fn, eIn, eOut;
         eIn = out.easing.createEaseInFunction(potency);
         eOut = out.easing.createEaseOutFunction(potency);
+        
         fn = function (d, t)
         {
             var val;
+            
             if (t > d / 2)
             {
                 val = eOut(d, t);
@@ -520,8 +529,10 @@ var MO5 = (function ()
             {
                 val = eIn(d, t);
             }
+            
             return val;
         };
+        
         return fn;
     };
 
@@ -554,10 +565,15 @@ var MO5 = (function ()
     out.mixins.display = function ()
     {
         var self = this;
-        this.canvas.addCallback(this.id, function ()
-        {
-            self.draw();
-        }, this.layer || 0, this);
+        
+        this.canvas.addCallback(
+            this.id, function ()
+            {
+                self.draw();
+            }, 
+            this.layer || 0, 
+            this
+        );
     };
 
     /**
@@ -576,6 +592,7 @@ var MO5 = (function ()
     {
         var x = (this.x + (this.width / 2)),
             y = (this.y + (this.height / 2));
+        
         return new out.Point(x, y);
     };
 
@@ -595,24 +612,27 @@ var MO5 = (function ()
         var t0,
         t1,
         self = this;
+        
         t0 = out.transform(
-
-        function (v)
-        {
-            self.x = v;
-        },
-        this.x,
-        x,
-        args);
+            function (v)
+            {
+                self.x = v;
+            },
+            this.x,
+            x,
+            args
+        );
+        
         t1 = out.transform(
-
-        function (v)
-        {
-            self.y = v;
-        },
-        this.y,
-        y,
-        args);
+            function (v)
+            {
+                self.y = v;
+            },
+            this.y,
+            y,
+            args
+        );
+        
         return [t0, t1];
     };
 
