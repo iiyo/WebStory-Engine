@@ -44,7 +44,8 @@
             false
         );
 
-        sceneName = command.getAttribute("scene");
+        command = command || {};
+        sceneName = command.scene;
 
         if (sceneName === null)
         {

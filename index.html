@@ -14,7 +14,7 @@
         <script src="js/extensions/button.js"></script>
 
         <script>
-            var game = new WSE.Game({ url: "game.xml", host: typeof HOST === "undefined" ? false : HOST });
+            var game = new WSE.Game({ url: "game.xml", debug: true, host: typeof HOST === "undefined" ? false : HOST });
             game.start();
         </script>
     </body>

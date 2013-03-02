@@ -218,8 +218,8 @@
          */
         this.play = function (command)
         {
-            command = command || document.createElement("div");
-            var fade = command.getAttribute("fade") === "true" ? true : this.fade;
+            command = command || {};
+            var fade = (command.fade || "false") === "true" ? true : this.fade;
 
             if (self.current === null)
             {
@@ -450,8 +450,9 @@
     {
         var name, isPlaying, self;
 
+        command = command || {};
         self = this;
-        name = command.getAttribute("track");
+        name = command.track;
         isPlaying = this.isPlaying === true && this.loop === true ? true : false;
 
         if (typeof this.tracks[name] === "undefined" || this.tracks[name] === null)

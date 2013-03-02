@@ -38,11 +38,14 @@
         var offsetWidth, offsetHeight, startX, startY, fx = out.fx;
 
         args = args || {};
+        command = command || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        effect = command.getAttribute("effect") || "fade";
-        direction = command.getAttribute("direction") || "right";
+        
+        wait = command.wait || "no";
+        wait = wait === "yes" ? true : false;
+        duration = command.duration || 500;
+        effect = command.effect || "fade";
+        direction = command.direction || "right";
         element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
@@ -65,7 +68,7 @@
         interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easingType = command.easing || "sineEaseOut";
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;

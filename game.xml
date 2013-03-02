@@ -6,13 +6,13 @@
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
             <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
             <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
-            <trigger name="sub_scene_by_key" event="keyup" key="UP_ARROW" sub="custom_event_scene" />
+            <trigger name="sub_scene" event="game.assets.n.line" scene="custom_event_scene" />
         </triggers>
         <setting name="host.stage.resize" value="true" />
         <setting name="host.inspector.enable" value="true" />
     </settings>
     <assets>
-        <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px"></textbox>
+        <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px" speed="150"></textbox>
         <textbox name="tb_top" x="0" y="0" z="30000" width="100%" height="100%" cssid="bla"></textbox>
         
         <rectangle name="rect" x="20px" y="20px" height="50px" width="100px" color="green" />
@@ -28,7 +28,7 @@
         </audio>
         
         <character name="n" textbox="tb_main"></character>
-        <character name="nn" textbox="tb_top"></character>
+        <character name="nn" textbox="tb_top" imagepack="backgrounds2"></character>
         
         <imagepack name="backgrounds" x="0" y="0" z="0">
             <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
@@ -68,7 +68,7 @@
         <scene id="start">
             <trigger name="next_on_right" action="activate" />
             <trigger name="next_on_space" action="activate" />
-            <trigger name="sub_scene_by_key" action="activate" />
+            <trigger name="sub_scene" action="activate" />
             <trigger name="game_menu_key_trigger" action="deactivate" />
             
             <show asset="rect" />
@@ -99,15 +99,15 @@
             <global name="globals_test" value="worked" />
             
             <line s="n">
-                Your choice: {$main_menu_choice}{br}
-                Your choice as global: {$$main_menu_choice}{br}
+                Your choice: {$main_menu_choice}<br />
+                Your choice as global: {$$main_menu_choice}<br />
                 Globals test: {$$globals_test}
             </line>
             
             <show asset="tb_top" />
             
             <line s="nn">
-                WebStoryEngine Docs: {a href="http://webstoryengine.org"}Click here{/a}
+                WebStoryEngine Docs: <a href="http://webstoryengine.org">Click here</a>
             </line>
             
             <hide asset="tb_top" />
@@ -203,7 +203,7 @@
             <clear asset="tb_main" />
             
             <line s="n">
-                To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
+                To start, click on the screen or press <b>space</b> / <b>right arrow</b> key.
             </line>
             
             <hide asset="tb_main" effect="slide" direction="bottom" />
@@ -283,9 +283,9 @@
         </scene>
         
         <scene id="custom_event_scene">
-            <line s="n">
-                A custom event has been triggered.
-            </line>
+            <show asset="rect" />
+            <wait />
+            <hide asset="rect" />
         </scene>
         
         <scene id="restart">

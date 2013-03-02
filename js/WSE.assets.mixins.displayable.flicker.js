@@ -38,9 +38,10 @@
 
         args = args || {};
         self = this;
-        duration = command.getAttribute("duration") || 500;
-        times = command.getAttribute("times") || 10;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        command = command || {};
+        duration = command.duration || 500;
+        times = command.times || 10;
+        maxOpacity = command.opacity || 1;
         element = args.element || document.getElementById(this.cssid);
         step = duration / times;
         iteration = 0;

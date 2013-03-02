@@ -50,9 +50,11 @@
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        command = command || {};
+        wait = command.wait || "no";
+        wait = wait === "yes" ? true : false;
+        duration = command.duration || 500;
+        maxOpacity = command.opacity || 1;
         element = args.element || document.getElementById(this.cssid);
 
         if (!element)

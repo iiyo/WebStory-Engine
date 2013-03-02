@@ -44,8 +44,9 @@
             false
         );
 
-        triggerName = command.getAttribute("name") || null;
-        action = command.getAttribute("action") || null;
+        command = command || {};
+        triggerName = command.name || null;
+        action = command.action || null;
 
         if (triggerName === null)
         {

@@ -35,7 +35,8 @@
     {
         var key;
 
-        key = command.getAttribute("name") || null;
+        command = command || {};
+        key = command.name || null;
 
         if (key === null)
         {

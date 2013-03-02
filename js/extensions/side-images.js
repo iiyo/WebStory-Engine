@@ -54,7 +54,7 @@
             var tb, speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
             
             assets = game.interpreter.assets;
-            speakerName = data.command.getAttribute('s');
+            speakerName = data.command.s;
             speaker = assets[speakerName];
             ipName = speaker.asset.getAttribute('imagepack');
             
@@ -89,7 +89,7 @@
                 return;
             }
             
-            tb = assets[speaker.asset.getAttribute('textbox')];
+            tb = assets[speaker.textboxName];
             ip = assets[ipName];
             
             //console.log('Showing new imagepack...');

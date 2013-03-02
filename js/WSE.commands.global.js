@@ -35,8 +35,9 @@
     {
         var name, value;
 
-        name = command.getAttribute("name") || null;
-        value = command.getAttribute("value") || null;
+        command = command || {};
+        name = command.name || null;
+        value = command.value || null;
 
         if (name === null)
         {

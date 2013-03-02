@@ -44,8 +44,9 @@
             false
         );
 
-        sceneId = command.getAttribute("scene") || null;
-        doNext = command.getAttribute("next") === false ? false : true;
+        command = command || {};
+        sceneId = command.scene || null;
+        doNext = (command.next || "true") === "false" ? false : true;
 
         //console.log("doNext in .sub() is: ", doNext);
 

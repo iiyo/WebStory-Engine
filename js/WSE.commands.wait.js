@@ -44,8 +44,9 @@
             false
         );
 
+        command = command || {};
         self = interpreter;
-        duration = command.getAttribute("duration");
+        duration = command.duration || null;
 
         if (duration !== null)
         {

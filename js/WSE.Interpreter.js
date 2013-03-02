@@ -659,7 +659,8 @@
 
     out.Interpreter.prototype.runCommand = function (command)
     {
-        var tagName, ifvar, ifval, ifnot, varContainer, assetName, bus = this.bus;
+        var tagName, ifvar, ifval, ifnot, varContainer, assetName;
+        var bus = this.bus, parsedCommand;
 
         this.bus.trigger(
             "wse.interpreter.runcommand.before", 
@@ -750,6 +751,10 @@
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
+        
+        parsedCommand = out.tools.xmlToJs(command);
+        
+        console.log('command: ', parsedCommand);
 
         if (tagName in this.commands)
         {
@@ -764,7 +769,7 @@
             
             bus.trigger('game.commands.' + tagName);
             
-            return this.commands[tagName](command, this);
+            return this.commands[tagName](parsedCommand, this);
         }
         else if (
             assetName !== null 
@@ -775,7 +780,7 @@
         {
             bus.trigger('game.assets.' + assetName + '.' + tagName);
             
-            return this.assets[assetName][tagName](command, this);
+            return this.assets[assetName][tagName](parsedCommand, this);
         }
         else
         {

@@ -204,4 +204,34 @@
         }
     };
     
+    out.tools.xmlToJs = function (xml)
+    {
+        return (function toJs(node)
+        {
+            var js = {};
+            
+            [].forEach.call(node.attributes, function (attr)
+            {
+                js[attr.nodeName] = attr.nodeValue;
+            });
+            
+            if (node.childNodes)
+            {
+                js.content = (function ()
+                {
+                    var ser = new XMLSerializer(), nodes = node.childNodes, i, len, text = '';
+                    
+                    for (i = 0, len = nodes.length; i < len; i += 1)
+                    {
+                        text += ser.serializeToString(nodes[i]);
+                    }
+                    
+                    return text;
+                }());
+            }
+            
+            return js;
+        }(xml));
+    };
+    
 }(WSE));

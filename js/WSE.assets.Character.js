@@ -33,17 +33,39 @@
     
     out.assets.Character = function (asset, interpreter)
     {
+        var displayName
+        
         this.asset = asset;
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.id = out.tools.getUniqueId();
         this.name = asset.getAttribute('name');
+        this.textbox = asset.getAttribute('textbox');
+        
+        try 
+        {
+            [].forEach.call(asset.childNodes, function (node)
+            {
+                if (node.tagName && node.tagName === 'displayname')
+                {
+                    displayName = node.textContent;
+                }
+            });
+            
+            this.displayName = displayName;
+        }
+        catch (e)
+        {
+            console.log(e);
+            this.displayName = null;
+        }
+        
         this.bus.trigger("wse.assets.character.constructor", this);
     };
 
     out.assets.Character.prototype.setTextbox = function (command)
     {
-        this.asset.setAttribute("textbox", command.getAttribute("textbox"));
+        this.asset.setAttribute("textbox", command.textbox);
         this.bus.trigger("wse.assets.character.settextbox", this);
     };
 

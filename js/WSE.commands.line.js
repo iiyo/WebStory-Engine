@@ -33,8 +33,8 @@
     
     out.commands.line = function (command, interpreter)
     {
-        var speakerId, speakerName, textboxName, i, len, current;
-        var assetElements, text, doNext, bus = interpreter.bus;
+        var speakerId, speakerName, textboxName, character;
+        var text, doNext, bus = interpreter.bus;
 
         bus.trigger(
             "wse.interpreter.commands.line",
@@ -45,8 +45,9 @@
             false
         );
 
-        speakerId = command.getAttribute("s");
-        doNext = command.getAttribute("stop") === "false" ? true : false;
+        command = command || {};
+        speakerId = command.s;
+        doNext = (command.stop || "true") === "false" ? true : false;
 
         if (speakerId === null)
         {
@@ -63,41 +64,41 @@
             };
         }
 
-        assetElements = interpreter.story.getElementsByTagName("character");
-        len = assetElements.length;
+        character = interpreter.assets[speakerId];
         
-        for (i = 0; i < len; i += 1)
+        if (!character)
         {
-            current = assetElements[i];
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Element 'line' references unknown speaker."
+                }
+            );
             
-            if (current.getAttribute("name") === speakerId)
-            {
-                textboxName = current.getAttribute("textbox");
-                
-                if (typeof textboxName === "undefined" || textboxName === null)
-                {
-                    bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: command,
-                            message: "No textbox defined for character '" + speakerId + "'."
-                        }
-                    );
-                    
-                    return {
-                        doNext: true
-                    };
-                }
-                
-                try
-                {
-                    speakerName = current.getElementsByTagName("displayname")[0].childNodes[0].nodeValue;
-                }
-                catch (e) {}
-                
-                break;
-            }
+            return {
+                doNext: true
+            };
         }
+        
+        textboxName = character.textbox;
+                
+        if (!textboxName)
+        {
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "No textbox defined for character '" + speakerId + "'."
+                }
+            );
+            
+            return {
+                doNext: true
+            };
+        }
+        
+        speakerName = character.displayName;
 
         if (typeof interpreter.assets[textboxName] === "undefined")
         {
@@ -113,23 +114,9 @@
                 doNext: true
             };
         }
-
-        //text = new XMLSerializer().serializeToString(command);//command.childNodes[0].nodeValue;
         
-        (function ()
-        {
-            var ser = new XMLSerializer(), nodes = command.childNodes, i, len;
-            
-            text = '';
-            
-            for (i = 0, len = nodes.length; i < len; i += 1)
-            {
-                text += ser.serializeToString(nodes[i]);
-            }
-        }());
-        
-        interpreter.log.push({speaker: speakerId, text: text});
-        interpreter.assets[textboxName].put(text, speakerName);
+        interpreter.log.push({speaker: speakerId, text: command.content});
+        interpreter.assets[textboxName].put(command.content, speakerName);
         
         return {
             doNext: doNext,

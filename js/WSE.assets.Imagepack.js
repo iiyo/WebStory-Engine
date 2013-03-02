@@ -146,9 +146,10 @@
         var image, name, self, old, duration, isAnimation, bus = this.bus;
 
         args = args || {};
+        command = command || {};
         self = this;
-        name = command.getAttribute("image");
-        duration = command.getAttribute("duration") || 400;
+        name = command.image;
+        duration = command.duration || 400;
         isAnimation = args.animation === true ? true : false;
 
         if (name === null)

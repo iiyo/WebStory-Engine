@@ -38,12 +38,13 @@
 
         args = args || {};
         self = this;
+        command = command || {};
         element = document.getElementById(this.cssid);
-        x = command.getAttribute("x");
-        y = command.getAttribute("y");
-        z = command.getAttribute("z");
-        duration = command.getAttribute("duration") || 500;
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        x = command.x || null;
+        y = command.y || null;
+        z = command.z || null;
+        duration = command.duration || 500;
+        easingType = command.easing || "sineEaseOut";
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;
@@ -62,7 +63,8 @@
             y = parseInt(y, 10);
         }
 
-        wait = command.getAttribute("wait") === "yes" ? true : false;
+        wait = command.wait || "no";
+        wait = wait === "yes" ? true : false;
         waitX = false;
         waitY = false;
         waitZ = false;

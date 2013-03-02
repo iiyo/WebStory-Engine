@@ -35,7 +35,7 @@
     {
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, j, jlen, currentScene, sceneName;
-        var makeButtonClickFn, oldState, cssid;
+        var makeButtonClickFn, oldState, cssid, dom;
 
         interpreter.bus.trigger(
             "wse.interpreter.commands.choice",
@@ -52,11 +52,15 @@
         buttons = [];
         scenes = [];
         self = interpreter;
-        children = command.getElementsByTagName("option");
+        dom = new DOMParser().parseFromString('<wse>' + command.content + '</wse>', "application/xml");
+        children = dom.getElementsByTagName("option");
         len = children.length;
-        duration = command.getAttribute("duration") || 500;
+        duration = command.duration || 500;
         duration = parseInt(duration, 10);
-        cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
+        cssid = command.cssid || "WSEChoiceMenu";
+        
+        console.log("dom:", dom);
+        console.log("children:", children);
 
         makeButtonClickFn = function (cur, me, sc)
         {

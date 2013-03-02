@@ -44,9 +44,10 @@
             false
         );
 
-        key = command.getAttribute("name") || null;
-        val = command.getAttribute("value") || null;
-        action = command.getAttribute("action") || "set";
+        command = command || {};
+        key = command.name || null;
+        val = command.value || null;
+        action = command.action || "set";
 
         if (key === null)
         {

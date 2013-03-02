@@ -46,8 +46,9 @@
             false
         );
 
-        assetName = command.getAttribute("asset");
-        action = command.getAttribute("action");
+        command = command || {};
+        assetName = command.asset;
+        action = command.action;
         isAnimation = args.animation || false;
 
         if (assetName === null)

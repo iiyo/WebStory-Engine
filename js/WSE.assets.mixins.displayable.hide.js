@@ -39,13 +39,15 @@
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        effect = command.getAttribute("effect") || "fade";
-        direction = command.getAttribute("direction") || "left";
+        command = command || {};
+        wait = command.wait || "no";
+        wait = wait === "yes" ? true : false;
+        duration = command.duration || 500;
+        effect = command.effect || "fade";
+        direction = command.direction || "left";
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easingType = command.easing || "sineEaseOut";
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;

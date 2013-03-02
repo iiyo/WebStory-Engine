@@ -35,8 +35,9 @@
     {
         var name, varName, ret;
         
-        name = command.getAttribute("name") || null;
-        varName = command.getAttribute("tovar") || null;
+        command = command || {};
+        name = command.name || null;
+        varName = command.tovar || null;
 
         if (typeof out.functions[name] !== "function")
         {
