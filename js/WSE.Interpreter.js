@@ -1197,11 +1197,11 @@
         }
 
         savegame = JSON.parse(savegame);
+        this.stage.innerHTML = savegame.screenContents;
 
         this.restoreSaveGame(savegame.saves);
 
         this.startTime = savegame.startTime;
-        this.stage.innerHTML = savegame.screenContents;
         this.runVars = savegame.runVars;
         this.log = savegame.log;
         this.visitedScenes = savegame.visitedScenes;
