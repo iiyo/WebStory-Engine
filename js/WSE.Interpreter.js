@@ -104,7 +104,7 @@
         
         // Each game must have it's own unique storage key so that multiple
         // games can be run on the same web page.
-        key = "wse_globals_" + this.game.url + "_";
+        key = "wse_globals_" + location.pathname + "_" + this.game.url + "_";
 
         /** @var Stores global variables. That is, variables that will
          *   be remembered independently of the current state of the game.
@@ -1051,12 +1051,13 @@
         savegame.listenersSubscribed = this.game.listenersSubscribed;
         savegame.callStack = this.callStack;
         savegame.waitCounter = this.waitCounter;
+        savegame.pathname = location.pathname;
 
         key = this.buildSavegameId(name);
 
         json = JSON.stringify(savegame);
 
-        listKey = "wse_" + savegame.gameUrl + "_savegames_list";
+        listKey = "wse_" + savegame.pathname + "_" + savegame.gameUrl + "_savegames_list";
 
         savegameList = JSON.parse(this.datasource.get(listKey));
         savegameList = savegameList || [];
@@ -1110,7 +1111,7 @@
     {
         var json, key, names, i, len, out;
         
-        key = "wse_" + this.game.url + "_savegames_list";
+        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
         json = this.datasource.get(key);
         
         if (json === null)
@@ -1151,7 +1152,7 @@
         var vars = {};
         
         vars.name = name;
-        vars.id = "wse_" + this.game.url + "_savegame_" + name;
+        vars.id = "wse_" + location.pathname + "_" + this.game.url + "_savegame_" + name;
 
         this.bus.trigger(
             "wse.interpreter.save.before",
@@ -1311,7 +1312,7 @@
     {
         var sgs, key, index, json, id;
 
-        key = "wse_" + this.game.url + "_savegames_list";
+        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
         json = this.datasource.get(key);
         
         if (json === null)
@@ -1326,7 +1327,7 @@
         if (index >= 0)
         {
             sgs.splice(index, 1);
-            this.datasource.set("wse_" + this.game.url + "_savegames_list", JSON.stringify(sgs));
+            this.datasource.set("wse_" + location.pathname + "_" + this.game.url + "_savegames_list", JSON.stringify(sgs));
             this.datasource.remove(id);
             
             return true;
