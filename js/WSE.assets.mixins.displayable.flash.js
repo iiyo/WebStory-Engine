@@ -46,7 +46,8 @@
      */
     out.assets.mixins.displayable.flash = function (command, args)
     {
-        var self, duration, wait, bus, stage, element, isAnimation, maxOpacity, fx = out.fx;
+        var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
+        var fx = out.fx, visible;
 
         args = args || {};
         self = this;
@@ -73,6 +74,7 @@
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
+        visible = (+(element.style.opacity.replace(/[^0-9\.]/, ""))) > 0 ? true : false;
 
         if (!isAnimation)
         {
@@ -84,8 +86,8 @@
             {
                 element.style.opacity = v;
             },
-            0,
-            maxOpacity,
+            visible ? maxOpacity : 0,
+            visible ? 0 : maxOpacity,
             {
                 duration: duration / 3,
                 onFinish: function ()
@@ -108,7 +110,7 @@
                         easing: fx.easing.easeInQuad
                     };
                 
-                    fx.transform(tranformFn, maxOpacity, 0, argsObj);
+                    fx.transform(tranformFn, visible ? 0 : maxOpacity, visible ? maxOpacity : 0, argsObj);
                 },
                 easing: fx.easing.easeInQuad
             }
