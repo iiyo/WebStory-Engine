@@ -44,6 +44,7 @@
         this.element.setAttribute("id", this.cssid);
         this.element.setAttribute("class", "WSEBackground");
         this.element.style.position = "absolute";
+        this.element.draggable = false;
         s.left = 0;
         s.top = 0;
         s.opacity = 0;
