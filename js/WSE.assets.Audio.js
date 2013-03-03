@@ -185,7 +185,7 @@
                 track.src = trackFiles.ogg;
             }
             
-            document.body.appendChild(track);
+            interpreter.stage.appendChild(track);
 
             this.tracks[trackName] = track;
         }
@@ -203,7 +203,7 @@
             
             try
             {
-                document.body.removeChild(self.current);
+                interpreter.stage.removeChild(self.current);
             }
             catch (e)
             {
@@ -213,7 +213,7 @@
             dupl.src = src;
             self.current = dupl;
             self.tracks[self.currentIndex] = dupl;
-            document.body.appendChild(dupl);
+            interpreter.stage.appendChild(dupl);
         };
 
         /**
@@ -548,7 +548,9 @@
         
         if (this.isPlaying)
         {
+            this.fade = false;
             this.play();
+            this.fade = vals.fade;
         }
         else
         {
