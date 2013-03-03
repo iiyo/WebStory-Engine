@@ -50,7 +50,7 @@
         this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
         this.id = out.tools.getUniqueId();
-        this.cssid = "wse_textbox_" + this.id;
+        this.cssid = "wse_textbox_" + this.name;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
         this.speed = parseInt(this.speed, 10);
