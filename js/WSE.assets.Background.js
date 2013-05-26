@@ -55,16 +55,17 @@
     {
         var self = this;
         
+        asset = out.tools.xmlToJs(asset);
         this.asset = asset;
         this.interpreter = interpreter;
         this.bus = interpreter.bus;
         this.stage = interpreter.stage;
-        this.z = asset.getAttribute("z") || 10;
+        this.z = asset.z || 10;
         this.id = engine.tools.getUniqueId();
         this.cssid = "WSEBackground_" + this.id;
         this.element = document.createElement("img");
-        this.src = asset.getAttribute('src');
-        this.name = asset.getAttribute('name');
+        this.src = asset.src;
+        this.name = asset.name;
         
         if (!this.src)
         {

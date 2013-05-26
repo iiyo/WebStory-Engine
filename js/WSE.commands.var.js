@@ -40,7 +40,7 @@
             {
                 interpreter: interpreter,
                 command: command
-            }, 
+            },
             false
         );
 

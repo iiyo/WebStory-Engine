@@ -65,8 +65,8 @@
     {
         var x, y;
         
-        x = asset.getAttribute('x') || "";
-        y = asset.getAttribute('y') || "";
+        x = asset.x || "";
+        y = asset.y || "";
         obj.xUnit = x.replace(/^.*(px|%)$/, '$1');
         obj.xUnit = obj.xUnit || 'px';
         obj.yUnit = y.replace(/^.*(px|%)$/, '$1');
@@ -100,6 +100,9 @@
         f1 = function ()
         {
             var name = arguments[1];
+            
+            console.log("INTER");
+            console.log(interpreter.globalVars);
             
             if (interpreter.globalVars.has(name))
             {

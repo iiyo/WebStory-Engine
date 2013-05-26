@@ -41,17 +41,23 @@
             return new out.assets.Animation(asset, interpreter);
         }
 
+        // HACK - remove this later
+        var origAsset = asset;
+        asset = out.tools.xmlToJs(asset);
+
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.asset = asset;
-        this.name = asset.getAttribute("name");
+        this.name = asset.name;
         this.cbs = [];
         this.assets = interpreter.assets;
         this.id = out.tools.getUniqueId();
         this.isRunning = false;
 
         self = this;
-        groups = this.asset.getElementsByTagName("group");
+        
+        // HACK - remove this later
+        groups = origAsset.getElementsByTagName("group");
         len = groups.length;
 
         if (len < 1)
@@ -81,9 +87,9 @@
         {
             var curDur, curDoEl;
 
-            curDoEl = del;
-            curDur = curDoEl.getAttribute("duration");
-            //                     console.log("Running do command.");
+            curDoEl = out.tools.xmlToJs(del);
+            curDur = curDoEl.duration;
+            //                             console.log("Running do command.");
             interpreter.commands["do"](curDoEl, interpreter,
             {
                 animation: true
@@ -117,7 +123,7 @@
                         continue;
                     }
 
-                    curAsName = curTr.getAttribute("asset");
+                    curAsName = curTr.asset;
 
                     try
                     {
@@ -128,13 +134,13 @@
                         continue;
                     }
 
-                    easingType = curTr.getAttribute("easing");
+                    easingType = curTr.easing;
                     //                     console.log(curAsName, curAs);
-                    from = parseInt(curTr.getAttribute("from"), 10);
-                    to = parseInt(curTr.getAttribute("to"), 10);
-                    unit = curTr.getAttribute("unit") || "";
-                    dur = curTr.getAttribute("duration") || 500;
-                    propName = curTr.getAttribute("property");
+                    from = parseInt(curTr.from, 10);
+                    to = parseInt(curTr.to, 10);
+                    unit = curTr.unit || "";
+                    dur = curTr.duration || 500;
+                    propName = curTr.property;
                     opt = {};
                     opt.duration = dur;
 

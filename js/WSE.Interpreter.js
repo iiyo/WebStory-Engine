@@ -688,8 +688,7 @@
                     "wse.interpreter.warning",
                     {
                         element: command,
-                        message: "Unknown variable '" + ifvar + "' (" + ifscope + 
-                            " scope) used in condition. Ignoring command."
+                        message: "Unknown variable '" + ifvar + "' used in condition. Ignoring command."
                     }
                 );
                 

@@ -42,7 +42,7 @@
             {
                 interpreter: interpreter,
                 command: command
-            }, 
+            },
             false
         );
 
@@ -69,6 +69,9 @@
             return function (ev)
             {
                 var noHide;
+                
+                console.log("CHOICE");
+                console.log(cur);
 
                 noHide = cur.getAttribute("hide") === "false" ? true : false;
 
