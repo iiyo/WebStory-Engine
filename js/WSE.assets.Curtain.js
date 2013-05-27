@@ -33,7 +33,6 @@
     
     out.assets.Curtain = function (asset, interpreter)
     {
-        asset = out.tools.xmlToJs(asset);
         this.asset = asset;
         this.interpreter = interpreter;
         this.bus = interpreter.bus;

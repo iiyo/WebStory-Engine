@@ -41,7 +41,6 @@
 
         var element, nameElement, textElement, cssid, x, y, width, height;
 
-        asset = out.tools.xmlToJs(asset);
         this.interpreter = interpreter;
         this.name = asset.name;
         this.stage = interpreter.stage;

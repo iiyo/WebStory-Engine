@@ -42,10 +42,6 @@
         var element, images, children, i, len, current, name;
         var src, image, self, triggerDecreaseFn, width, height;
 
-        // HACK - remove this later
-        var origAsset = asset;
-        asset = out.tools.xmlToJs(asset);
-
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.name = asset.name;
@@ -66,8 +62,7 @@
         element.setAttribute("class", "imagepack");
         element.setAttribute("id", this.cssid);
 
-        // HACK - remove this later
-        children = origAsset.getElementsByTagName("image");
+        children = asset.content.getElementsByTagName("image");
 
         triggerDecreaseFn = function ()
         {

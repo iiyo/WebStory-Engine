@@ -101,9 +101,6 @@
         {
             var name = arguments[1];
             
-            console.log("INTER");
-            console.log(interpreter.globalVars);
-            
             if (interpreter.globalVars.has(name))
             {
                 return "" + interpreter.globalVars.get(name);
@@ -236,5 +233,31 @@
             return js;
         }(xml));
     };
+
+    // Converts strings into XML objects, needed to handle the nested elements within XML tags
+    out.tools.stringToXml = function (string)	
+    {
+		return (function toXml(str)
+		{
+			var parser, xmlDoc;
+			
+			// correctly handle multiple tags by enclosing them in a single tag
+			str = "<wse>" + str + "</wse>";
+			
+			if (window.DOMParser)
+			{
+				  xmlDoc = new DOMParser().parseFromString(str,"text/xml");
+			}
+			
+			else // Internet Explorer
+			{
+				  xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+				  xmlDoc.async = false;
+				  xmlDoc.loadXML(str);
+			}
+
+			return xmlDoc;
+		}(string));
+	};
     
 }(WSE));

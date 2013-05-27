@@ -9,10 +9,7 @@
     engine.assets.Rectangle = function (asset, interpreter)
     {
         var el, id, cssid, width, height, x, y, z, color;
-        
-        asset = out.tools.xmlToJs(asset);
-        console.log("RECT");
-        console.log(asset);
+
         // generate a unique ID for this asset:
         id = engine.tools.getUniqueId();
         

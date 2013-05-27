@@ -21,9 +21,7 @@
     engine.assets.CanvasImagePack = function (asset, interpreter)
     {
         var el, id, cssid, width, height, x, y, z, color;
-        
-        asset = out.tools.xmlToJs(asset);
-        
+                
         // generate a unique ID for this asset:
         id = engine.tools.getUniqueId();
         

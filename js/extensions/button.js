@@ -8,8 +8,6 @@
     {
         var el, id, cssid, width, height, x, y, z, clickFn, text;
         
-        asset = out.tools.xmlToJs(asset);
-        
         // generate a unique ID for this asset:
         id = engine.tools.getUniqueId();
         

@@ -907,6 +907,7 @@
     out.Interpreter.prototype.createAsset = function (asset)
     {
         var name, type, self, bus = this.bus;
+        var xmlObj; // temporary, for use with XML DOM conversion
 
         bus.trigger(
             "wse.interpreter.createasset",
@@ -962,6 +963,14 @@
 
         if (type in out.assets)
         {
+            // convert asset from XML to JS object
+            asset = out.tools.xmlToJs(asset);
+
+            if (typeof asset.content !== 'undefined') 
+			{
+                asset.content = out.tools.stringToXml(asset.content);
+            }
+            
             this.assets[name] = new out.assets[type](asset, this);
             return;
         }

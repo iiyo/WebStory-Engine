@@ -45,11 +45,6 @@
         var trackFiles, href, type, source, tracks, bus;
 
         bus = interpreter.bus;
-        
-        // HACK - remove this later
-        var origAsset = asset;
-        asset = out.tools.xmlToJs(asset);
-        
         self = this;
         this.au = new Audio();
         this.au.setAttribute("preload", "auto");
@@ -63,8 +58,7 @@
         this.fade = asset.fade === "true" ? true : false;
         this.id = out.tools.getUniqueId();
 
-		// HACK - remove this later
-        tracks = origAsset.getElementsByTagName("track");
+        tracks = asset.content.getElementsByTagName("track");
         len = tracks.length;
 
         if (len < 1)

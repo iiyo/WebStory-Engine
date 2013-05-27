@@ -55,7 +55,6 @@
     {
         var self = this;
         
-        asset = out.tools.xmlToJs(asset);
         this.asset = asset;
         this.interpreter = interpreter;
         this.bus = interpreter.bus;

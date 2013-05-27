@@ -33,9 +33,8 @@
     
     out.assets.Character = function (asset, interpreter)
     {
-        var displayName
+        var displayName;
         
-        asset = out.tools.xmlToJs(asset);
         this.asset = asset;
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;

@@ -41,10 +41,6 @@
             return new out.assets.Animation(asset, interpreter);
         }
 
-        // HACK - remove this later
-        var origAsset = asset;
-        asset = out.tools.xmlToJs(asset);
-
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.asset = asset;
@@ -56,8 +52,7 @@
 
         self = this;
         
-        // HACK - remove this later
-        groups = origAsset.getElementsByTagName("group");
+        groups = asset.content.getElementsByTagName("group");
         len = groups.length;
 
         if (len < 1)
