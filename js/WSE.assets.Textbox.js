@@ -42,17 +42,17 @@
         var element, nameElement, textElement, cssid, x, y, width, height;
 
         this.interpreter = interpreter;
-        this.name = asset.getAttribute("name");
+        this.name = asset.name;
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
-        this.type = asset.getAttribute("behaviour") || "adv";
-        this.z = asset.getAttribute("z") || 5000;
-        this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
-        this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
+        this.type = asset.behaviour || "adv";
+        this.z = asset.z || 5000;
+        this.showNames = asset.namebox === "yes" ? true : false;
+        this.nltobr = asset.nltobr === "true" ? true : false;
         this.id = out.tools.getUniqueId();
         this.cssid = "wse_textbox_" + this.name;
-        this.effectType = asset.getAttribute("effect") || "typewriter";
-        this.speed = asset.getAttribute("speed") || 0;
+        this.effectType = asset.effect || "typewriter";
+        this.speed = asset.speed || 0;
         this.speed = parseInt(this.speed, 10);
         
         out.tools.applyAssetUnits(this, asset);
@@ -100,25 +100,25 @@
         textElement.setAttribute("class", "text");
         nameElement.setAttribute("class", "name");
 
-        cssid = asset.getAttribute("cssid") || this.cssid;
+        cssid = asset.cssid || this.cssid;
         element.setAttribute("id", cssid);
         this.cssid = cssid;
 
-        x = asset.getAttribute("x");
+        x = asset.x;
         if (x)
         {
             element.style.left = x;
         }
 
-        y = asset.getAttribute("y");
+        y = asset.y;
         if (y)
         {
             element.style.top = y;
         }
 
         element.style.zIndex = this.z;
-        width = asset.getAttribute("width");
-        height = asset.getAttribute("height");
+        width = asset.width;
+        height = asset.height;
         
         if (width)
         {

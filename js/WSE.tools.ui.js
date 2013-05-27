@@ -354,10 +354,10 @@
         return function (command, interpreter)
         {
             var title, message, container, key, doNext;
-            title = command.getAttribute("title") || "Input required...";
-            message = command.getAttribute("message") || "Your input is required:";
-            key = command.getAttribute("var") || null;
-            doNext = command.getAttribute("next") === "false" ? false : true;
+            title = command.title || "Input required...";
+            message = command.message || "Your input is required:";
+            key = command.var || null;
+            doNext = command.next === "false" ? false : true;
             
             if (key === null)
             {
@@ -394,9 +394,9 @@
     module.commands.alert = function (command, interpreter)
     {
         var title, message, doNext;
-        title = command.getAttribute("title") || "Alert!";
-        message = command.getAttribute("message") || "Alert!";
-        doNext = command.getAttribute("next") === "false" ? false : true;
+        title = command.title || "Alert!";
+        message = command.message || "Alert!";
+        doNext = command.next === "false" ? false : true;
         module.tools.ui.alert(
             interpreter,
             {

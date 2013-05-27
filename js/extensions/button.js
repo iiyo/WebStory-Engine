@@ -12,13 +12,13 @@
         id = engine.tools.getUniqueId();
         
         // read the preferences from the definition:
-        width = asset.getAttribute("width") || "20px";
-        height = asset.getAttribute("height") || "20px";
-        x = asset.getAttribute("x") || 0;
-        y = asset.getAttribute("y") || 0;
-        z = asset.getAttribute("z") || 10000;
-        cssid = asset.getAttribute("cssid") || "WSEButton" + id;
-        text = asset.getAttribute("text") || "";
+        width = asset.width || "20px";
+        height = asset.height || "20px";
+        x = asset.x || 0;
+        y = asset.y || 0;
+        z = asset.z || 10000;
+        cssid = asset.cssid || "WSEButton" + id;
+        text = asset.text || "";
         engine.tools.applyAssetUnits(this, asset);
         
         el = document.createElement("div");
