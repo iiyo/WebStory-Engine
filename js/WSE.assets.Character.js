@@ -33,14 +33,14 @@
     
     out.assets.Character = function (asset, interpreter)
     {
-        var displayName
+        var displayName;
         
         this.asset = asset;
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.id = out.tools.getUniqueId();
-        this.name = asset.getAttribute('name');
-        this.textbox = asset.getAttribute('textbox');
+        this.name = asset.name;
+        this.textbox = asset.textbox;
         
         try 
         {
@@ -73,7 +73,7 @@
     {
         var obj = {
             assetType: "Character",
-            textboxName: this.asset.getAttribute("textbox")
+            textboxName: this.asset.textbox
         };
         
         this.bus.trigger(
@@ -89,7 +89,7 @@
 
     out.assets.Character.prototype.restore = function (obj)
     {
-        this.asset.setAttribute("textbox", obj.textboxName);
+        this.asset.textbox = obj.textboxName;
         this.bus.trigger(
             "wse.assets.character.restore",
             {

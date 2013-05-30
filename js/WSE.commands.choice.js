@@ -42,7 +42,7 @@
             {
                 interpreter: interpreter,
                 command: command
-            }, 
+            },
             false
         );
 
@@ -52,15 +52,16 @@
         buttons = [];
         scenes = [];
         self = interpreter;
-        dom = new DOMParser().parseFromString('<wse>' + command.content + '</wse>', "application/xml");
+        dom = out.tools.stringToXml(command.content);
+        
         children = dom.getElementsByTagName("option");
         len = children.length;
         duration = command.duration || 500;
         duration = parseInt(duration, 10);
         cssid = command.cssid || "WSEChoiceMenu";
         
-        console.log("dom:", dom);
-        console.log("children:", children);
+        //         console.log("dom:", dom);
+        //         console.log("children:", children);
 
         makeButtonClickFn = function (cur, me, sc)
         {
@@ -70,7 +71,7 @@
             {
                 var noHide;
 
-                noHide = cur.getAttribute("hide") === "false" ? true : false;
+                noHide = cur.hide === "false" ? true : false;
 
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -79,13 +80,14 @@
                     function ()
                     {
                         var cmds, i, len, noNext;
-                        noNext = cur.getAttribute("next") === "false" ? true : false;
-                        cmds = cur.getElementsByTagName("var");
+                        noNext = cur.next === "false" ? true : false;
+                        cmds = out.tools.stringToXml(cur.content);
+                        cmds = cmds.getElementsByTagName("var");
                         len = cmds.length;
 
                         for (i = 0; i < len; i += 1)
                         {
-                            self.commands["var"](cmds[i], self);
+                            self.commands["var"](out.tools.xmlToJs(cmds[i]), self);
                         }
 
                         if (sc !== null)
@@ -139,14 +141,14 @@
 
         for (i = 0; i < len; i += 1)
         {
-            current = children[i];
+            current = out.tools.xmlToJs(children[i]);
             currentButton = document.createElement("input");
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
-            currentButton.setAttribute("value", current.getAttribute("label"));
-            currentButton.value = current.getAttribute("label");
-            sceneName = current.getAttribute("scene") || null;
+            currentButton.setAttribute("value", current.label);
+            currentButton.value = current.label;
+            sceneName = current.scene || null;
             
             for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
             {

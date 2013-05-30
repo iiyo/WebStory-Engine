@@ -35,6 +35,9 @@
  * the character says something and hidden when someone else
  * says something.
  */
+
+// NOTE: This is broken until the asset.getAttribute stuff can be removed
+
 (function (engine)
 {
     "use strict";

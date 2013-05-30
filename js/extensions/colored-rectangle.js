@@ -9,18 +9,18 @@
     engine.assets.Rectangle = function (asset, interpreter)
     {
         var el, id, cssid, width, height, x, y, z, color;
-        
+
         // generate a unique ID for this asset:
         id = engine.tools.getUniqueId();
         
         // read the preferences from the definition:
-        width = asset.getAttribute("width") || "200px";
-        height = asset.getAttribute("height") || "100px";
-        x = asset.getAttribute("x") || 0;
-        y = asset.getAttribute("y") || 0;
-        z = asset.getAttribute("z") || 10000;
-        color = asset.getAttribute("color") || "red";
-        cssid = asset.getAttribute("cssid") || "WseRectangle" + id;
+        width = asset.width || "200px";
+        height = asset.height || "100px";
+        x = asset.x || 0;
+        y = asset.y || 0;
+        z = asset.z || 10000;
+        color = asset.color || "red";
+        cssid = asset.cssid || "WseRectangle" + id;
         engine.tools.applyAssetUnits(this, asset);
         
         el = document.createElement("div");

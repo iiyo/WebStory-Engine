@@ -44,17 +44,17 @@
 
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
-        this.name = asset.getAttribute("name");
+        this.name = asset.name;
         this.id = out.tools.getUniqueId();
-        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.id;
+        this.cssid = asset.cssid || "wse_imagepack_" + this.id;
         this.interpreter = interpreter;
         out.tools.applyAssetUnits(this, asset);
 
         self = this;
         images = {};
         element = document.createElement("div");
-        width = asset.getAttribute('width');
-        height = asset.getAttribute('height');
+        width = asset.width;
+        height = asset.height;
 
         element.style.opacity = 0;
         element.draggable = false;
@@ -62,7 +62,7 @@
         element.setAttribute("class", "imagepack");
         element.setAttribute("id", this.cssid);
 
-        children = asset.getElementsByTagName("image");
+        children = asset.content.getElementsByTagName("image");
 
         triggerDecreaseFn = function ()
         {
@@ -127,9 +127,9 @@
         }
 
         element.style.position = "absolute";
-        element.style.left = asset.getAttribute("x") || 0;
-        element.style.top = asset.getAttribute("y") || 0;
-        element.style.zIndex = asset.getAttribute("z") || 0;
+        element.style.left = asset.x || 0;
+        element.style.top = asset.y || 0;
+        element.style.zIndex = asset.z || 0;
 
         this.images = images;
         this.current = null;

@@ -49,16 +49,16 @@
         this.au = new Audio();
         this.au.setAttribute("preload", "auto");
         this.bus = bus;
-        this.name = asset.getAttribute("name");
+        this.name = asset.name;
         this.tracks = {};
         this.current = null;
         this.currentIndex = null;
-        this.autopause = asset.getAttribute("autopause") === "true" ? true : false;
-        this.loop = asset.getAttribute("loop") === "true" ? true : false;
-        this.fade = asset.getAttribute("fade") === "true" ? true : false;
+        this.autopause = asset.autopause === "true" ? true : false;
+        this.loop = asset.loop === "true" ? true : false;
+        this.fade = asset.fade === "true" ? true : false;
         this.id = out.tools.getUniqueId();
 
-        tracks = asset.getElementsByTagName("track");
+        tracks = asset.content.getElementsByTagName("track");
         len = tracks.length;
 
         if (len < 1)

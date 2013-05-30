@@ -37,12 +37,12 @@
         this.interpreter = interpreter;
         this.bus = interpreter.bus;
         this.stage = interpreter.stage;
-        this.color = asset.getAttribute("color") || "black";
-        this.z = asset.getAttribute("z") || 20000;
+        this.color = asset.color || "black";
+        this.z = asset.z || 20000;
         this.id = out.tools.getUniqueId();
         this.cssid = "WSECurtain_" + this.id;
         this.element = document.createElement("div");
-        this.name = asset.getAttribute('name');
+        this.name = asset.name;
 
         this.element.setAttribute("id", this.cssid);
         this.element.setAttribute("class", "WSECurtain");
@@ -61,7 +61,8 @@
 
     out.assets.Curtain.prototype.set = function (asset)
     {
-        this.color = asset.getAttribute("color") || "black";
+        asset = out.tools.xmlToJs(asset);
+        this.color = asset.color || "black";
         this.element.style.backgroundColor = this.color;
     };
 
