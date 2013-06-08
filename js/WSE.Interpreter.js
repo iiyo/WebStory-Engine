@@ -159,7 +159,7 @@
             '<div class="container">' + 
                 '<div class="heading">' + 
                     '<span id="WSELoadingScreenPercentage"></span>' + 
-                    'Loading assets...' + 
+                    'Loading...' + 
                 '</div>' + 
                 '<div class="progressBar">' + 
                     '<div class="progress" id="WSELoadingScreenProgress" style="width: 100%;">' + 
@@ -796,6 +796,76 @@
                 {
                     interpreter: this,
                     command: command
+                },
+                false
+            );
+            
+            return {
+                doNext: true
+            };
+        }
+    };
+
+	// Extra method for direct command input
+
+    out.Interpreter.prototype.runCommandDirect = function (command)
+    {
+        var tagName, ifvar, ifval, ifnot, varContainer, assetName;
+        var bus = this.bus, parsedCommand;
+
+        this.bus.trigger(
+            "wse.interpreter.runcommand.before",
+            {
+                interpreter: this,
+                command: command
+            },
+            false
+        );
+
+        tagName = command.ty;
+        assetName = command.asset || null;
+
+        if (tagName in this.commands)
+        {
+            bus.trigger(
+                "wse.interpreter.runcommand.after.command",
+                {
+                    interpreter: this,
+                    command: command
+                }, 
+                false
+            );
+            
+            bus.trigger('game.commands.' + tagName);
+            
+            return this.commands[tagName](command, this);
+        }
+        else if (
+            assetName !== null 
+            && assetName in this.assets 
+            && typeof this.assets[assetName][tagName] === "function" 
+            && tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
+        )
+        {
+            bus.trigger('game.assets.' + assetName + '.' + tagName);
+            
+            return this.assets[assetName][tagName](parsedCommand, this);
+        }
+        else
+        {
+            bus.trigger(
+                "wse.interpreter.warning",
+                {
+                    element: command,
+                    message: "Unknown element '" + tagName + "'."
+                }
+            );
+            
+            bus.trigger(
+                "wse.interpreter.runcommand.after.error",
+                {
+                    interpreter: this,
+                    command: command
                 }, 
                 false
             );
@@ -805,6 +875,8 @@
             };
         }
     };
+
+	// End extra method
 
     out.Interpreter.prototype.commands = {};
     out.commands = out.Interpreter.prototype.commands;
@@ -976,7 +1048,7 @@
         }
         else
         {
-            console.log(out.assets);
+            // console.log(out.assets);
             bus.trigger(
                 "wse.interpreter.warning",
                 {

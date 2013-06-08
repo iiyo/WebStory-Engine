@@ -16,6 +16,9 @@
         <script>
             var game = new WSE.Game({ url: "game.xml", debug: true, host: typeof HOST === "undefined" ? false : HOST });
             game.start();
+			console.log(game);
+			setTimeout(function () { game.interpreter.runCommandDirect({ "ty" : "line", "content": "Hello World", "s": "n" }) }, 5000);
+			// Doesn't work WSE.commands.line({"s" : "n", "content" : "Testing 123."}, game);
         </script>
     </body>
 </html>

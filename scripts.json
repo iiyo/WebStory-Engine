@@ -26,6 +26,7 @@
         "js/WSE.assets.Textbox.js",
         "js/WSE.assets.Background.js",
 
+        "js/WSE.commands.assets.js",
         "js/WSE.commands.break.js",
         "js/WSE.commands.choice.js",
         "js/WSE.commands.do.js",

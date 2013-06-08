@@ -208,7 +208,7 @@
     {
         return (function toJs(node)
         {
-            var js = {};
+            var js = { "ty" : node.nodeName };
             
             [].forEach.call(node.attributes, function (attr)
             {
