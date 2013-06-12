@@ -208,25 +208,41 @@
     {
         return (function toJs(node)
         {
-            var js = { "ty" : node.nodeName };
-            
+            var js = { "type" : node.nodeName }, getInnerHTML;
+
+			getInnerHTML = function (node)
+			{
+				var ser = new XMLSerializer(), innerHTML = "", children = node.childNodes, child; 
+				for (child in children) {
+					innerHTML += ser.serializeToString(children[child]);
+				}
+				return innerHTML;
+			};
+
             [].forEach.call(node.attributes, function (attr)
             {
                 js[attr.nodeName] = attr.nodeValue;
-            });
+            });           
             
-            if (node.childNodes)
+            if (node.nodeName === "line") {
+				//js.text = node.textContent;
+				js.text = getInnerHTML(node);
+			}
+            
+            else if (node.childNodes)
             {
-                js.content = (function ()
+                js.items = (function ()
                 {
-                    var ser = new XMLSerializer(), nodes = node.childNodes, i, len, text = '';
+                    var nodes = node.childNodes, i, len, items = [];
                     
                     for (i = 0, len = nodes.length; i < len; i += 1)
                     {
-                        text += ser.serializeToString(nodes[i]);
+                        if (nodes[i].nodeName !== "#text" && nodes[i].nodeName !== "#comment") 
+                        {
+							items.push(toJs(nodes[i]));
+						}
                     }
-                    
-                    return text;
+                    return items;
                 }());
             }
             
@@ -235,7 +251,7 @@
     };
 
     // Converts strings into XML objects, needed to handle the nested elements within XML tags
-    out.tools.stringToXml = function (string)	
+    /*out.tools.stringToXml = function (string)
     {
 		return (function toXml(str)
 		{
@@ -258,6 +274,6 @@
 
 			return xmlDoc;
 		}(string));
-	};
+	};*/
     
 }(WSE));

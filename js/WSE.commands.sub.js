@@ -72,12 +72,13 @@
         );
 
         interpreter.pushToCallStack();
-        scene = interpreter.getSceneById(sceneId);
+        //scene = interpreter.getSceneById(sceneId);
+        interpreter.changeScene(interpreter.getSceneById(sceneId));
 
-        interpreter.currentCommands = scene.childNodes;
+        /*interpreter.currentCommands = scene.childNodes;
         interpreter.index = -1;
         interpreter.sceneId = sceneId;
-        interpreter.currentElement = -1;
+        interpreter.currentElement = -1;*/
 
         return {
             doNext: doNext

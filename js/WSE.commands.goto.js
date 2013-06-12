@@ -61,7 +61,7 @@
         {
             current = interpreter.scenes[i];
             
-            if (current.getAttribute("id") === sceneName)
+            if (current.id === sceneName)
             {
                 scene = current;
                 break;

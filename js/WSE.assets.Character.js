@@ -42,7 +42,7 @@
         this.name = asset.name;
         this.textbox = asset.textbox;
         
-        try 
+        /*try 
         {
             [].forEach.call(asset.childNodes, function (node)
             {
@@ -58,14 +58,14 @@
         {
             console.log(e);
             this.displayName = null;
-        }
+        }*/
         
         this.bus.trigger("wse.assets.character.constructor", this);
     };
 
     out.assets.Character.prototype.setTextbox = function (command)
     {
-        this.asset.setAttribute("textbox", command.textbox);
+        this.asset.textbox = command.textbox;
         this.bus.trigger("wse.assets.character.settextbox", this);
     };
 

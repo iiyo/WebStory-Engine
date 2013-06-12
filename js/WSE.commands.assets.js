@@ -34,7 +34,7 @@
     out.commands.assets = function (command, interpreter)
     {
         var assets, len, i, cur;
-        //var createAsset, buildLoadingScreen, iself = this;
+        var createAsset;
 
 		interpreter.buildLoadingScreen();
 
@@ -52,7 +52,7 @@
 
         try
         {
-            assets = command.assets;
+            assets = command.items;
         }
         catch (e)
         {
@@ -66,83 +66,9 @@
 
         len = assets.length;
 
-        for (i = 0; i < len; i += 1)
-        {
-            cur = assets[i];
-            
-            if (cur.nodeType !== 1)
-            {
-                continue;
-            }
-            
-            this.createAsset(cur);
-        }
-        
-        this.bus.trigger("wse.assets.loading.finished");        
-        
-        return {
-            doNext: true
-        };
-
-
-/*
-		buildLoadingScreen = function ()
-		{
-			var loadScreen, self, fn;
-
-			loadScreen = document.createElement("div");
-			loadScreen.setAttribute("id", "WSELoadingScreen");
-			loadScreen.style.zIndex = 10000;
-			loadScreen.style.width = "100%";
-			loadScreen.style.height = "100%";
-
-			loadScreen.innerHTML = '' + 
-				'<div class="container">' + 
-					'<div class="heading">' + 
-						'<span id="WSELoadingScreenPercentage"></span>' + 
-						'Loading...' + 
-					'</div>' + 
-					'<div class="progressBar">' + 
-						'<div class="progress" id="WSELoadingScreenProgress" style="width: 100%;">' + 
-						'</div>' + 
-					'</div>' + 
-				'</div>';
-
-			interpreter.game.stage.appendChild(loadScreen);
-
-			fn = function ()
-			{
-				var el, el2, perc;
-				
-				try
-				{
-					el = document.getElementById("WSELoadingScreenProgress");
-					el2 = document.getElementById("WSELoadingScreenPercentage");
-					perc = parseInt((interpreter.assetsLoaded / interpreter.assetsLoadingMax) * 100, 10);
-					
-					if (interpreter.assetsLoadingMax < 1)
-					{
-						perc = 0;
-					}
-					
-					el.style.width = perc + "%";
-					el2.innerHTML = "" + interpreter.assetsLoaded + "/" + interpreter.assetsLoadingMax + " (" + perc + "%)";
-				}
-				catch (e)
-				{
-					//console.log("Element missing.");
-				}
-			};
-
-			this.bus.subscribe(fn, "wse.assets.loading.increase");
-			this.bus.subscribe(fn, "wse.assets.loading.decrease");
-
-			this.loadScreen = loadScreen;
-		};
-*/
 		createAsset = function (asset)
 		{
-			var name, type, self, bus = iself.bus;
+			var name, type, self, bus = interpreter.bus;
 			var xmlObj; // temporary, for use with XML DOM conversion
 
 			interpreter.bus.trigger(
@@ -198,7 +124,7 @@
 
 			if (type in out.assets)
 			{
-				interpreter.assets[name] = new out.assets[type](asset, this);
+				interpreter.assets[name] = new out.assets[type](asset, interpreter);
 				return;
 			}
 			
@@ -216,8 +142,18 @@
 			}
 		};
 
+        for (i = 0; i < len; i += 1)
+        {
+            cur = assets[i];
+            createAsset(cur);
+        }
+        
+        interpreter.bus.trigger("wse.assets.loading.finished");
+        
+        return {
+            doNext: true
+        };
+
     };
-
-
 	
 }(WSE));

@@ -115,8 +115,9 @@
             };
         }
         
-        interpreter.log.push({speaker: speakerId, text: command.content});
-        interpreter.assets[textboxName].put(command.content, speakerName);
+        
+        interpreter.log.push({speaker: speakerId, text: command.text});
+        interpreter.assets[textboxName].put(command.text, speakerName);
         
         return {
             doNext: doNext,

@@ -229,13 +229,15 @@
                     return;
                 }
                 
-                window.addEventListener("resize",
+                window.addEventListener(
+					"resize",
                                         
-                                        function ()
-                                        {
-                                            console.log("Resizing...");
-                                            out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
-                                        });
+					function ()
+					{
+						console.log("Resizing...");
+						out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
+					}
+				);
             }(this));
         }
     };

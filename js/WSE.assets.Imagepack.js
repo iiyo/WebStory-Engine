@@ -62,7 +62,7 @@
         element.setAttribute("class", "imagepack");
         element.setAttribute("id", this.cssid);
 
-        children = asset.content.getElementsByTagName("image");
+        children = asset.items;
 
         triggerDecreaseFn = function ()
         {
@@ -72,8 +72,8 @@
         for (i = 0, len = children.length; i < len; i += 1)
         {
             current = children[i];
-            name = current.getAttribute("name");
-            src = current.getAttribute("src");
+            name = current.name;
+            src = current.src;
 
             if (name === null)
             {

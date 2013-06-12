@@ -362,7 +362,7 @@
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, current, self;
+        var scenes, outScenes, len, i, ix, iy, current, self;
 
         self = this;
 
@@ -386,14 +386,26 @@
         this.bus.trigger("wse.assets.loading.finished");
 
         scenes = this.story.getElementsByTagName("scene");
-        this.scenes = scenes;
-        len = scenes.length;
+		outScenes = [];
+
+        for (ix = 0; ix < scenes.length; ix += 1) {
+			outScenes[ix] = { id: scenes[ix].getAttribute("id"), commands: [] };
+			for (iy = 0; iy < scenes[ix].childNodes.length; iy += 1) {
+				if (scenes[ix].childNodes[iy].nodeName !== "#text" && scenes[ix].childNodes[iy].nodeName !== "#comment")
+				{
+					outScenes[ix].commands.push(out.tools.xmlToJs(scenes[ix].childNodes[iy]));
+				}
+			}
+		}
+
+        this.scenes = outScenes;
+        len = this.scenes.length;
         
         for (i = 0; i < len; i += 1)
         {
-            current = scenes[i];
+            current = this.scenes[i];
 
-            if (current.getAttribute("id") === "start")
+            if (current.id === "start")
             {
                 this.changeScene(current);
                 
@@ -414,7 +426,7 @@
         }
         
         this.startTime = Math.round(+new Date() / 1000);
-        this.changeScene(scenes[0]);
+        this.changeScene(this.scenes[0]);
     };
 
     out.Interpreter.prototype.changeScene = function (scene)
@@ -442,7 +454,7 @@
             return;
         }
 
-        id = scene.getAttribute("id");
+        id = scene.id;
         this.visitedScenes.push(id);
 
         if (id === null)
@@ -458,7 +470,13 @@
         }
 
         bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
-        this.currentCommands = scene.childNodes;
+        
+        this.currentCommands = scene.commands;
+        //parsedCommand = out.tools.xmlToJs(scene.childNodes);
+        
+        //console.log('command: ', parsedCommand);
+        
+        //this.currentCommands = scene.childNodes;
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
@@ -504,7 +522,7 @@
 
     out.Interpreter.prototype.popFromCallStack = function ()
     {
-        var top = this.callStack.pop();
+        var ix, top = this.callStack.pop();
 
         this.bus.trigger(
             "wse.interpreter.message", 
@@ -516,7 +534,7 @@
         this.sceneId = top.sceneId;
         this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
-        this.currentCommands = this.currentScene.childNodes;
+        this.currentCommands = this.currentScene.commands;
     };
 
     out.Interpreter.prototype.getSceneById = function (sceneName)
@@ -529,7 +547,7 @@
         {
             current = this.scenes[i];
             
-            if (current.getAttribute("id") === sceneName)
+            if (current.id === sceneName)
             {
                 scene = current;
                 break;
@@ -609,17 +627,18 @@
         }
 
         command = this.currentCommands[this.index];
-        nodeName = command.nodeName;
+        //nodeName = command.nodeName;
+        nodeName = command.type;
 
         // ignore text and comment nodes:
-        if (nodeName === "#text" || nodeName === "#comment")
+        /*if (nodeName === "#text" || nodeName === "#comment")
         {
             this.index += 1;
             setTimeout(function () { self.next(); }, 0);
             bus.trigger("wse.interpreter.next.ignore", this, false);
             
             return;
-        }
+        }*/
 
         bus.trigger("wse.interpreter.next.command", command);
         this.currentElement += 1;
@@ -671,14 +690,14 @@
             false
         );
 
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        tagName = command.type;
+        assetName = command.asset || null;
 
-        ifvar = command.getAttribute("ifvar") || null;
-        ifval = command.getAttribute("ifvalue");
-        ifnot = command.getAttribute("ifnot");
+        ifvar = command.ifvar || null;
+        ifval = command.ifvalue;
+        ifnot = command.ifnot;
 
-        if (ifvar !== null || ifval !== null || ifnot !== null)
+        if (ifvar !== null || typeof ifval !== 'undefined' || typeof ifnot !== 'undefined')
         {
             varContainer = this.runVars;
 
@@ -751,9 +770,7 @@
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
         
-        parsedCommand = out.tools.xmlToJs(command);
-        
-        console.log('command: ', parsedCommand);
+		// PARSEDCOMMAND WAS HERE
 
         if (tagName in this.commands)
         {
@@ -768,7 +785,7 @@
             
             bus.trigger('game.commands.' + tagName);
             
-            return this.commands[tagName](parsedCommand, this);
+            return this.commands[tagName](command, this);
         }
         else if (
             assetName !== null 
@@ -779,7 +796,7 @@
         {
             bus.trigger('game.assets.' + assetName + '.' + tagName);
             
-            return this.assets[assetName][tagName](parsedCommand, this);
+            return this.assets[assetName][tagName](command, this);
         }
         else
         {
@@ -808,72 +825,79 @@
 
 	// Extra method for direct command input
 
-    out.Interpreter.prototype.runCommandDirect = function (command)
+    out.Interpreter.prototype.runCommands = function (commands)
     {
-        var tagName, ifvar, ifval, ifnot, varContainer, assetName;
+
+        this.currentCommands = this.currentCommands.concat(commands);
+
+        this.next();
+
+/*        var commandIndex, tagName, varContainer, assetName;
         var bus = this.bus, parsedCommand;
 
-        this.bus.trigger(
-            "wse.interpreter.runcommand.before",
-            {
-                interpreter: this,
-                command: command
-            },
-            false
-        );
+		for (commandIndex in commands) {
+			(function (command, interpreter) {
 
-        tagName = command.ty;
-        assetName = command.asset || null;
+				interpreter.bus.trigger(
+					"wse.interpreter.runcommand.before",
+					{
+						interpreter: interpreter,
+						command: command
+					},
+					false
+				);
 
-        if (tagName in this.commands)
-        {
-            bus.trigger(
-                "wse.interpreter.runcommand.after.command",
-                {
-                    interpreter: this,
-                    command: command
-                }, 
-                false
-            );
-            
-            bus.trigger('game.commands.' + tagName);
-            
-            return this.commands[tagName](command, this);
-        }
-        else if (
-            assetName !== null 
-            && assetName in this.assets 
-            && typeof this.assets[assetName][tagName] === "function" 
-            && tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
-        )
-        {
-            bus.trigger('game.assets.' + assetName + '.' + tagName);
-            
-            return this.assets[assetName][tagName](parsedCommand, this);
-        }
-        else
-        {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown element '" + tagName + "'."
-                }
-            );
-            
-            bus.trigger(
-                "wse.interpreter.runcommand.after.error",
-                {
-                    interpreter: this,
-                    command: command
-                }, 
-                false
-            );
-            
-            return {
-                doNext: true
-            };
-        }
+				tagName = command.type;
+				assetName = command.asset || null;
+
+				if (tagName in interpreter.commands)
+				{
+					bus.trigger(
+						"wse.interpreter.runcommand.after.command",
+						{
+							interpreter: interpreter,
+							command: command
+						}, 
+						false
+					);
+					
+					bus.trigger('game.commands.' + tagName);
+					
+					return interpreter.commands[tagName](command, interpreter);
+				}
+				else if (
+					assetName !== null 
+					&& assetName in interpreter.assets 
+					&& typeof interpreter.assets[assetName][tagName] === "function" 
+					&& tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
+				)
+				{
+					bus.trigger('game.assets.' + assetName + '.' + tagName);
+					
+					return interpreter.assets[assetName][tagName](parsedCommand, interpreter);
+				}
+				else
+				{
+					bus.trigger(
+						"wse.interpreter.warning",
+						{
+							element: command,
+							message: "Unknown element '" + tagName + "'."
+						}
+					);
+					
+					bus.trigger(
+						"wse.interpreter.runcommand.after.error",
+						{
+							interpreter: interpreter,
+							command: command
+						}, 
+						false
+					);
+				
+				}
+			}) (commands[commandIndex], this);
+		}*/
     };
 
 	// End extra method
