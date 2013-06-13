@@ -145,7 +145,7 @@
      */
     out.Interpreter.prototype.buildLoadingScreen = function ()
     {
-        var loadScreen, self, fn;
+        var loadScreen, self, setMeter;
 
         self = this;
 
@@ -154,6 +154,7 @@
         loadScreen.style.zIndex = 10000;
         loadScreen.style.width = "100%";
         loadScreen.style.height = "100%";
+        loadScreen.style.visibility = "hidden";
 
         loadScreen.innerHTML = '' + 
             '<div class="container">' + 
@@ -169,7 +170,7 @@
 
         this.game.stage.appendChild(loadScreen);
 
-        fn = function ()
+        setMeter = function ()
         {
             var el, el2, perc;
             
@@ -178,6 +179,7 @@
                 el = document.getElementById("WSELoadingScreenProgress");
                 el2 = document.getElementById("WSELoadingScreenPercentage");
                 perc = parseInt((self.assetsLoaded / self.assetsLoadingMax) * 100, 10);
+                console.log(perc);
                 
                 if (self.assetsLoadingMax < 1)
                 {
@@ -193,10 +195,30 @@
             }
         };
 
-        this.bus.subscribe(fn, "wse.assets.loading.increase");
-        this.bus.subscribe(fn, "wse.assets.loading.decrease");
+        this.bus.subscribe(setMeter, "wse.assets.loading.increase");
+        this.bus.subscribe(setMeter, "wse.assets.loading.decrease");
+        this.bus.subscribe(setMeter, "wse.assets.loading.started");
+
+        this.bus.subscribe(
+            function ()
+            {
+                console.log("SHOW");
+                self.loadScreen.style.visibility = "visible";
+            }, 
+            "wse.assets.loading.started"
+        );
+
+        this.bus.subscribe(
+            function ()
+            {
+                console.log("HIDE");
+                self.loadScreen.style.visibility = "hidden";
+            }, 
+            "wse.assets.loading.finished"
+        );
 
         this.loadScreen = loadScreen;
+
     };
 
     out.Interpreter.prototype.start = function ()
@@ -302,7 +324,7 @@
             "wse.assets.loading.decrease"
         );
 
-        (function ()
+       /* (function ()
         {
             var subscrFn;
             
@@ -332,9 +354,9 @@
             }
             
             bus.subscribe(subscrFn, "wse.assets.loading.finished");
-        }());
+        }());*/
 
-        this.buildAssets();
+        //this.buildAssets();
         this.createTriggers();
 
         makeKeyFn = function (type)
@@ -383,7 +405,7 @@
             return;
         }
         
-        this.bus.trigger("wse.assets.loading.finished");
+        //this.bus.trigger("wse.assets.loading.finished");
 
         scenes = this.story.getElementsByTagName("scene");
 		outScenes = [];
@@ -472,11 +494,7 @@
         bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
         
         this.currentCommands = scene.commands;
-        //parsedCommand = out.tools.xmlToJs(scene.childNodes);
-        
-        //console.log('command: ', parsedCommand);
-        
-        //this.currentCommands = scene.childNodes;
+
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
@@ -769,8 +787,6 @@
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
-        
-		// PARSEDCOMMAND WAS HERE
 
         if (tagName in this.commands)
         {
@@ -965,7 +981,7 @@
         }
     };
 
-    out.Interpreter.prototype.buildAssets = function ()
+    /*out.Interpreter.prototype.buildAssets = function ()
     {
         var assets, len, i, cur, bus = this.bus;
 
@@ -998,7 +1014,7 @@
             
             this.createAsset(cur);
         }
-    };
+    };*/
 
     out.Interpreter.prototype.createAsset = function (asset)
     {

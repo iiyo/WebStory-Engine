@@ -36,7 +36,7 @@
         var assets, len, i, cur;
         var createAsset;
 
-		interpreter.buildLoadingScreen();
+		//interpreter.buildLoadingScreen();
 
         interpreter.bus.trigger("wse.assets.loading.started");
 
