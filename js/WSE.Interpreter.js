@@ -1025,7 +1025,17 @@
         {
             if (assets.hasOwnProperty(key))
             {
-                assets[key].restore(saves[key]);
+                try
+                {
+                    assets[key].restore(saves[key]);
+                }
+                catch (e)
+                {
+                    console.log(e);
+                    bus.trigger("wse.interpreter.warning", {
+                        message: "Could not restore asset state for asset '" + key + "'!"
+                    });
+                }
             }
         }
     };
