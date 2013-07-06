@@ -544,7 +544,12 @@
         this.isPlaying = vals.isPlaying;
         this.fade = vals.fade;
         this.currentIndex = vals.currentIndex;
-        this.current.currentTime = vals.currentTime;
+        
+        if (this.tracks[this.currentIndex]) 
+        {
+            this.current = this.tracks[this.currentIndex];
+            this.current.currentTime = vals.currentTime;
+        }
         
         if (this.isPlaying)
         {
