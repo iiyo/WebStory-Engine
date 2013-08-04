@@ -154,7 +154,6 @@
         {
             if (this.scenes[i].id === id) 
             {
-                console.log(JSON.stringify(this.scenes[i]));
                 callback(this.scenes[i]);
             }
         }
