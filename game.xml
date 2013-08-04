@@ -99,15 +99,15 @@
             <global name="globals_test" value="worked" />
             
             <line s="n">
-                Your choice: {$main_menu_choice}{br}
-                Your choice as global: {$$main_menu_choice}{br}
+                Your choice: {$main_menu_choice}<br />
+                Your choice as global: {$$main_menu_choice}<br />
                 Globals test: {$$globals_test}
             </line>
             
             <show asset="tb_top" />
             
             <line s="nn">
-                WebStoryEngine Docs: {a href="http://webstoryengine.org"}Click here{/a}
+                WebStoryEngine Docs: <a href="http://webstoryengine.org" target="_blank">Click here</a>
             </line>
             
             <hide asset="tb_top" />
@@ -203,7 +203,7 @@
             <clear asset="tb_main" />
             
             <line s="n">
-                To start, click on the screen or press {b}space{/b} / {b}right arrow{/b} key.
+                To start, click on the screen or press <b>space</b> / <b>right arrow</b> key.
             </line>
             
             <hide asset="tb_main" effect="slide" direction="bottom" />
