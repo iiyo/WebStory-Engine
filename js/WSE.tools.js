@@ -204,49 +204,4 @@
         }
     };
     
-    out.tools.xmlToJs = function (xml)
-    {
-        return (function toJs(node)
-        {
-            var js = { "type" : node.nodeName }, getInnerHTML;
-
-			getInnerHTML = function (node)
-			{
-				var ser = new XMLSerializer(), innerHTML = "", children = node.childNodes, child; 
-				for (child in children) {
-					innerHTML += ser.serializeToString(children[child]);
-				}
-				return innerHTML;
-			};
-
-            [].forEach.call(node.attributes, function (attr)
-            {
-                js[attr.nodeName] = attr.nodeValue;
-            });           
-            
-            if (node.nodeName === "line") {
-				js.text = getInnerHTML(node);
-			}
-            
-            else if (node.childNodes)
-            {
-                js.items = (function ()
-                {
-                    var nodes = node.childNodes, i, len, items = [];
-                    
-                    for (i = 0, len = nodes.length; i < len; i += 1)
-                    {
-                        if (nodes[i].nodeName !== "#text" && nodes[i].nodeName !== "#comment") 
-                        {
-							items.push(toJs(nodes[i]));
-						}
-                    }
-                    return items;
-                }());
-            }
-            
-            return js;
-        }(xml));
-    };
-    
 }(WSE));

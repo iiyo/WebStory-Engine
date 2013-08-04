@@ -33,7 +33,7 @@
     
     out.commands.goto = function (command, interpreter)
     {
-        var scene, sceneName, i, len, current, bus = interpreter.bus;
+        var scene, sceneId, i, len, current, bus = interpreter.bus;
 
         bus.trigger(
             "wse.interpreter.commands.goto",
@@ -45,43 +45,10 @@
         );
 
         command = command || {};
-        sceneName = command.scene;
-
-        if (sceneName === null)
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Element 'goto' misses attribute 'scene'."
-                }
-            );
-        }
-
-        for (i = 0, len = interpreter.scenes.length; i < len; i += 1)
-        {
-            current = interpreter.scenes[i];
-            
-            if (current.id === sceneName)
-            {
-                scene = current;
-                break;
-            }
-        }
-
-        if (typeof scene === "undefined")
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Unknown scene '" + sceneName + "'."
-                }
-            );
-            
-            return;
-        }
+        sceneId = command.scene;
 
         return {
-            changeScene: scene
+            changeScene: sceneId
         };
     };    
 }(WSE));

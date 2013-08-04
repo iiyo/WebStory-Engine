@@ -148,7 +148,8 @@
             currentButton.value = current.label;
             sceneName = current.scene || null;
             
-            for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
+			// *** SCENE SWITCH SIMPLIFIED - JUST PASSES SCENE ID
+            /*for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
             {
                 currentScene = interpreter.scenes[j];
                 if (currentScene.id === sceneName)
@@ -158,12 +159,12 @@
                 }
             }
             
-            scenes[i] = scenes[i] || null;
+            scenes[i] = scenes[i] || null;*/
 
             out.tools.attachEventListener(
                 currentButton, 
                 'click',
-                makeButtonClickFn(current, menuElement, scenes[i])
+                makeButtonClickFn(current, menuElement, sceneName)
             );
             
             buttons.push(currentButton);

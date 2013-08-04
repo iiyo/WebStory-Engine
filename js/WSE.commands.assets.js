@@ -36,8 +36,6 @@
         var assets, len, i, cur;
         var createAsset;
 
-		//interpreter.buildLoadingScreen();
-
         interpreter.bus.trigger("wse.assets.loading.started");
 
         interpreter.bus.trigger(
@@ -76,7 +74,7 @@
 				{
 					interpreter: interpreter,
 					asset: asset
-				}, 
+				},
 				false
 			);
 
@@ -147,8 +145,6 @@
             cur = assets[i];
             createAsset(cur);
         }
-        
-        interpreter.bus.trigger("wse.assets.loading.finished");
         
         return {
             doNext: true

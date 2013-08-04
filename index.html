@@ -14,21 +14,8 @@
         <script src="js/extensions/button.js"></script>
 
         <script>
-            var game = new WSE.Game({ url: "game.xml", debug: true, host: typeof HOST === "undefined" ? false : HOST });
+            var game = new WSE.Game({ mode: "XML", url: "game.xml", debug: true, host: typeof HOST === "undefined" ? false : HOST });
             game.start();
-			console.log(game);
-			/*setTimeout(function () {
-				game.interpreter.runCommands([ 
-					{ "type" : "assets", "items" : [
-						{ "type" : "textbox", "name" : "tb2", "behaviour" : "nvl", "cssid" : "NvlTb2", "names" : "no", "width" : "890px", "height" : "450px", "x" : "5px", "y" : "5px"},
-						{ "type" : "character", "name": "na", "textbox": "tb2" },						
-						{ "type" : "character", "name": "n", "textbox": "tb_main" } 
-					] },
-					{ "type" : "line", "content": "Hello World", "s": "n" },
-					{ "type" : "line", "content": "BlaBla", "s": "n" }
-				]);
-			}, 2000);*/
-
         </script>
     </body>
 </html>

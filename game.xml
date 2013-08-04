@@ -10,39 +10,36 @@
         </triggers>
         <setting name="host.stage.resize" value="true" />
         <setting name="host.inspector.enable" value="true" />
+        <setting name="scenes.first" value="start" />
     </settings>
-    <assets>
-        <textbox name="tb_0101" x="5px" y="355px" width="890px" height="100px" speed="150"></textbox>
-    </assets>
     <scenes>
-        
         <scene id="start">
 			<assets>
 				<textbox name="tb_main" x="5px" y="355px" width="890px" height="100px" speed="150"></textbox>
 				<textbox name="tb_top" x="0" y="0" z="30000" width="100%" height="100%" cssid="bla"></textbox>
 				
 				<rectangle name="rect" x="20px" y="20px" height="50px" width="100px" color="green" />
-				    
+					
 				<textbox name="tb_nvl" behaviour="nvl" cssid="NvlTb" names="no" 
-				    width="890px" height="450px" x="5px" y="5px"></textbox>
+					width="890px" height="450px" x="5px" y="5px"></textbox>
 				
 				<audio name="music" loop="true" fade="true">
-				    <track title="legend">
-				        <source href="/Desktop/wlegend.mp3" type="mp3" />
-				        <source href="/Desktop/wlegend.ogg" type="ogg" />
-				    </track>
+					<track title="legend">
+						<source href="/Desktop/wlegend.mp3" type="mp3" />
+						<source href="/Desktop/wlegend.ogg" type="ogg" />
+					</track>
 				</audio>
 				
 				<character name="n" textbox="tb_main"></character>
 				<character name="nn" textbox="tb_top" imagepack="backgrounds2"></character>
 				
 				<imagepack name="backgrounds" x="0" y="0" z="0">
-				    <image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
-				    <image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
+					<image src="assets/images/daytime_clouds_A_01.jpg" name="clouds01" />
+					<image src="assets/images/Evening_clouds_C_01.jpg" name="clouds02" />
 				</imagepack>
 				
 				<imagepack name="backgrounds2" x="0" y="0" z="0">
-				    <image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
+					<image src="assets/images/Rainbow_A_01.jpg" name="rainbow" />
 				</imagepack>
 				
 				<curtain name="fog"></curtain>
@@ -52,20 +49,20 @@
 				<button name="sg_button" text="S/L" function="savegames" x="862px" y="320px" z="100000" />
 				
 				<animation name="anim">
-				    <group>
-				        <do asset="backgrounds" action="move" x="-300px" y="-200px" duration="2000" easing="easeOutBounce" />
-				        <transform asset="tb_main" property="border-top-width" from="1" to="5" unit="px" />
-				    </group>
-				    <group>
-				        <transform asset="tb_main" property="border-top-width" from="5" to="1" unit="px" />
-				        <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
-				    </group>
-				    <group>
-				        <do asset="backgrounds" action="move" x="-300px" y="0px" duration="2000" easing="easeOutBounce" />
-				    </group>
-				    <group>
-				        <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
-				    </group>
+					<group>
+						<do asset="backgrounds" action="move" x="-300px" y="-200px" duration="2000" easing="easeOutBounce" />
+						<transform asset="tb_main" property="border-top-width" from="1" to="5" unit="px" />
+					</group>
+					<group>
+						<transform asset="tb_main" property="border-top-width" from="5" to="1" unit="px" />
+						<transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeOutBounce" />
+					</group>
+					<group>
+						<do asset="backgrounds" action="move" x="-300px" y="0px" duration="2000" easing="easeOutBounce" />
+					</group>
+					<group>
+						<transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
+					</group>
 				</animation>
 				
 			</assets>

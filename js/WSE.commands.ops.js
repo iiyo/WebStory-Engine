@@ -31,7 +31,7 @@
 {
     "use strict";
     
-    out.commands.line = function (command, interpreter)
+    out.commands.ops = function (command, interpreter)
     {
         var speakerId, speakerName, textboxName, character;
         var text, doNext, bus = interpreter.bus;
@@ -114,9 +114,9 @@
                 doNext: true
             };
         }
-        
+                
         interpreter.log.push({speaker: speakerId, text: command.text});
-        interpreter.assets[textboxName].put(command.text, speakerName);
+        interpreter.assets[textboxName].putOps(command.text, speakerName, command.items);
         
         return {
             doNext: doNext,

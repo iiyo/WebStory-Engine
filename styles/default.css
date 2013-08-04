@@ -119,6 +119,7 @@ img
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
+    overflow: auto;
 }
 /*
  * #MainTb
@@ -156,6 +157,17 @@ img
     width: 100px;
     height: 30px;
     font-size: 12px;
+}
+
+.WSEStage ol li
+{
+	color: #ffcc00;
+	cursor: pointer;
+}
+
+.WSEStage ol li:hover
+{
+	color: #ffe680;
 }
 
 .menu

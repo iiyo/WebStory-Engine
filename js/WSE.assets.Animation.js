@@ -163,15 +163,15 @@
             doElements = [];
             for (x = 0; x < current.items.len; x += 1) 
             {
-				if (current.items[x].type === "do")
-				{
-					doElements.push(current.items[x]);
-				}
-				else if (current.items[x].type === "transform")
-				{
-					transformations.push(current.items[x]);
-				}				
-			}
+                if (current.items[x].type === "do")
+                {
+                    doElements.push(current.items[x]);
+                }
+                else if (current.items[x].type === "transform")
+                {
+                    transformations.push(current.items[x]);
+                }                
+            }
 
             loopFn(transformations, doElements);
         }

@@ -103,7 +103,6 @@
 
             image = new Image();
 
-            this.bus.trigger("wse.assets.loading.increase");
             out.tools.attachEventListener(image, 'load', triggerDecreaseFn);
 
             image.src = src;
@@ -124,6 +123,9 @@
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
             element.appendChild(image);
+
+            this.bus.trigger("wse.assets.loading.increase");
+
         }
 
         element.style.position = "absolute";
