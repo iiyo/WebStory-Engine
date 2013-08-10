@@ -81,7 +81,7 @@
 
                         for (i = 0; i < len; i += 1)
                         {
-                            self.commands["var"](cmds[i], self);
+                            interpreter.runCommand(cmds[i]);
                         }
 
                         if (sc !== null)

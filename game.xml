@@ -225,6 +225,21 @@
                 </option>
             </choice>
             
+            <choice>
+                <option label="I want green!">
+                    <var name="color" value="green" ifvar="learn_more_pressed" ifvalue="true" />
+                    <var name="color" value="red" ifvar="learn_more_pressed" ifvalue="false" />
+                </option>
+                <option label="I like blue!">
+                    <var name="color" value="blue" ifvar="learn_more_pressed" ifvalue="true" />
+                    <var name="color" value="red" ifvar="learn_more_pressed" ifvalue="false" />
+                </option>
+            </choice>
+            
+            <line s="n">
+                You get this color: {$color}
+            </line>
+            
             <line s="n" ifvar="learn_more_pressed" ifvalue="true">
                 You want to learn more.
             </line>
