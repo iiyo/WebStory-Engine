@@ -349,58 +349,58 @@
             name = "";
         }
 
-		self.interpreter.waitCounter += 1;
-		
-		setTimeout(
-			function ()
-			{
-				var li, op, opix, container = document.createElement('ol');
-				container.class = "ops";
-				
-				self.interpreter.game.unsubscribeListeners();
-				
-				for (op in options) {
-					(function(li) {
-						li = document.createElement('li');
-						li.link = options[op].to;
-						opix = parseInt(op) + 1;
-						li.innerHTML = "<span class='opix'>" + opix + ".</span> " + options[op].text;
-						out.tools.attachEventListener(li, 'click', function() {
-							self.interpreter.changeScene(li.link);
-							self.interpreter.game.subscribeListeners();
-						});
-						container.appendChild(li);
-					})(li);
-				}
-				
-				textElement.innerHTML += namePart + text;
-				textElement.appendChild(container);
-				
-				nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
-				
-				if (self.type === 'nvl')
-				{
-					textElement.innerHTML = '<div>' + textElement.innerHTML + '</div>';
-				}
-				
-				out.fx.transform(
-					function (v)
-					{
-						textElement.style.opacity = v;
-					},
-					0,
-					1,
-					{
-						duration: 50,
-						onFinish: function ()
-						{
-							self.interpreter.waitCounter -= 1;
-						}
-					}
-				);
-			},
-			50
-		);
+        self.interpreter.waitCounter += 1;
+        
+        setTimeout(
+            function ()
+            {
+                var li, op, opix, container = document.createElement('ol');
+                container.class = "ops";
+                
+                self.interpreter.game.unsubscribeListeners();
+                
+                for (op in options) {
+                    (function(li) {
+                        li = document.createElement('li');
+                        li.link = options[op].to;
+                        opix = parseInt(op) + 1;
+                        li.innerHTML = "<span class='opix'>" + opix + ".</span> " + options[op].text;
+                        out.tools.attachEventListener(li, 'click', function() {
+                            self.interpreter.changeScene(li.link);
+                            self.interpreter.game.subscribeListeners();
+                        });
+                        container.appendChild(li);
+                    })(li);
+                }
+                
+                textElement.innerHTML += namePart + text;
+                textElement.appendChild(container);
+                
+                nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
+                
+                if (self.type === 'nvl')
+                {
+                    textElement.innerHTML = '<div>' + textElement.innerHTML + '</div>';
+                }
+                
+                out.fx.transform(
+                    function (v)
+                    {
+                        textElement.style.opacity = v;
+                    },
+                    0,
+                    1,
+                    {
+                        duration: 50,
+                        onFinish: function ()
+                        {
+                            self.interpreter.waitCounter -= 1;
+                        }
+                    }
+                );
+            },
+            50
+        );
 
         this.bus.trigger("wse.assets.textbox.put", this, false);
         self.interpreter.waitCounter -= 1;
@@ -418,7 +418,7 @@
         
         return {
             doNext: true
-		};
+        };
     };
 
     out.assets.Textbox.prototype.save = function ()

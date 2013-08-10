@@ -63,17 +63,17 @@
 
     out.services.gamedata.Web.prototype.load = function (args, callback)
     {
-        var iself;
+        var self;
         
         this.url = args.url;
         this.data = null;
         this.scenes = null;
         
-        iself = this;
+        self = this;
         this.ajaxPost('s', args.game, 
             function (data)
             {
-                iself.settings = {
+                self.settings = {
                     stages: data.stages,
                     triggers: data.triggers,
                     options: data.options
@@ -81,7 +81,7 @@
 
                 if (callback && typeof(callback) === "function") 
                 {
-                    callback(iself.settings);
+                    callback(self.settings);
                 }
             }
         );

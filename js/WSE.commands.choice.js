@@ -148,7 +148,7 @@
             currentButton.value = current.label;
             sceneName = current.scene || null;
             
-			// *** SCENE SWITCH SIMPLIFIED - JUST PASSES SCENE ID
+            // *** SCENE SWITCH SIMPLIFIED - JUST PASSES SCENE ID
             /*for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
             {
                 currentScene = interpreter.scenes[j];

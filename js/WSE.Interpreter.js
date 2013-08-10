@@ -399,19 +399,16 @@
         
         this.changeScene(this.game.firstSceneId);
     };
-  
-    /*out.Interpreter.prototype.loadScene = function(scene, iself) {
-    };*/
 
     out.Interpreter.prototype.changeScene = function (sceneId)
     {
-        var iself = this;
+        var self = this;
         this.game.dataService.getScene(sceneId, {}, function(scene)
         {
 
             var id, len;
 
-            iself.bus.trigger(
+            self.bus.trigger(
                 "wse.interpreter.changescene.before",
                 {
                     scene: scene,
@@ -422,7 +419,7 @@
 
             if (typeof scene === "undefined" || scene === null)
             {
-                iself.bus.trigger(
+                self.bus.trigger(
                     "wse.interpreter.error",
                     {
                         message: "Scene does not exist."
@@ -433,11 +430,11 @@
             }
 
             id = scene.id;
-            iself.visitedScenes.push(id);
+            self.visitedScenes.push(id);
 
             if (id === null)
             {
-                iself.bus.trigger(
+                self.bus.trigger(
                     "wse.interpreter.error",
                     {
                         message: "Encountered scene without id attribute."
@@ -447,18 +444,18 @@
                 return;
             }
 
-            iself.bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
+            self.bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
             
-            iself.currentCommands = scene.commands;
+            self.currentCommands = scene.commands;
 
-            len = iself.currentCommands.length;
-            iself.index = 0;
-            iself.sceneId = id;
-            iself.currentElement = 0;
+            len = self.currentCommands.length;
+            self.index = 0;
+            self.sceneId = id;
+            self.currentElement = 0;
 
             if (len < 1)
             {
-                iself.bus.trigger(
+                self.bus.trigger(
                     "wse.interpreter.warning",
                     {
                         element: scene,
@@ -469,9 +466,9 @@
                 return;
             }
 
-            iself.numberOfFunctionsToWaitFor = 0;
+            self.numberOfFunctionsToWaitFor = 0;
 
-            iself.bus.trigger(
+            self.bus.trigger(
                 "wse.interpreter.changescene.after",
                 {
                     scene: scene,
@@ -480,7 +477,7 @@
                 false
             );
 
-            iself.next();
+            self.next();
 
         });
     };
@@ -498,7 +495,7 @@
 
     out.Interpreter.prototype.popFromCallStack = function ()
     {
-        var top = this.callStack.pop(), iself = this;
+        var top = this.callStack.pop(), self = this;
 
         this.bus.trigger(
             "wse.interpreter.message",
@@ -510,7 +507,7 @@
         this.sceneId = top.sceneId;
         this.currentElement = top.currentElement;
         this.getSceneById(top.sceneId, function(scene) {
-            iself.currentScene = scene;
+            self.currentScene = scene;
         });
                 
         this.currentCommands = this.currentScene.commands;
@@ -762,17 +759,6 @@
             };
         }
     };
-
-    // Extra method for direct command input
-
-    out.Interpreter.prototype.runCommands = function (commands)
-    {
-        this.currentCommands = this.currentCommands.concat(commands);
-
-        this.next();
-    };
-
-    // End extra method
 
     out.Interpreter.prototype.commands = {};
     out.commands = out.Interpreter.prototype.commands;

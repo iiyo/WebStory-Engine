@@ -39,7 +39,7 @@
         "js/WSE.commands.goto.js",
         "js/WSE.commands.line.js",
         "js/WSE.commands.localize.js",
-        "js/WSE.commands.ops.js",
+        "js/WSE.commands.options.js",
         "js/WSE.commands.restart.js",
         "js/WSE.commands.sub.js",
         "js/WSE.commands.trigger.js",

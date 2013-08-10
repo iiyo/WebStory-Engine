@@ -64,81 +64,81 @@
 
         len = assets.length;
 
-		createAsset = function (asset)
-		{
-			var name, type, self, bus = interpreter.bus;
-			var xmlObj; // temporary, for use with XML DOM conversion
+        createAsset = function (asset)
+        {
+            var name, type, self, bus = interpreter.bus;
+            var xmlObj; // temporary, for use with XML DOM conversion
 
-			interpreter.bus.trigger(
-				"wse.interpreter.createasset",
-				{
-					interpreter: interpreter,
-					asset: asset
-				},
-				false
-			);
+            interpreter.bus.trigger(
+                "wse.interpreter.createasset",
+                {
+                    interpreter: interpreter,
+                    asset: asset
+                },
+                false
+            );
 
-			name = asset.name;
-			type = asset.type;
+            name = asset.name;
+            type = asset.type;
 
-			if (name === null)
-			{
-				interpreter.bus.trigger(
-					"wse.interpreter.error",
-					{
-						element: asset,
-						message: "Expected attribute 'name'."
-					}
-				);
-				
-				return;
-			}
+            if (name === null)
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.error",
+                    {
+                        element: asset,
+                        message: "Expected attribute 'name'."
+                    }
+                );
+                
+                return;
+            }
 
-			if (type === null)
-			{
-				interpreter.bus.trigger(
-					"wse.interpreter.warning",
-					{
-						element: asset,
-						message: "Expected attribute 'type' on asset '" + name + "'."
-					}
-				);
-				
-				return;
-			}
+            if (type === null)
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "Expected attribute 'type' on asset '" + name + "'."
+                    }
+                );
+                
+                return;
+            }
 
-			if (typeof interpreter.assets[name] !== "undefined")
-			{
-				interpreter.bus.trigger(
-					"wse.interpreter.warning",
-					{
-						element: asset,
-						message: "Trying to override existing asset '" + name + "'."
-					}
-				);
-			}
+            if (typeof interpreter.assets[name] !== "undefined")
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "Trying to override existing asset '" + name + "'."
+                    }
+                );
+            }
 
-			type = out.tools.firstLetterUppercase(type);
+            type = out.tools.firstLetterUppercase(type);
 
-			if (type in out.assets)
-			{
-				interpreter.assets[name] = new out.assets[type](asset, interpreter);
-				return;
-			}
-			
-			else
-			{
-				interpreter.bus.trigger(
-					"wse.interpreter.warning",
-					{
-						element: asset,
-						message: "Unknown asset type '" + type + "'."
-					}
-				);
-				
-				return;
-			}
-		};
+            if (type in out.assets)
+            {
+                interpreter.assets[name] = new out.assets[type](asset, interpreter);
+                return;
+            }
+            
+            else
+            {
+                interpreter.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "Unknown asset type '" + type + "'."
+                    }
+                );
+                
+                return;
+            }
+        };
 
         for (i = 0; i < len; i += 1)
         {
@@ -151,5 +151,5 @@
         };
 
     };
-	
+    
 }(WSE));

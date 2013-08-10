@@ -44,7 +44,7 @@
     
     out.services.gamedata.XML.prototype.load = function (args, callback)
     {
-        var iself;
+        var self;
         
         args = args || {};
         this.url = args.url || "game.xml";
@@ -67,7 +67,7 @@
         }
         else
         {
-            iself = this;
+            self = this;
             out.ajax.get(
                 this.url,
                 function (obj)
@@ -77,19 +77,19 @@
                     settings = data.getElementsByTagName("settings");
                     settings = settings[0].childNodes;
                     
-                    iself.scenes = [];
-                    iself.settings = { stages: [], options: {}, triggers: [] };
+                    self.scenes = [];
+                    self.settings = { stages: [], options: {}, triggers: [] };
                     outSettings = [];
 
                     for (x = 0; x < scenes.length; x += 1)
                     {
-                        iself.scenes[x] = { id: scenes[x].getAttribute("id"), commands: [] };
+                        self.scenes[x] = { id: scenes[x].getAttribute("id"), commands: [] };
                         
                         for (y = 0; y < scenes[x].childNodes.length; y += 1)
                         {
                             if (scenes[x].childNodes[y].nodeName !== "#text" && scenes[x].childNodes[y].nodeName !== "#comment")
                             {
-                                iself.scenes[x].commands.push(iself.xmlToJs(scenes[x].childNodes[y]));
+                                self.scenes[x].commands.push(self.xmlToJs(scenes[x].childNodes[y]));
                             }
                         }
                     }
@@ -98,7 +98,7 @@
                     {
                         if (settings[x].nodeName !== "#text" && settings[x].nodeName !== "#comment")
                         {
-                            setting = iself.xmlToJs(settings[x]);
+                            setting = self.xmlToJs(settings[x]);
                             setting.type = settings[x].nodeName;
                             
                             items = [];
@@ -107,7 +107,7 @@
                             {
                                 if (settings[x].childNodes[y].nodeName !== "#text" && settings[x].childNodes[y].nodeName !== "#comment")
                                 {
-                                    items.push(iself.xmlToJs(settings[x].childNodes[y]));
+                                    items.push(self.xmlToJs(settings[x].childNodes[y]));
                                 }
                             }
                             
@@ -116,26 +116,26 @@
                                 setting.items = items;
                             }
                             
-                            if  (settings[x].nodeName === 'stage' && typeof iself.stage === 'undefined')
+                            if  (settings[x].nodeName === 'stage' && typeof self.stage === 'undefined')
                             {
-                                iself.settings.stages.push(setting);
+                                self.settings.stages.push(setting);
                             }
                             
-                            if  (settings[x].nodeName === 'triggers' && typeof iself.stage === 'undefined')
+                            if  (settings[x].nodeName === 'triggers' && typeof self.stage === 'undefined')
                             {
-                                iself.settings.triggers = setting.items;
+                                self.settings.triggers = setting.items;
                             }
 
                             if  (settings[x].nodeName === 'setting')
                             {
-                                iself.settings.options[setting.name] = setting.value;
+                                self.settings.options[setting.name] = setting.value;
                             }
                         }
                     }
 
                     if (callback && typeof(callback) === "function") 
                     {
-                        callback(iself.settings);
+                        callback(self.settings);
                     }
                 }
             );
@@ -165,16 +165,16 @@
         {
             var js = { "type" : node.nodeName }, getInnerHTML;
 
-			getInnerHTML = function (node)
-			{
-				var ser = new XMLSerializer(), innerHTML = "", children = node.childNodes, child; 
-				for (child in children) {
-					if (typeof children[child] === 'object') {
-						innerHTML += ser.serializeToString(children[child]);
-					}
-				}
-				return innerHTML;
-			};
+            getInnerHTML = function (node)
+            {
+                var ser = new XMLSerializer(), innerHTML = "", children = node.childNodes, child; 
+                for (child in children) {
+                    if (typeof children[child] === 'object') {
+                        innerHTML += ser.serializeToString(children[child]);
+                    }
+                }
+                return innerHTML;
+            };
 
             [].forEach.call(node.attributes, function (attr)
             {
@@ -182,44 +182,44 @@
             });
             
             switch(node.nodeName) {
-				case "line":
-					js.text = getInnerHTML(node);
-					break;
-				case "ops":
-					js.items = [];
-					(function ()
-					{
-						var nodes = node.childNodes, i, len;
-						
-						for (i = 0, len = nodes.length; i < len; i += 1)
-						{
-							if (nodes[i].nodeName === "op") 
-							{
-								js.items.push({ "text" : getInnerHTML(nodes[i]), "to" : toJs(nodes[i]).to });
-							}
-							if (nodes[i].nodeName === "text")
-							{
-								js.text = getInnerHTML(nodes[i]);
-							}
-						}
-					}());
-					break;
-				default:
-					js.items = (function ()
-					{
-						var nodes = node.childNodes, i, len, items = [];
-						
-						for (i = 0, len = nodes.length; i < len; i += 1)
-						{
-							if (nodes[i].nodeName !== "#text" && nodes[i].nodeName !== "#comment") 
-							{
-								items.push(toJs(nodes[i]));
-							}
-						}
-						return items;
-					}());
-					break;
-			}
+                case "line":
+                    js.text = getInnerHTML(node);
+                    break;
+                case "ops":
+                    js.items = [];
+                    (function ()
+                    {
+                        var nodes = node.childNodes, i, len;
+                        
+                        for (i = 0, len = nodes.length; i < len; i += 1)
+                        {
+                            if (nodes[i].nodeName === "op") 
+                            {
+                                js.items.push({ "text" : getInnerHTML(nodes[i]), "to" : toJs(nodes[i]).to });
+                            }
+                            if (nodes[i].nodeName === "text")
+                            {
+                                js.text = getInnerHTML(nodes[i]);
+                            }
+                        }
+                    }());
+                    break;
+                default:
+                    js.items = (function ()
+                    {
+                        var nodes = node.childNodes, i, len, items = [];
+                        
+                        for (i = 0, len = nodes.length; i < len; i += 1)
+                        {
+                            if (nodes[i].nodeName !== "#text" && nodes[i].nodeName !== "#comment") 
+                            {
+                                items.push(toJs(nodes[i]));
+                            }
+                        }
+                        return items;
+                    }());
+                    break;
+            }
             
             return js;
         }(xml));

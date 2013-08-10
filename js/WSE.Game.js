@@ -48,7 +48,7 @@
      */
     out.Game = function (args)
     {
-        var host, iself;
+        var host, self;
         
         out.trigger("wse.game.constructor", {args: args, game: this});
         
@@ -56,17 +56,17 @@
         this.bus = new Squiddle();
         this.debug = args.debug === true ? true : false;
         
-        iself = this;
+        self = this;
         
         this.dataService = new out.services.gamedata[args.mode]( { url: args.url, host: args.host, game: args.game }, 
             function(settings) 
             {
-                iself.settings = settings;
-                iself.firstSceneId = settings.options["scenes.first"];
-                iself.interpreter = new out.Interpreter(iself);
-                iself.keys = new out.Keys();
-                iself.listenersSubscribed = false;
-                iself.init();
+                self.settings = settings;
+                self.firstSceneId = settings.options["scenes.first"];
+                self.interpreter = new out.Interpreter(self);
+                self.keys = new out.Keys();
+                self.listenersSubscribed = false;
+                self.init();
             }
         );
 
