@@ -30,72 +30,77 @@
 (function (out)
 {
     "use strict";
-    
-    out.assets.Character = function (asset, interpreter)
+   
+    out.services.gamedata.Web = function (args, callback)
     {
-        var displayName;
-        
-        this.asset = asset;
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
-        this.id = out.tools.getUniqueId();
-        this.name = asset.name;
-        this.textbox = asset.textbox;
-        
-        /*try 
+        args = args || null;
+        if (typeof args !== 'null') 
         {
-            [].forEach.call(asset.childNodes, function (node)
-            {
-                if (node.tagName && node.tagName === 'displayname')
-                {
-                    displayName = node.textContent;
-                }
-            });
-            
-            this.displayName = displayName;
+            this.load(args, callback);
         }
-        catch (e)
+    };
+
+    out.services.gamedata.Web.prototype.ajaxPost = function(req, id, callback) {
+
+        var xmlHttp = new XMLHttpRequest()
+            , parameters = req + "=" + id
+        ;
+
+        xmlHttp.open("POST", this.url, true);
+
+        xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+        xmlHttp.onreadystatechange = function()
         {
-            console.log(e);
-            this.displayName = null;
-        }*/
-        
-        this.bus.trigger("wse.assets.character.constructor", this);
-    };
-
-    out.assets.Character.prototype.setTextbox = function (command)
-    {
-        this.asset.textbox = command.textbox;
-        this.bus.trigger("wse.assets.character.settextbox", this);
-    };
-
-    out.assets.Character.prototype.save = function ()
-    {
-        var obj = {
-            assetType: "Character",
-            textboxName: this.asset.textbox
-        };
-        
-        this.bus.trigger(
-            "wse.assets.character.save",
+            if(xmlHttp.readyState == 4 && xmlHttp.status == 200)
             {
-                subject: this,
-                saves: obj
+                callback(JSON.parse(xmlHttp.responseText));
             }
-        );
-        
-        return obj;
+        }
+
+        xmlHttp.send(parameters);
     };
 
-    out.assets.Character.prototype.restore = function (obj)
+    out.services.gamedata.Web.prototype.load = function (args, callback)
     {
-        this.asset.textbox = obj.textboxName;
-        this.bus.trigger(
-            "wse.assets.character.restore",
+        var self;
+        
+        this.url = args.url;
+        this.data = null;
+        this.scenes = null;
+        
+        self = this;
+        this.ajaxPost('s', args.game, 
+            function (data)
             {
-                subject: this,
-                saves: obj
+                self.settings = {
+                    stages: data.stages,
+                    triggers: data.triggers,
+                    options: data.options
+                };
+
+                if (callback && typeof(callback) === "function") 
+                {
+                    callback(self.settings);
+                }
             }
         );
     };
+
+    out.services.gamedata.Web.prototype.getTriggers = function ()
+    {
+        return this.settings.triggers;
+    };
+
+    out.services.gamedata.Web.prototype.getScene = function (id, input, callback)
+    {
+        // Add code here to handle input variable
+        this.ajaxPost('n', id,
+            function (data)
+            {
+                callback({ id: id, commands: data });
+            }
+        );
+    };
+    
 }(WSE));

@@ -62,7 +62,7 @@
         element.setAttribute("class", "imagepack");
         element.setAttribute("id", this.cssid);
 
-        children = asset.content.getElementsByTagName("image");
+        children = asset.items;
 
         triggerDecreaseFn = function ()
         {
@@ -72,8 +72,8 @@
         for (i = 0, len = children.length; i < len; i += 1)
         {
             current = children[i];
-            name = current.getAttribute("name");
-            src = current.getAttribute("src");
+            name = current.name;
+            src = current.src;
 
             if (name === null)
             {
@@ -103,7 +103,6 @@
 
             image = new Image();
 
-            this.bus.trigger("wse.assets.loading.increase");
             out.tools.attachEventListener(image, 'load', triggerDecreaseFn);
 
             image.src = src;
@@ -124,6 +123,9 @@
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
             element.appendChild(image);
+
+            this.bus.trigger("wse.assets.loading.increase");
+
         }
 
         element.style.position = "absolute";

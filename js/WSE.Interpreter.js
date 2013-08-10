@@ -1,4 +1,4 @@
-/*
+    /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
 
@@ -145,7 +145,7 @@
      */
     out.Interpreter.prototype.buildLoadingScreen = function ()
     {
-        var loadScreen, self, fn;
+        var loadScreen, self, setMeter;
 
         self = this;
 
@@ -154,12 +154,13 @@
         loadScreen.style.zIndex = 10000;
         loadScreen.style.width = "100%";
         loadScreen.style.height = "100%";
+        loadScreen.style.visibility = "hidden";
 
         loadScreen.innerHTML = '' + 
             '<div class="container">' + 
                 '<div class="heading">' + 
                     '<span id="WSELoadingScreenPercentage"></span>' + 
-                    'Loading assets...' + 
+                    'Loading...' + 
                 '</div>' + 
                 '<div class="progressBar">' + 
                     '<div class="progress" id="WSELoadingScreenProgress" style="width: 100%;">' + 
@@ -169,7 +170,7 @@
 
         this.game.stage.appendChild(loadScreen);
 
-        fn = function ()
+        setMeter = function ()
         {
             var el, el2, perc;
             
@@ -191,19 +192,65 @@
             {
                 //console.log("Element missing.");
             }
+
+            if (self.assetsLoaded === (self.assetsLoadingMax - 1))
+            {
+                self.bus.trigger("wse.assets.loading.finished");
+            }
+            
         };
 
-        this.bus.subscribe(fn, "wse.assets.loading.increase");
-        this.bus.subscribe(fn, "wse.assets.loading.decrease");
+        (function (){
+            var subscrFn;
+            
+            subscrFn = function ()
+            {
+                var valFn, finishFn, options;
+                
+                valFn = function (v)
+                {
+                    self.loadScreen.style.opacity = v;
+                };
+                
+                finishFn = function ()
+                {
+                    self.loadScreen.style.display = "none";
+                };
+                
+                options = {
+                    duration: 500,
+                    onFinish: finishFn
+                };
+                
+                document.getElementById("WSELoadingScreenProgress").style.width = "100%";
+                
+                out.fx.transform(valFn, 1, 0, options);
+                //console.log("Hiding loading screen...");
+            }
+            
+            self.bus.subscribe(subscrFn, "wse.assets.loading.finished");
+        }());
+
+        this.bus.subscribe(setMeter, "wse.assets.loading.increase");
+        this.bus.subscribe(setMeter, "wse.assets.loading.decrease");
+        this.bus.subscribe(setMeter, "wse.assets.loading.started");
+
+        this.bus.subscribe(
+            function ()
+            {
+                self.loadScreen.style.visibility = "visible";
+            }, 
+            "wse.assets.loading.started"
+        );
 
         this.loadScreen = loadScreen;
+
     };
 
     out.Interpreter.prototype.start = function ()
     {
         var self, fn, makeKeyFn, bus;
         
-        this.story = this.game.ws;
         this.stage = this.game.stage;
         this.bus = this.game.bus;
         this.index = 0;
@@ -302,39 +349,6 @@
             "wse.assets.loading.decrease"
         );
 
-        (function ()
-        {
-            var subscrFn;
-            
-            subscrFn = function ()
-            {
-                var valFn, finishFn, options;
-                
-                valFn = function (v)
-                {
-                    self.loadScreen.style.opacity = v;
-                };
-                
-                finishFn = function ()
-                {
-                    self.loadScreen.style.display = "none";
-                };
-                
-                options = {
-                    duration: 500,
-                    onFinish: finishFn
-                };
-                
-                document.getElementById("WSELoadingScreenProgress").style.width = "100%";
-                
-                out.fx.transform(valFn, 1, 0, options);
-                //console.log("Hiding loading screen...");
-            }
-            
-            bus.subscribe(subscrFn, "wse.assets.loading.finished");
-        }());
-
-        this.buildAssets();
         this.createTriggers();
 
         makeKeyFn = function (type)
@@ -362,7 +376,7 @@
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, current, self;
+        var scenes, outScenes, len, i, ix, iy, current, self;
 
         self = this;
 
@@ -383,112 +397,89 @@
             return;
         }
         
-        this.bus.trigger("wse.assets.loading.finished");
+        this.changeScene(this.game.firstSceneId);
+    };
 
-        scenes = this.story.getElementsByTagName("scene");
-        this.scenes = scenes;
-        len = scenes.length;
-        
-        for (i = 0; i < len; i += 1)
+    out.Interpreter.prototype.changeScene = function (sceneId)
+    {
+        var self = this;
+        this.game.dataService.getScene(sceneId, {}, function(scene)
         {
-            current = scenes[i];
 
-            if (current.getAttribute("id") === "start")
+            var id, len;
+
+            self.bus.trigger(
+                "wse.interpreter.changescene.before",
+                {
+                    scene: scene,
+                    interpreter: this
+                },
+                false
+            );
+
+            if (typeof scene === "undefined" || scene === null)
             {
-                this.changeScene(current);
+                self.bus.trigger(
+                    "wse.interpreter.error",
+                    {
+                        message: "Scene does not exist."
+                    }
+                );
                 
                 return;
             }
-        }
-        
-        if (len < 1)
-        {
-            this.bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "No scenes found!"
-                }
-            );
-            
-            return;
-        }
-        
-        this.startTime = Math.round(+new Date() / 1000);
-        this.changeScene(scenes[0]);
-    };
 
-    out.Interpreter.prototype.changeScene = function (scene)
-    {
-        var len, id, bus = this.bus;
+            id = scene.id;
+            self.visitedScenes.push(id);
 
-        bus.trigger(
-            "wse.interpreter.changescene.before",
+            if (id === null)
             {
-                scene: scene,
-                interpreter: this
-            },
-            false
-        );
+                self.bus.trigger(
+                    "wse.interpreter.error",
+                    {
+                        message: "Encountered scene without id attribute."
+                    }
+                );
 
-        if (typeof scene === "undefined" || scene === null)
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Scene does not exist."
-                }
-            );
+                return;
+            }
+
+            self.bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
             
-            return;
-        }
+            self.currentCommands = scene.commands;
 
-        id = scene.getAttribute("id");
-        this.visitedScenes.push(id);
+            len = self.currentCommands.length;
+            self.index = 0;
+            self.sceneId = id;
+            self.currentElement = 0;
 
-        if (id === null)
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Encountered scene without id attribute."
-                }
-            );
-
-            return;
-        }
-
-        bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
-        this.currentCommands = scene.childNodes;
-        len = this.currentCommands.length;
-        this.index = 0;
-        this.sceneId = id;
-        this.currentElement = 0;
-
-        if (len < 1)
-        {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: scene,
-                    message: "Scene '" + id + "' is empty."
-                }
-            );
-            
-            return;
-        }
-
-        this.numberOfFunctionsToWaitFor = 0;
-
-        bus.trigger(
-            "wse.interpreter.changescene.after",
+            if (len < 1)
             {
-                scene: scene,
-                interpreter: this
-            },
-            false
-        );
+                self.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: scene,
+                        message: "Scene '" + id + "' is empty."
+                    }
+                );
+                
+                return;
+            }
 
-        this.next();
+            self.numberOfFunctionsToWaitFor = 0;
+
+            self.bus.trigger(
+                "wse.interpreter.changescene.after",
+                {
+                    scene: scene,
+                    interpreter: this
+                },
+                false
+            );
+
+            self.next();
+
+        });
     };
 
     out.Interpreter.prototype.pushToCallStack = function ()
@@ -504,49 +495,27 @@
 
     out.Interpreter.prototype.popFromCallStack = function ()
     {
-        var top = this.callStack.pop();
+        var top = this.callStack.pop(), self = this;
 
         this.bus.trigger(
-            "wse.interpreter.message", 
+            "wse.interpreter.message",
             "Returning from sub scene '" + this.sceneId + "' to scene '" + top.sceneId + "'...",
             false
         );
 
         this.index = top.index + 1;
         this.sceneId = top.sceneId;
-        this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
-        this.currentCommands = this.currentScene.childNodes;
+        this.getSceneById(top.sceneId, function(scene) {
+            self.currentScene = scene;
+        });
+                
+        this.currentCommands = this.currentScene.commands;
     };
 
-    out.Interpreter.prototype.getSceneById = function (sceneName)
+    out.Interpreter.prototype.getSceneById = function (sceneName, callback)
     {
-        var i, len, current, scene;
-        
-        scene = null;
-
-        for (i = 0, len = this.scenes.length; i < len; i += 1)
-        {
-            current = this.scenes[i];
-            
-            if (current.getAttribute("id") === sceneName)
-            {
-                scene = current;
-                break;
-            }
-        }
-
-        if (scene === null)
-        {
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Scene '" + sceneName + "' not found!"
-                }
-            );
-        }
-
-        return scene;
+        this.game.dataService.getScene(sceneName, {}, callback);
     };
 
     out.Interpreter.prototype.next = function (triggeredByUser)
@@ -609,17 +578,7 @@
         }
 
         command = this.currentCommands[this.index];
-        nodeName = command.nodeName;
-
-        // ignore text and comment nodes:
-        if (nodeName === "#text" || nodeName === "#comment")
-        {
-            this.index += 1;
-            setTimeout(function () { self.next(); }, 0);
-            bus.trigger("wse.interpreter.next.ignore", this, false);
-            
-            return;
-        }
+        nodeName = command.type;
 
         bus.trigger("wse.interpreter.next.command", command);
         this.currentElement += 1;
@@ -648,7 +607,6 @@
         {
             setTimeout(function () { self.next(); }, 0);
             bus.trigger("wse.interpreter.next.after.donext", this, false);
-            
             return;
         }
 
@@ -671,14 +629,14 @@
             false
         );
 
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        tagName = command.type;
+        assetName = command.asset || null;
 
-        ifvar = command.getAttribute("ifvar") || null;
-        ifval = command.getAttribute("ifvalue");
-        ifnot = command.getAttribute("ifnot");
+        ifvar = command.ifvar || null;
+        ifval = command.ifvalue;
+        ifnot = command.ifnot;
 
-        if (ifvar !== null || ifval !== null || ifnot !== null)
+        if (ifvar !== null || typeof ifval !== 'undefined' || typeof ifnot !== 'undefined')
         {
             varContainer = this.runVars;
 
@@ -750,10 +708,6 @@
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
-        
-        parsedCommand = out.tools.xmlToJs(command);
-        
-        console.log('command: ', parsedCommand);
 
         if (tagName in this.commands)
         {
@@ -768,7 +722,7 @@
             
             bus.trigger('game.commands.' + tagName);
             
-            return this.commands[tagName](parsedCommand, this);
+            return this.commands[tagName](command, this);
         }
         else if (
             assetName !== null 
@@ -779,7 +733,7 @@
         {
             bus.trigger('game.assets.' + assetName + '.' + tagName);
             
-            return this.assets[assetName][tagName](parsedCommand, this);
+            return this.assets[assetName][tagName](command, this);
         }
         else
         {
@@ -796,7 +750,7 @@
                 {
                     interpreter: this,
                     command: command
-                }, 
+                },
                 false
             );
             
@@ -821,7 +775,7 @@
 
         try
         {
-            triggers = this.game.ws.getElementsByTagName("triggers")[0].getElementsByTagName("trigger");
+            triggers = this.game.dataService.getTriggers();
         }
         catch (e)
         {
@@ -832,7 +786,7 @@
         for (i = 0, len = triggers.length; i < len; i += 1)
         {
             cur = triggers[i];
-            curName = cur.getAttribute("name") || null;
+            curName = cur.name || null;
 
             if (curName === null)
             {
@@ -866,126 +820,6 @@
             {
                 this.triggers[curName] = curTrigger;
             }
-        }
-    };
-
-    out.Interpreter.prototype.buildAssets = function ()
-    {
-        var assets, len, i, cur, bus = this.bus;
-
-        bus.trigger("wse.assets.loading.started");
-
-        try
-        {
-            assets = this.story.getElementsByTagName("assets")[0].childNodes;
-        }
-        catch (e)
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Error while creating assets: " + e.getMessage()
-                }
-            );
-        }
-
-        len = assets.length;
-
-        for (i = 0; i < len; i += 1)
-        {
-            cur = assets[i];
-            
-            if (cur.nodeType !== 1)
-            {
-                continue;
-            }
-            
-            this.createAsset(cur);
-        }
-    };
-
-    out.Interpreter.prototype.createAsset = function (asset)
-    {
-        var name, type, self, bus = this.bus;
-        var xmlObj; // temporary, for use with XML DOM conversion
-
-        bus.trigger(
-            "wse.interpreter.createasset",
-            {
-                interpreter: this,
-                asset: asset
-            }, 
-            false
-        );
-
-        name = asset.getAttribute("name");
-        type = asset.tagName;
-        self = this;
-
-        if (name === null)
-        {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    element: asset,
-                    message: "Expected attribute 'name'."
-                }
-            );
-            
-            return;
-        }
-
-        if (type === null)
-        {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Expected attribute 'type' on asset '" + name + "'."
-                }
-            );
-            
-            return;
-        }
-
-        if (typeof this.assets[name] !== "undefined")
-        {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Trying to override existing asset '" + name + "'."
-                }
-            );
-        }
-
-        type = out.tools.firstLetterUppercase(type);
-
-        if (type in out.assets)
-        {
-            // convert asset from XML to JS object
-            asset = out.tools.xmlToJs(asset);
-
-            if (typeof asset.content !== 'undefined') 
-			{
-                asset.content = out.tools.stringToXml(asset.content);
-            }
-            
-            this.assets[name] = new out.assets[type](asset, this);
-            return;
-        }
-        else
-        {
-            console.log(out.assets);
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Unknown asset type '" + type + "'."
-                }
-            );
-            
-            return;
         }
     };
 
@@ -1189,6 +1023,7 @@
         return vars.id;
     };
 
+    // *** LOAD FUNCTION CURRENTLY NEEDS WORK
     out.Interpreter.prototype.load = function (name)
     {
         var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId, bus = this.bus;
@@ -1237,21 +1072,10 @@
         this.state = "listen";
 
         sceneId = savegame.sceneId;
-        this.sceneId = sceneId;
 
-        scenes = this.story.getElementsByTagName("scene");
-        this.scenes = scenes;
+        this.changeScene(sceneId);
 
-        for (i = 0, len = this.scenes.length; i < len; i += 1)
-        {
-            if (scenes[i].getAttribute("id") === sceneId)
-            {
-                scene = scenes[i];
-                break;
-            }
-        }
-
-        if (!scene)
+        /* if (!scene)
         {
             bus.trigger(
                 "wse.interpreter.error",
@@ -1260,7 +1084,7 @@
                 }
             );
             return false;
-        }
+        }*/
 
         this.currentCommands = scene.childNodes;
 
@@ -1270,6 +1094,8 @@
         {
             var elements, i, len, cur, index, type, com, rem;
             elements = interpreter.stage.getElementsByTagName("*");
+
+            // console.log(elements);
 
             for (i = 0, len = elements.length; i < len; i += 1)
             {
@@ -1723,6 +1549,5 @@
 
         this.stage.appendChild(menu);
     };
-
 
 }(WSE));

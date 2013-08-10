@@ -12,6 +12,9 @@
         "js/WSE.Interpreter.js",
         "js/WSE.tools.ui.js",
 
+        "js/WSE.services.gamedata.XML.js",
+        "js/WSE.services.gamedata.Web.js",
+
         "js/WSE.assets.mixins.displayable.flash.js",
         "js/WSE.assets.mixins.displayable.flicker.js",
         "js/WSE.assets.mixins.displayable.hide.js",
@@ -26,6 +29,7 @@
         "js/WSE.assets.Textbox.js",
         "js/WSE.assets.Background.js",
 
+        "js/WSE.commands.assets.js",
         "js/WSE.commands.break.js",
         "js/WSE.commands.choice.js",
         "js/WSE.commands.do.js",
@@ -35,6 +39,7 @@
         "js/WSE.commands.goto.js",
         "js/WSE.commands.line.js",
         "js/WSE.commands.localize.js",
+        "js/WSE.commands.options.js",
         "js/WSE.commands.restart.js",
         "js/WSE.commands.sub.js",
         "js/WSE.commands.trigger.js",

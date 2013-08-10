@@ -163,7 +163,6 @@
         nameElement = document.getElementById(this.nameElement);
 
         text = out.tools.replaceVariables(text, this.interpreter);
-        //text = out.tools.textToHtml(text, this.nltobr);
 
         self.interpreter.waitCounter += 1;
 
@@ -242,7 +241,9 @@
             setTimeout(
                 function ()
                 {
+
                     textElement.innerHTML += namePart + text;
+
                     nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
                     
                     if (self.type === 'nvl')
@@ -269,6 +270,137 @@
                 50
             );
         }
+
+        this.bus.trigger("wse.assets.textbox.put", this, false);
+        self.interpreter.waitCounter -= 1;
+
+        return {
+            doNext: false
+        };
+    };
+
+    out.assets.Textbox.prototype.clear = function ()
+    {
+        document.getElementById(this.textElement).innerHTML = "";
+        document.getElementById(this.nameElement).innerHTML = "";
+        this.bus.trigger("wse.assets.textbox.clear", this);
+        
+        return {
+            doNext: true
+        };
+    };
+
+    out.assets.Textbox.prototype.putOps = function (text, name, options)
+    {
+        var textElement, nameElement, namePart, self;
+        
+        name = name || null;
+
+        self = this;
+        textElement = document.getElementById(this.textElement);
+        nameElement = document.getElementById(this.nameElement);
+
+        text = out.tools.replaceVariables(text, this.interpreter);
+        //text = out.tools.textToHtml(text, this.nltobr);
+
+        self.interpreter.waitCounter += 1;
+
+        if (this.speed < 1)
+        {
+            self.interpreter.waitCounter += 1;
+            
+            (function ()
+            {
+                var valFn, finishFn, options;
+                
+                valFn = function (v)
+                {
+                    textElement.style.opacity = v;
+                };
+                
+                finishFn = function ()
+                {
+                    self.interpreter.waitCounter -= 1;
+                };
+                
+                options = {
+                    duration: 50,
+                    onFinish: finishFn
+                };
+                
+                out.fx.transform(valFn, 1, 0, options);
+            }());
+            
+        }
+
+        if (this.type === 'adv')
+        {
+            textElement.innerHTML = "";
+        }
+
+        namePart = "";
+        if (this.showNames === false && !(!name))
+        {
+            namePart = this.nameTemplate.replace(/\{name\}/g, name);
+        }
+
+        if (name === null)
+        {
+            name = "";
+        }
+
+        self.interpreter.waitCounter += 1;
+        
+        setTimeout(
+            function ()
+            {
+                var li, op, opix, container = document.createElement('ol');
+                container.class = "ops";
+                
+                self.interpreter.game.unsubscribeListeners();
+                
+                for (op in options) {
+                    (function(li) {
+                        li = document.createElement('li');
+                        li.link = options[op].to;
+                        opix = parseInt(op) + 1;
+                        li.innerHTML = "<span class='opix'>" + opix + ".</span> " + options[op].text;
+                        out.tools.attachEventListener(li, 'click', function() {
+                            self.interpreter.changeScene(li.link);
+                            self.interpreter.game.subscribeListeners();
+                        });
+                        container.appendChild(li);
+                    })(li);
+                }
+                
+                textElement.innerHTML += namePart + text;
+                textElement.appendChild(container);
+                
+                nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
+                
+                if (self.type === 'nvl')
+                {
+                    textElement.innerHTML = '<div>' + textElement.innerHTML + '</div>';
+                }
+                
+                out.fx.transform(
+                    function (v)
+                    {
+                        textElement.style.opacity = v;
+                    },
+                    0,
+                    1,
+                    {
+                        duration: 50,
+                        onFinish: function ()
+                        {
+                            self.interpreter.waitCounter -= 1;
+                        }
+                    }
+                );
+            },
+            50
+        );
 
         this.bus.trigger("wse.assets.textbox.put", this, false);
         self.interpreter.waitCounter -= 1;

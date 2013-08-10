@@ -53,12 +53,10 @@
         interpreter.state = "listen";
         interpreter.stage.innerHTML = "";
 
-        interpreter.assets = {};
-        interpreter.buildAssets();
-
         return {
             doNext: true,
-            changeScene: interpreter.scenes[0]
-        };
+            // *** changeScene: interpreter.scenes[0]
+            changeScene: interpreter.game.firstSceneId
+       };
     };
 }(WSE));
