@@ -48,43 +48,28 @@
      */
     out.Game = function (args)
     {
-        var host;
+        var host, self;
         
         out.trigger("wse.game.constructor", {args: args, game: this});
         
         args = args || {};
         this.bus = new Squiddle();
-        this.url = args.url || "game.xml";
-        this.ws = null;
         this.debug = args.debug === true ? true : false;
         
-        host = args.host || false;
-        this.host = host;
+        self = this;
         
-        if (host)
-        {
-            this.ws = (function (url)
+        this.dataService = new out.services.gamedata[args.mode]( { url: args.url, host: args.host, game: args.game }, 
+            function(settings) 
             {
-                var xml, parser;
-                
-                parser = new DOMParser();
-                xml = host.get(url);
-                       
-                return parser.parseFromString(xml, "application/xml");
-            }(this.url));
-            
-            this.init();
-        }
-        else
-        {
-            this.load(this.url);
-        }
-        
-        this.interpreter = new out.Interpreter(this);
-        this.keys = new out.Keys();
-        this.listenersSubscribed = false;
-        //console.log("this.interpreter: ", this.interpreter);
-        
+                self.settings = settings;
+                self.firstSceneId = settings.options["scenes.first"];
+                self.interpreter = new out.Interpreter(self);
+                self.keys = new out.Keys();
+                self.listenersSubscribed = false;
+                self.init();
+            }
+        );
+
         this.bus.subscribe(
             function (data)
             {
@@ -111,59 +96,31 @@
     };
     
     /**
-     * Loads the WebStory file using the AJAX function and triggers
-     * the game initialization.
-     */
-    out.Game.prototype.load = function ()
-    {
-        //console.log("Loading game file...");
-        var fn, self;
-        self = this;
-        fn = function (obj)
-        {
-            self.ws = obj.responseXML;
-            //console.log("Response XML: " + obj.responseXML);
-            self.init();
-        };
-        out.ajax.get(this.url, fn);
-    };
-    
-    /**
      * Initializes the game instance.
      */
     out.Game.prototype.init = function ()
     {
         //console.log("Initializing game...");
-        var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn, resizeFn;
+        var stage, stageElements, stageInfo, width, height, id, self, alignFn, resizeFn;
         
         self = this;
-        ws = this.ws;
-        
-        try
-        {
-            stageElements = ws.getElementsByTagName("stage");
-        }
-        catch (e)
-        {
-            console.log(e);
-        }
-        
+
         width = "800px";
         height = "480px";
         id = "Stage";
         
-        if (stageElements.length < 1)
+        if (typeof this.settings.stages === 'undefined')
         {
             throw new Error("No stage definition found!");
         }
         
-        stageInfo = stageElements[0];
-        width = stageInfo.getAttribute("width") || width;
-        height = stageInfo.getAttribute("height") || height;
-        id = stageInfo.getAttribute("id") || id;
+        stageInfo = this.settings.stages[0];
+        width = stageInfo.width || width;
+        height = stageInfo.height || height;
+        id = stageInfo.id || id;
         
         // Create the stage element or inject into existing one?
-        if (stageInfo.getAttribute("create") === "yes")
+        if (stageInfo.create === "yes")
         {
             stage = document.createElement("div");
             stage.setAttribute("id", id);
@@ -188,7 +145,7 @@
             stage.style.top = (dim.height / 2) - (parseInt(height, 10) / 2) + 'px';
         };
         
-        if (stageInfo.getAttribute("center") === "yes")
+        if (stageInfo.center === "yes")
         {
             out.tools.attachEventListener(window, 'resize', alignFn);
             alignFn();
@@ -202,14 +159,13 @@
             out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
         };
         
-        if (stageInfo.getAttribute("resize") === "yes")
+        if (stageInfo.resize === "yes")
         {
             out.tools.attachEventListener(window, 'resize', resizeFn);
             resizeFn();
         }
         
         this.stage = stage;
-        //     stage.onclick = function() { self.interpreter.next(); };
         
         this.applySettings();
         
@@ -229,13 +185,15 @@
                     return;
                 }
                 
-                window.addEventListener("resize",
-                                        
-                                        function ()
-                                        {
-                                            console.log("Resizing...");
-                                            out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
-                                        });
+                window.addEventListener(
+                    "resize",
+
+                    function ()
+                    {
+                        console.log("Resizing...");
+                        out.fx.fitToWindow(stage, parseInt(width, 10), parseInt(height, 10));
+                    }
+                );
             }(this));
         }
     };
@@ -247,23 +205,7 @@
      */
     out.Game.prototype.getSetting = function (name)
     {
-        var ret, settings, i, len, cur, curName;
-        
-        settings = this.ws.getElementsByTagName("setting");
-        
-        for (i = 0, len = settings.length; i < len; i += 1)
-        {
-            cur = settings[i];
-            curName = cur.getAttribute("name") || null;
-            
-            if (curName !== null && curName === name)
-            {
-                ret = cur.getAttribute("value") || null;
-                return ret;
-            }
-        }
-        
-        return null;
+        return this.settings.options[name];
     };
     
     // FIXME: implement...
@@ -290,7 +232,8 @@
         
         self = this;
         
-        if (this.ws === null)
+        // test for the presence of the interpreter object - created when the configuration has finished loading
+        if (typeof this.interpreter === 'undefined')
         {
             return setTimeout(
                 function ()
@@ -299,13 +242,6 @@
                 }
             );
         }
-        
-        /*
-         * this.next = function ()
-         * {
-         *    self.bus.trigger("wse.game.next", this);
-         *    self.interpreter.next(true);
-    };*/
         
         // Listener that sets the interpreter's state machine to the next state
         // if the current state is not pause or wait mode.
@@ -332,7 +268,7 @@
             out.tools.removeEventListener(this.stage, 'click', fn);
             this.listenersSubscribed = false;
         };
-        
+                
         this.interpreter.start();
     };
 

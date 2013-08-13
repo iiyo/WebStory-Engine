@@ -72,15 +72,11 @@
         );
 
         interpreter.pushToCallStack();
-        scene = interpreter.getSceneById(sceneId);
-
-        interpreter.currentCommands = scene.childNodes;
-        interpreter.index = -1;
-        interpreter.sceneId = sceneId;
-        interpreter.currentElement = -1;
+        console.log(sceneId);
+        interpreter.changeScene(sceneId);
 
         return {
             doNext: doNext
         };
-    };    
+    };
 }(WSE));

@@ -33,7 +33,7 @@
     
     out.assets.Animation = function (asset, interpreter)
     {
-        var groups, i, len, current, transformations, jlen;
+        var groups, i, x, len, current, transformations, jlen;
         var self, doElements, createTransformFn, loopFn, runDoCommandFn;
 
         if (!(this instanceof out.assets.Animation))
@@ -52,7 +52,7 @@
 
         self = this;
         
-        groups = asset.content.getElementsByTagName("group");
+        groups = asset.items;
         len = groups.length;
 
         if (len < 1)
@@ -82,7 +82,7 @@
         {
             var curDur, curDoEl;
 
-            curDoEl = out.tools.xmlToJs(del);
+            curDoEl = del;
             curDur = curDoEl.duration;
             //                             console.log("Running do command.");
             interpreter.commands["do"](curDoEl, interpreter,
@@ -159,8 +159,19 @@
         for (i = 0; i < len; i += 1)
         {
             current = groups[i];
-            transformations = current.getElementsByTagName("transform");
-            doElements = current.getElementsByTagName("do");
+            transformations = [];
+            doElements = [];
+            for (x = 0; x < current.items.len; x += 1) 
+            {
+                if (current.items[x].type === "do")
+                {
+                    doElements.push(current.items[x]);
+                }
+                else if (current.items[x].type === "transform")
+                {
+                    transformations.push(current.items[x]);
+                }                
+            }
 
             loopFn(transformations, doElements);
         }

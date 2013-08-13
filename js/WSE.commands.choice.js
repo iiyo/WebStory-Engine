@@ -35,7 +35,7 @@
     {
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, j, jlen, currentScene, sceneName;
-        var makeButtonClickFn, oldState, cssid, dom;
+        var makeButtonClickFn, oldState, cssid;
 
         interpreter.bus.trigger(
             "wse.interpreter.commands.choice",
@@ -52,9 +52,8 @@
         buttons = [];
         scenes = [];
         self = interpreter;
-        dom = out.tools.stringToXml(command.content);
         
-        children = dom.getElementsByTagName("option");
+        children = command.items;
         len = children.length;
         duration = command.duration || 500;
         duration = parseInt(duration, 10);
@@ -81,13 +80,12 @@
                     {
                         var cmds, i, len, noNext;
                         noNext = cur.next === "false" ? true : false;
-                        cmds = out.tools.stringToXml(cur.content);
-                        cmds = cmds.getElementsByTagName("var");
+                        cmds = cur.items;
                         len = cmds.length;
 
                         for (i = 0; i < len; i += 1)
                         {
-                            self.commands["var"](out.tools.xmlToJs(cmds[i]), self);
+                            self.commands["var"](cmds[i], self);
                         }
 
                         if (sc !== null)
@@ -141,7 +139,7 @@
 
         for (i = 0; i < len; i += 1)
         {
-            current = out.tools.xmlToJs(children[i]);
+            current = children[i];
             currentButton = document.createElement("input");
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
@@ -150,22 +148,23 @@
             currentButton.value = current.label;
             sceneName = current.scene || null;
             
-            for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
+            // *** SCENE SWITCH SIMPLIFIED - JUST PASSES SCENE ID
+            /*for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
             {
                 currentScene = interpreter.scenes[j];
-                if (currentScene.getAttribute("id") === sceneName)
+                if (currentScene.id === sceneName)
                 {
                     scenes[i] = currentScene;
                     break;
                 }
             }
             
-            scenes[i] = scenes[i] || null;
+            scenes[i] = scenes[i] || null;*/
 
             out.tools.attachEventListener(
                 currentButton, 
                 'click',
-                makeButtonClickFn(current, menuElement, scenes[i])
+                makeButtonClickFn(current, menuElement, sceneName)
             );
             
             buttons.push(currentButton);

@@ -35,11 +35,11 @@
     {
         var self = this, fn;
 
-        this.name = trigger.getAttribute("name") || null;
-        this.event = trigger.getAttribute("event") || null;
-        this.special = trigger.getAttribute("special") || null;
-        this.fnName = trigger.getAttribute("function") || null;
-        this.scene = trigger.getAttribute("scene") || null;
+        this.name = trigger.name || null;
+        this.event = trigger.event || null;
+        this.special = trigger.special || null;
+        this.fnName = trigger.function || null;
+        this.scene = trigger.scene || null;
         this.interpreter = interpreter;
         this.isSubscribed = false;
 
@@ -164,7 +164,7 @@
             case "keypress":
                 
                 this.isKeyEvent = true;
-                this.key = trigger.getAttribute("key") || null;
+                this.key = trigger.key || null;
 
                 if (this.key === null)
                 {

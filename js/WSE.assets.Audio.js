@@ -47,7 +47,7 @@
         bus = interpreter.bus;
         self = this;
         this.au = new Audio();
-        this.au.setAttribute("preload", "auto");
+        this.au.preload = "auto";
         this.bus = bus;
         this.name = asset.name;
         this.tracks = {};
@@ -58,7 +58,7 @@
         this.fade = asset.fade === "true" ? true : false;
         this.id = out.tools.getUniqueId();
 
-        tracks = asset.content.getElementsByTagName("track");
+        tracks = asset.items;
         len = tracks.length;
 
         if (len < 1)
@@ -80,7 +80,7 @@
         for (i = 0; i < len; i += 1)
         {
             current = tracks[i];
-            sources = current.getElementsByTagName("source");
+            sources = current.items;
             jlen = sources.length;
 
             if (jlen < 1)
@@ -96,7 +96,7 @@
             }
 
             track = new Audio();
-            track.setAttribute("preload", "auto");
+            track.preload = "auto";
             
             if (this.loop)
             {
@@ -104,7 +104,7 @@
             }
             
             trackFiles = {};
-            trackName = current.getAttribute("title");
+            trackName = current.title;
 
             if (trackName === null)
             {
@@ -121,8 +121,8 @@
             for (j = 0; j < jlen; j += 1)
             {
                 source = sources[j];
-                href = source.getAttribute("href");
-                type = source.getAttribute("type");
+                href = source.href;
+                type = source.type;
 
                 if (href === null)
                 {
@@ -161,7 +161,7 @@
              * out.tools.attachEventListener(track, 'load', function() { self.bus.trigger("wse.assets.loading.decrease"); });*/
 
             if (
-                track.canPlayType("audio/mpeg") 
+                track.canPlayType("audio/mpeg")
                 && typeof trackFiles.mp3 !== "undefined"
             )
             {
@@ -198,7 +198,7 @@
             var dupl, src;
             
             dupl = new Audio();
-            dupl.setAttribute("preload", "auto");
+            dupl.preload = "auto";
             src = self.current.src;
             
             try
