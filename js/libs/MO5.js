@@ -215,7 +215,7 @@ var MO5 = (function ()
             throw new Error("MO5.transform expects parameter callback to be a function.");
         }
 
-        var dur = args.duration || 1000,
+        var dur,
             now,
             f,
             tStart = new Date().getTime(),
@@ -227,6 +227,8 @@ var MO5 = (function ()
             doLog = args.log || false,
             c = 0, // number of times func get's executed
             onFinish = args.onFinish || function () {};
+        
+        dur = typeof args.duration !== "undefined" ? args.duration : 1000;
 
         now = Date.now || function () { return +(new Date()); };
 
