@@ -1019,7 +1019,7 @@
                 catch (e)
                 {
                     console.log(e);
-                    bus.trigger("wse.interpreter.warning", {
+                    this.bus.trigger("wse.interpreter.warning", {
                         message: "Could not restore asset state for asset '" + key + "'!"
                     });
                 }

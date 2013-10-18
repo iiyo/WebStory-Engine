@@ -27,6 +27,9 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/* global document */
+
 (function (out)
 {
     "use strict";
@@ -46,7 +49,7 @@
         this.bus = interpreter.bus;
         this.name = asset.getAttribute("name");
         this.id = out.tools.getUniqueId();
-        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.id;
+        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
         this.interpreter = interpreter;
         out.tools.applyAssetUnits(this, asset);
 
@@ -61,6 +64,8 @@
 
         element.setAttribute("class", "imagepack");
         element.setAttribute("id", this.cssid);
+        
+        element.setAttribute("data-wse-asset-name", this.name);
 
         children = asset.getElementsByTagName("image");
 
@@ -110,6 +115,8 @@
             image.style.opacity = 0;
             image.style.position = "absolute";
             image.draggable = false;
+            
+            image.setAttribute("data-wse-asset-image-name", name);
             
             if (width !== null)
             {
@@ -167,7 +174,12 @@
             };
         }
 
-        image = document.getElementById(this.images[name]);
+        try {
+            image = document.getElementById(this.images[name]);
+        }
+        catch (e) {
+            console.error("DOM Element for Image " + name + " on Imagepack " + this.name + " not found!", e);
+        }
 
         if (typeof image === "undefined" || image === null)
         {
@@ -316,7 +328,7 @@
 
         obj = {
             assetType: "Imagepack",
-            current: name,
+            current: cur,
             cssid: this.cssid,
             images: images,
             z: this.z
@@ -343,9 +355,9 @@
 
         document.getElementById(this.cssid).style.zIndex = this.z;
 
-        if (name !== null && this.images[name] !== null)
+        if (name !== null)
         {
-            this.current = this.images[name];
+            this.current = name;
         }
 
         this.bus.trigger(
