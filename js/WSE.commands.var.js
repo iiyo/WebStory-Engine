@@ -33,7 +33,7 @@
     
     out.commands["var"] = function (command, interpreter)
     {
-        var key, val, action, container;
+        var key, val, lval, action, container;
 
         interpreter.bus.trigger(
             "wse.interpreter.commands.var",
@@ -45,7 +45,7 @@
         );
 
         key = command.getAttribute("name") || null;
-        val = command.getAttribute("value") || null;
+        val = command.getAttribute("value") || "1";
         action = command.getAttribute("action") || "set";
 
         if (key === null)
@@ -60,21 +60,9 @@
             };
         }
 
-        if (action !== "set" && action !== "delete" && action !== "increase" && action !== "decrease" && action !== "print")
-        {
-            interpreter.bus.trigger("wse.interpreter.warning",
-            {
-                element: command,
-                message: "Unknown action '" + action + "' defined on 'var' command."
-            });
-            return {
-                doNext: true
-            };
-        }
-
         container = interpreter.runVars;
 
-        if (action !== "set" && !(key in container))
+        if (action !== "set" && !(key in container || command.getAttribute("lvalue")))
         {
             interpreter.bus.trigger("wse.interpreter.warning",
             {
@@ -86,22 +74,78 @@
             };
         }
 
+        if (action === "set")
+        {
+            container[key] = "" + val;
+            return {
+                doNext: true
+            };
+        }
+
+        lval = command.getAttribute("lvalue") || container[key];
+        lval = out.tools.replaceVariables(lval, interpreter);
+        val  = out.tools.replaceVariables(val,  interpreter);
+
         switch (action)
         {
         case "delete":
             delete container[key];
             break;
+
         case "increase":
-            container[key]++;
+            container[key] = "" + (parseFloat(lval) + parseFloat(val));
             break;
         case "decrease":
-            container[key]--;
+            container[key] = "" + (parseFloat(lval) - parseFloat(val));
             break;
+        case "multiply":
+            container[key] = "" + (parseFloat(lval) * parseFloat(val));
+            break;
+        case "divide":
+            container[key] = "" + (parseFloat(lval) / parseFloat(val));
+            break;
+        case "modulus":
+            container[key] = "" + (parseFloat(lval) % parseFloat(val));
+            break;
+
+        case "and":
+            container[key] = "" + (parseFloat(lval) && parseFloat(val));
+            break;
+        case "or":
+            container[key] = "" + (parseFloat(lval) || parseFloat(val));
+            break;
+        case "not":
+            container[key] = parseFloat(lval) ? "0" : "1";
+            break;
+
+        case "is_greater":
+            container[key] = parseFloat(lval) > parseFloat(val) ? "1" : "0";
+            break;
+        case "is_less":
+            container[key] = parseFloat(lval) < parseFloat(val) ? "1" : "0";
+            break;
+        case "is_equal":
+            container[key] = parseFloat(lval) === parseFloat(val) ? "1" : "0";
+            break;
+        case "not_greater":
+            container[key] = parseFloat(lval) <= parseFloat(val) ? "1" : "0";
+            break;
+        case "not_less":
+            container[key] = parseFloat(lval) >= parseFloat(val) ? "1" : "0";
+            break;
+        case "not_equal":
+            container[key] = parseFloat(lval) !== parseFloat(val) ? "1" : "0";
+            break;
+
         case "print":
             interpreter.bus.trigger("wse.interpreter.message", "Variable '" + key + "' is: " + container[key]);
             break;
         default:
-            container[key] = "" + val;
+            interpreter.bus.trigger("wse.interpreter.warning",
+            {
+                element: command,
+                message: "Unknown action '" + action + "' defined on 'var' command."
+            });
         }
 
         return {
