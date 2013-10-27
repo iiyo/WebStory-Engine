@@ -64,6 +64,8 @@
             };
         }
 
+        sceneId = out.tools.replaceVariables(sceneId, interpreter);
+
         interpreter.bus.trigger(
             "wse.interpreter.message", 
             "Entering sub scene '" + sceneId + "'...",

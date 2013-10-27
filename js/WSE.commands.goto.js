@@ -56,6 +56,8 @@
             );
         }
 
+        sceneName = out.tools.replaceVariables(sceneName, interpreter);
+
         for (i = 0, len = interpreter.scenes.length; i < len; i += 1)
         {
             current = interpreter.scenes[i];
