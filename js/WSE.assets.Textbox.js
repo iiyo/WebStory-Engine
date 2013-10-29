@@ -168,11 +168,6 @@
 
         self.interpreter.waitCounter += 1;
 
-        if (this.type === 'adv')
-        {
-            textElement.innerHTML = "";
-        }
-
         namePart = "";
         if (this.showNames === false && !(!name))
         {
@@ -218,6 +213,11 @@
 
         if (this.speed > 0)
         {
+            if (self.type === 'adv')
+            {
+                textElement.innerHTML = "";
+            }
+            
             (function ()
             {
                 var container;
@@ -245,11 +245,11 @@
         {
             self.interpreter.waitCounter += 1;
             
-            putText();
-            
             setTimeout(
                 function ()
                 {
+            
+                    putText();
                     
                     if (self.type === 'nvl')
                     {
@@ -284,6 +284,12 @@
         };
         
         function putText () {
+
+            if (self.type === 'adv')
+            {
+                textElement.innerHTML = "";
+            }
+            
             textElement.innerHTML += namePart + text;
             nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
         }

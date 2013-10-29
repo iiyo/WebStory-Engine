@@ -2,6 +2,12 @@
 
 ===== Version 0.3.x =====
 
+==== Version 0.3.6 ====
+
+Released on 2013-10-29.
+
+  * Fixed: Textbox set new text before triggering the fade effect.
+
 ==== Version 0.3.5 ====
 
 Released on 2013-10-29.
