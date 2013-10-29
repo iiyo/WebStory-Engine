@@ -54,6 +54,7 @@
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
         this.speed = parseInt(this.speed, 10);
+        this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
         
         out.tools.applyAssetUnits(this, asset);
 
@@ -167,33 +168,6 @@
 
         self.interpreter.waitCounter += 1;
 
-        if (this.speed < 1)
-        {
-            self.interpreter.waitCounter += 1;
-            
-            (function ()
-            {
-                var valFn, finishFn, options;
-                
-                valFn = function (v)
-                {
-                    textElement.style.opacity = v;
-                };
-                
-                finishFn = function ()
-                {
-                    self.interpreter.waitCounter -= 1;
-                };
-                
-                options = {
-                    duration: 50,
-                    onFinish: finishFn
-                };
-                
-                out.fx.transform(valFn, 1, 0, options);
-            }());
-        }
-
         if (this.type === 'adv')
         {
             textElement.innerHTML = "";
@@ -208,6 +182,38 @@
         if (name === null)
         {
             name = "";
+        }
+
+        if (this.speed < 1)
+        {
+            if (this.fadeDuration > 0) {
+                self.interpreter.waitCounter += 1;
+            
+                (function ()
+                {
+                    var valFn, finishFn, options;
+                    
+                    valFn = function (v)
+                    {
+                        textElement.style.opacity = v;
+                    };
+                    
+                    finishFn = function ()
+                    {
+                        self.interpreter.waitCounter -= 1;
+                    };
+                    
+                    options = {
+                        duration: self.fadeDuration,
+                        onFinish: finishFn
+                    };
+                    
+                    out.fx.transform(valFn, 1, 0, options);
+                }());
+            }
+            else {
+                putText();
+            }
         }
 
         if (this.speed > 0)
@@ -235,15 +241,15 @@
                 );
             }());
         }
-        else
+        else if (this.fadeDuration > 0)
         {
             self.interpreter.waitCounter += 1;
+            
+            putText();
             
             setTimeout(
                 function ()
                 {
-                    textElement.innerHTML += namePart + text;
-                    nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
                     
                     if (self.type === 'nvl')
                     {
@@ -258,7 +264,7 @@
                         0,
                         1,
                         {
-                            duration: 50,
+                            duration: self.fadeDuration,
                             onFinish: function ()
                             {
                                 self.interpreter.waitCounter -= 1;
@@ -266,7 +272,7 @@
                         }
                     );
                 },
-                50
+                self.fadeDuration
             );
         }
 
@@ -276,6 +282,11 @@
         return {
             doNext: false
         };
+        
+        function putText () {
+            textElement.innerHTML += namePart + text;
+            nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
+        }
     };
 
     out.assets.Textbox.prototype.clear = function ()

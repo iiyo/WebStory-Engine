@@ -2,6 +2,14 @@
 
 ===== Version 0.3.x =====
 
+==== Version 0.3.5 ====
+
+Released on 2013-10-29.
+
+  * Added more options for variables.
+  * Added a fadeDuration= attribute to Textboxes to control the
+    duration of the fade effect between lines. Default is 0 now (no fade).
+
 ==== Version 0.3.4 ====
 
 Released on 2013-10-18.
