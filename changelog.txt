@@ -2,6 +2,12 @@
 
 ===== Version 0.3.x =====
 
+==== Version 0.3.7 ====
+
+Released on 2013-11-01.
+
+  * Fixed: wait command ignored duration= attribute.
+
 ==== Version 0.3.6 ====
 
 Released on 2013-10-29.
