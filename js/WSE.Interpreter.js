@@ -578,7 +578,7 @@
             return;
         }
 
-        if (this.wait === true && this.waitCounter > 0)
+        if (this.waitForTimer === true || (this.wait === true && this.waitCounter > 0))
         {
             setTimeout(function () { self.next(); }, 0);
             
