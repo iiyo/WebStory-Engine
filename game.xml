@@ -61,7 +61,9 @@
                 <transform asset="backgrounds" property="left" from="-300" to="0" unit="px" duration="2000" easing="easeInQuint" />
             </group>
         </animation>
-        
+
+        <particles name="snow" n="500" text="ж" />
+        <particles name="snow2" src="assets/images/snow.png" />
     </assets>
     <scenes>
         
@@ -73,8 +75,18 @@
             
             <show asset="rect" />
             <show asset="sg_button" />
-            
+
             <wait />
+
+            <break />
+            
+            <start asset="snow" />
+            <break />
+            <start asset="snow2" />
+            <break />
+            <stop asset="snow" />
+            <break />
+            <stop asset="snow2" />
             
             <hello />
             
