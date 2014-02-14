@@ -1,3 +1,4 @@
+/* global location, document, console, setTimeout, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -329,7 +330,7 @@
                 
                 out.fx.transform(valFn, 1, 0, options);
                 //console.log("Hiding loading screen...");
-            }
+            };
             
             bus.subscribe(subscrFn, "wse.assets.loading.finished");
         }());
@@ -687,8 +688,8 @@
                     "wse.interpreter.warning",
                     {
                         element: command,
-                        message: "Unknown variable '" + ifvar + "' (" + ifscope + 
-                            " scope) used in condition. Ignoring command."
+                        message: "Unknown variable '" + ifvar +
+                            "' used in condition. Ignoring command."
                     }
                 );
                 
@@ -767,10 +768,10 @@
             return this.commands[tagName](command, this);
         }
         else if (
-            assetName !== null 
-            && assetName in this.assets 
-            && typeof this.assets[assetName][tagName] === "function" 
-            && tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
+            assetName !== null &&
+            assetName in this.assets &&
+            typeof this.assets[assetName][tagName] === "function" &&
+            tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|set)/)
         )
         {
             bus.trigger('game.assets.' + assetName + '.' + tagName);

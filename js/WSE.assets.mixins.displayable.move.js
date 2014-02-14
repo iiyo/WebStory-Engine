@@ -1,3 +1,4 @@
+/* global document, console, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.

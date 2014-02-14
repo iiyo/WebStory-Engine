@@ -1,3 +1,4 @@
+/* global console, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -180,8 +181,8 @@
                 }
 
                 if (
-                    typeof interpreter.game.keys.keys[this.key] === "undefined" 
-                    || interpreter.game.keys.keys[this.key] === null
+                    typeof interpreter.game.keys.keys[this.key] === "undefined" ||
+                    interpreter.game.keys.keys[this.key] === null
                 )
                 {
                     interpreter.bus.trigger(
