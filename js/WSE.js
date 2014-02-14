@@ -31,7 +31,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 {
     "use strict";
     
-    var out = {}, version = "0.3.7";
+    var out = {}, version = "0.4.0-preview.1";
     
     out.fx = MO5;
     out.Keys = STEINBECK.Keys;

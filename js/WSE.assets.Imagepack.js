@@ -150,7 +150,7 @@
 
     out.assets.Imagepack.prototype.set = function (command, args)
     {
-        var image, name, self, old, duration, isAnimation, bus = this.bus;
+        var image, name, self, old, duration, isAnimation, bus = this.bus, element;
 
         args = args || {};
         self = this;
@@ -231,6 +231,10 @@
             self.interpreter.waitCounter += 1;
         }
         
+        element = document.getElementById(this.cssid);
+        element.style.width = image.offsetWidth + "px";
+        element.style.height = image.offsetHeight + "px";
+        
         (function ()
         {
             var valFn, finishFn, options;
@@ -249,8 +253,8 @@
             };
             
             options = {
-                duration: duration / 2,
-                easing: out.fx.easing.linear,
+                duration: duration,
+                easing: out.fx.easing.easeOutCubic,
                 onFinish: finishFn
             };
             
@@ -289,14 +293,14 @@
                     
                     options = {
                         duration: duration,
-                        easing: out.fx.easing.linear,
+                        easing: out.fx.easing.easeInCubic,
                         onFinish: finishFn
                     };
                     
                     out.fx.transform(valFn, 1, 0, options);
                 };
                 
-                setTimeout(timeoutFn, duration / 2);
+                timeoutFn();
             }());
         }
 

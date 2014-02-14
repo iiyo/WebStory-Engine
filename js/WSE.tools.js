@@ -204,4 +204,8 @@
         }
     };
     
+    out.tools.extractUnit = function (numberString) {
+        return numberString.replace(/^(-){0,1}[0-9]*/, "");
+    };
+    
 }(WSE));
