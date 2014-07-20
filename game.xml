@@ -245,7 +245,7 @@
             </line>
             
             <line s="n" ifvar="learn_more_pressed" ifvalue="false">
-                You don't want to learn more.
+                You don't want to learn more, so we gave you red instead! Haha!
             </line>
             
             <goto scene="restart" />
