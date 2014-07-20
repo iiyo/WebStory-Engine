@@ -357,13 +357,9 @@
         name = save.current;
         this.cssid = save.cssid;
         this.z = save.z;
+        this.current = name;
 
         document.getElementById(this.cssid).style.zIndex = this.z;
-
-        if (name !== null)
-        {
-            this.current = name;
-        }
 
         this.bus.trigger(
             "wse.assets.imagepack.restore",
