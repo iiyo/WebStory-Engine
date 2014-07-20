@@ -74,8 +74,6 @@
             dur1 = dur2 * 2;
         }
 
-        //         console.log("CSS ID: " + this.cssid, element);
-
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
