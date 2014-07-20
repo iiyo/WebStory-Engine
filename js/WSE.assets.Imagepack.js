@@ -29,7 +29,7 @@
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-/* global document, Image, console, setTimeout, WSE */
+/* global document, Image, console, WSE */
 
 (function (out)
 {
