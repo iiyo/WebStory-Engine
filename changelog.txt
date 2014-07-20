@@ -5,6 +5,7 @@
 ==== Version 0.4.0 ====
 
   * Implemented anchors for displayable objects to be able to better position them on stage.
+  * Fixed: When saving an imagepack that had no image set and then setting the same image that was set before loading resulted in the infamous "Trying to set an image that is already set" warning and so the image was never shown.
 
 ===== Version 0.3.x =====
 
