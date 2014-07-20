@@ -1,3 +1,4 @@
+/* global document, setTimeout, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -72,8 +73,6 @@
             dur2 = step / 3;
             dur1 = dur2 * 2;
         }
-
-        //         console.log("CSS ID: " + this.cssid, element);
 
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;

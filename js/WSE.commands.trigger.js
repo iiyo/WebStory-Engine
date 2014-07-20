@@ -1,3 +1,4 @@
+/* global WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -79,8 +80,8 @@
         }
 
         if (
-            typeof interpreter.triggers[triggerName] === "undefined" 
-            || interpreter.triggers[triggerName] === null
+            typeof interpreter.triggers[triggerName] === "undefined" ||
+            interpreter.triggers[triggerName] === null
         )
         {
             interpreter.bus.trigger(

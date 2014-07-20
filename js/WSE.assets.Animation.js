@@ -1,3 +1,4 @@
+/* global document, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -68,7 +69,6 @@
 
         createTransformFn = function (as, f, t, pn, u, opt)
         {
-            //                             console.log(f, t, pn, u, opt);
             return out.fx.transform(
 
             function (v)

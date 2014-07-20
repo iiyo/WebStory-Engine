@@ -1,3 +1,4 @@
+/* global Audio, console, setTimeout, document, window, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -161,8 +162,8 @@
              * out.tools.attachEventListener(track, 'load', function() { self.bus.trigger("wse.assets.loading.decrease"); });*/
 
             if (
-                track.canPlayType("audio/mpeg") 
-                && typeof trackFiles.mp3 !== "undefined"
+                track.canPlayType("audio/mpeg") &&
+                typeof trackFiles.mp3 !== "undefined"
             )
             {
                 track.src = trackFiles.mp3;

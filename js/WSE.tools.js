@@ -1,3 +1,4 @@
+/* global WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -202,6 +203,10 @@
                 target[key] = source[key];
             }
         }
+    };
+    
+    out.tools.extractUnit = function (numberString) {
+        return numberString.replace(/^(-){0,1}[0-9]*/, "");
     };
     
 }(WSE));

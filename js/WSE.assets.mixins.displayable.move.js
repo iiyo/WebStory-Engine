@@ -1,3 +1,4 @@
+/* global document, console, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -35,13 +36,20 @@
     {
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
         var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage, fx = out.fx;
+        var xAnchor, yAnchor, xAnchorUnit = "%", yAnchorUnit = "%";
+        var offsetLeft, offsetTop, oldElementDisplayStyle;
 
         args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
+        
         x = command.getAttribute("x");
         y = command.getAttribute("y");
         z = command.getAttribute("z");
+        
+        xAnchor = command.getAttribute("xAnchor");
+        yAnchor = command.getAttribute("yAnchor");
+        
         duration = command.getAttribute("duration") || 500;
         easingType = command.getAttribute("easing") || "sineEaseOut";
         easing = (typeof fx.easing[easingType] !== null) ? 
@@ -49,18 +57,70 @@
             fx.easing.sineEaseOut;
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
+        
+        offsetLeft = element.offsetLeft;
+        offsetTop = element.offsetTop;
 
         if (x !== null)
         {
-            xUnit = x.replace(/^(-){0,1}[0-9]*/, "");
+            xUnit = out.tools.extractUnit(x);
             x = parseInt(x, 10);
         }
 
         if (y !== null)
         {
-            yUnit = y.replace(/^(-){0,1}[0-9]*/, "");
+            yUnit = out.tools.extractUnit(y);
             y = parseInt(y, 10);
         }
+        
+        oldElementDisplayStyle = element.style.display;
+        element.style.display = "";
+        
+        if (xUnit === "%") {
+            x = (stage.offsetWidth / 100) * x;
+            xUnit = "px";
+        }
+        
+        if (yUnit === "%") {
+            y = (stage.offsetHeight / 100) * y;
+            yUnit = "px";
+        }
+        
+        if (xAnchor !== null) {
+            
+            console.log("Has xAnchor:", xAnchor);
+            
+            xAnchorUnit = out.tools.extractUnit(xAnchor);
+            xAnchor = parseInt(xAnchor, 10);
+            
+            if (xAnchorUnit === "%") {
+                x = x - ((element.offsetWidth / 100) * xAnchor);
+            }
+            else {
+                x = x - xAnchor;
+            }
+            
+            console.log("x:", x);
+        }
+        
+        if (yAnchor !== null) {
+            
+            console.log("Has yAnchor:", yAnchor);
+            
+            yAnchorUnit = out.tools.extractUnit(yAnchor);
+            yAnchor = parseInt(yAnchor, 10);
+            
+            if (yAnchorUnit === "%") {
+                y = y - ((element.offsetHeight / 100) * yAnchor);
+            }
+            else {
+                y = y - yAnchor;
+            }
+            
+            console.log("y:", y);
+        }
+        
+        element.style.display = oldElementDisplayStyle;
 
         wait = command.getAttribute("wait") === "yes" ? true : false;
         waitX = false;
@@ -84,11 +144,11 @@
         {
             if (xUnit === '%')
             {
-                ox = element.offsetLeft / (stage.offsetWidth / 100);
+                ox = offsetLeft / (stage.offsetWidth / 100);
             }
             else
             {
-                ox = element.offsetLeft;
+                ox = offsetLeft;
             }
             
             if (!isAnimation)
@@ -120,11 +180,11 @@
         {   
             if (yUnit === '%')
             {
-                oy = element.offsetTop / (stage.offsetHeight / 100);
+                oy = offsetTop / (stage.offsetHeight / 100);
             }
             else
             {
-                oy = element.offsetTop;
+                oy = offsetTop;
             }
             
             if (!isAnimation)

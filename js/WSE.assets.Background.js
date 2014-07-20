@@ -1,3 +1,4 @@
+/* global document, window, WSE */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
     All rights reserved.
@@ -31,24 +32,24 @@
 {
     "use strict";
     
-    function resize (ev)
+    function resize (self)
     {
-        this.element.setAttribute("width", this.stage.offsetWidth);
-        this.element.setAttribute("height", this.stage.offsetHeight);
+        self.element.setAttribute("width", self.stage.offsetWidth);
+        self.element.setAttribute("height", self.stage.offsetHeight);
     }
     
-    function styleElement ()
+    function styleElement (self)
     {
-        var s = this.element.style;
+        var s = self.element.style;
         
-        this.element.setAttribute("id", this.cssid);
-        this.element.setAttribute("class", "WSEBackground");
-        this.element.style.position = "absolute";
-        this.element.draggable = false;
+        self.element.setAttribute("id", self.cssid);
+        self.element.setAttribute("class", "WSEBackground");
+        self.element.style.position = "absolute";
+        self.element.draggable = false;
         s.left = 0;
         s.top = 0;
         s.opacity = 0;
-        s.zIndex = this.z;
+        s.zIndex = self.z;
     }
     
     engine.assets.Background = function (asset, interpreter)
@@ -81,9 +82,9 @@
         
         engine.tools.applyAssetUnits(this, asset);
         this.element.setAttribute('src', this.src);
-        styleElement.call(this);
-        resize.call(this);
-        window.addEventListener('resize', function () { resize.call(self); });
+        styleElement(this);
+        resize(this);
+        window.addEventListener('resize', function () { resize(self); });
 
         this.stage.appendChild(this.element);
     };
