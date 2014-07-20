@@ -72,6 +72,14 @@
         obj.xUnit = obj.xUnit || 'px';
         obj.yUnit = y.replace(/^.*(px|%)$/, '$1');
         obj.yUnit = obj.yUnit || 'px';
+        
+        if (obj.xUnit !== "px" && obj.xUnit !== "%") {
+            obj.xUnit = "px";
+        }
+        
+        if (obj.yUnit !== "px" && obj.yUnit !== "%") {
+            obj.yUnit = "px";
+        }
     };
     
     /**
@@ -207,6 +215,27 @@
     
     out.tools.extractUnit = function (numberString) {
         return numberString.replace(/^(-){0,1}[0-9]*/, "");
+    };
+    
+    out.tools.calculateValueWithAnchor = function (oldValue, anchor, maxValue) {
+    
+        var value = 0, anchorUnit = "px";
+        
+        if (anchor === null) {
+            return oldValue;
+        }
+        
+        anchorUnit = out.tools.extractUnit(anchor);
+        anchor = parseInt(anchor, 10);
+        
+        if (anchorUnit === "%") {
+            value = oldValue - ((maxValue / 100) * anchor);
+        }
+        else {
+            value = oldValue - anchor;
+        }
+        
+        return value;
     };
     
 }(WSE));

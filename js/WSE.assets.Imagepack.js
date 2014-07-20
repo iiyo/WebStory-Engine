@@ -44,7 +44,7 @@
     out.assets.Imagepack = function (asset, interpreter)
     {
         var element, images, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn, width, height;
+        var src, image, self, triggerDecreaseFn, width, height, x, y, xUnit, yUnit;
 
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
@@ -52,6 +52,11 @@
         this.id = out.tools.getUniqueId();
         this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
         this.interpreter = interpreter;
+        this.xAnchor = asset.getAttribute("xAnchor");
+        this.yAnchor = asset.getAttribute("yAnchor");
+        this.width = parseInt(asset.getAttribute("width"), 10) || 100;
+        this.height = parseInt(asset.getAttribute("height"), 10) || 100;
+        
         out.tools.applyAssetUnits(this, asset);
 
         self = this;
@@ -131,18 +136,45 @@
 
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
+            
             element.appendChild(image);
         }
 
         element.style.position = "absolute";
-        element.style.left = asset.getAttribute("x") || 0;
-        element.style.top = asset.getAttribute("y") || 0;
         element.style.zIndex = asset.getAttribute("z") || 0;
+        
+        this.stage.appendChild(element);
+        
+        x = parseInt(asset.getAttribute("x") || 0, 10);
+        y = parseInt(asset.getAttribute("y") || 0, 10);
+        xUnit = out.tools.extractUnit(asset.getAttribute("x")) || "px";
+        yUnit = out.tools.extractUnit(asset.getAttribute("y")) || "px";
+        
+        if (xUnit === "%") {
+            x = (this.stage.offsetWidth / 100) * x;
+        }
+        
+        if (yUnit === "%") {
+            y = (this.stage.offsetHeight / 100) * y;
+        }
+        
+        x = out.tools.calculateValueWithAnchor(x, this.xAnchor, this.width);
+        y = out.tools.calculateValueWithAnchor(y, this.yAnchor, this.height);
+        
+        if (xUnit === "%") {
+            x = x / (this.stage.offsetWidth / 100);
+        }
+        
+        if (yUnit === "%") {
+            y = y / (this.stage.offsetHeight / 100);
+        }
+        
+        element.style.left = "" + x + xUnit;
+        element.style.top = "" + y + yUnit;
 
         this.images = images;
         this.current = null;
 
-        this.stage.appendChild(element);
 
         this.bus.trigger("wse.assets.imagepack.constructor", this);
     };
@@ -336,6 +368,8 @@
             current: cur,
             cssid: this.cssid,
             images: images,
+            xAnchor: this.xAnchor,
+            yAnchor: this.yAnchor,
             z: this.z
         };
         
@@ -358,6 +392,8 @@
         this.cssid = save.cssid;
         this.z = save.z;
         this.current = name;
+        this.xAnchor = save.xAnchor;
+        this.yAnchor = save.yAnchor;
 
         document.getElementById(this.cssid).style.zIndex = this.z;
 

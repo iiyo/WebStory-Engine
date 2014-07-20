@@ -50,6 +50,14 @@
         xAnchor = command.getAttribute("xAnchor");
         yAnchor = command.getAttribute("yAnchor");
         
+        if (xAnchor === null && this.xAnchor !== null) {
+            xAnchor = this.xAnchor;
+        }
+        
+        if (yAnchor === null  && this.yAnchor !== null) {
+            yAnchor = this.yAnchor;
+        }
+        
         duration = command.getAttribute("duration") || 500;
         easingType = command.getAttribute("easing") || "sineEaseOut";
         easing = (typeof fx.easing[easingType] !== null) ? 
@@ -86,39 +94,8 @@
             yUnit = "px";
         }
         
-        if (xAnchor !== null) {
-            
-            console.log("Has xAnchor:", xAnchor);
-            
-            xAnchorUnit = out.tools.extractUnit(xAnchor);
-            xAnchor = parseInt(xAnchor, 10);
-            
-            if (xAnchorUnit === "%") {
-                x = x - ((element.offsetWidth / 100) * xAnchor);
-            }
-            else {
-                x = x - xAnchor;
-            }
-            
-            console.log("x:", x);
-        }
-        
-        if (yAnchor !== null) {
-            
-            console.log("Has yAnchor:", yAnchor);
-            
-            yAnchorUnit = out.tools.extractUnit(yAnchor);
-            yAnchor = parseInt(yAnchor, 10);
-            
-            if (yAnchorUnit === "%") {
-                y = y - ((element.offsetHeight / 100) * yAnchor);
-            }
-            else {
-                y = y - yAnchor;
-            }
-            
-            console.log("y:", y);
-        }
+        x = out.tools.calculateValueWithAnchor(x, xAnchor, element.offsetWidth);
+        y = out.tools.calculateValueWithAnchor(y, yAnchor, element.offsetHeight);
         
         element.style.display = oldElementDisplayStyle;
 
