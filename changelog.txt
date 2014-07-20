@@ -1,5 +1,11 @@
 ====== WebStory Engine Changelog ======
 
+===== Version 0.4.x =====
+
+==== Version 0.4.0 ====
+
+  * Implemented anchors for displayable objects to be able to better position them on stage.
+
 ===== Version 0.3.x =====
 
 ==== Version 0.3.7 ====
