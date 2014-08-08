@@ -57,7 +57,10 @@
         this.autopause = asset.getAttribute("autopause") === "true" ? true : false;
         this.loop = asset.getAttribute("loop") === "true" ? true : false;
         this.fade = asset.getAttribute("fade") === "true" ? true : false;
+        this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
+        this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
         this.id = out.tools.getUniqueId();
+        this.locked = false;
 
         tracks = asset.getElementsByTagName("track");
         len = tracks.length;
@@ -226,7 +229,8 @@
         this.play = function (command)
         {
             command = command || document.createElement("div");
-            var fade = command.getAttribute("fade") === "true" ? true : this.fade;
+            var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : this.fade;
+            var fadeinDuration = parseInt(command.getAttribute("fadein")) || this.fadeinDuration;
 
             if (self.current === null)
             {
@@ -279,12 +283,14 @@
 
             if (fade === true)
             {
+                //console.log("Starting audio asset with fade in " + fadeinDuration + "msec");
                 self.current.volume = 0.0001;
                 self.current.play();
-                self.fadeIn();
+                self.fadeIn(fadeinDuration);
             }
             else
             {
+                //console.log("Starting audio asset without fade");
                 self.current.play();
             }
 
@@ -297,9 +303,16 @@
 
         /**
          * Stops playing the current track.
+         * 
+         * @param command [XML DOM Element] The command as written in the WebStory.
+         * @return [object] Object that determines the next state of the interpreter.
          */
-        this.stop = function ()
+        this.stop = function (command)
         {
+            command = command || document.createElement("div");
+            var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : self.fade;
+            var fadeoutDuration = parseInt(command.getAttribute("fadeout")) || self.fadeoutDuration;
+
             if (self.current === null)
             {
                 this.bus.trigger(
@@ -316,9 +329,11 @@
                 };
             }
             
-            if (self.fade === true)
+            if (fade === true)
             {
+                //console.log("Stopping audio asset with fade in " + fadeoutDuration + "msec");
                 self.fadeOut(
+                    fadeoutDuration,
                     function ()
                     {
                         self.current.pause();
@@ -330,13 +345,14 @@
             }
             else
             {
+                //console.log("Stopping audio asset without fade");
                 self.current.pause();
                 self.currentTime = 0.1;
                 self.renewCurrent();
                 self.isPlaying = false;
             }
             
-            this.bus.trigger("wse.assets.audio.play", this);
+            this.bus.trigger("wse.assets.audio.stop", this);
             
             return {
                 doNext: true
@@ -357,20 +373,22 @@
             };
         };
 
-        this.fadeIn = function ()
+        this.fadeIn = function (duration)
         {
             var fn;
             
             fn = function ()
             {
-                if (self.current.volume > 0.99)
+                if ( self.locked === false )
                 {
-                    self.current.volume = 1;
-                    return;
+                    //console.log("fadeIn timer callback is called");
+                    var newVolume = self.current.volume + 1.0 * 10 / duration;
+                    self.current.volume = newVolume < 1.0 ? newVolume : 1.0;
                 }
-                
-                self.current.volume += 0.01;
-                setTimeout(fn, 10);
+                if (self.current.volume < 1.0)
+                {
+                    setTimeout(fn, 10);
+                }
             };
             
             setTimeout(fn, 10);
@@ -380,22 +398,27 @@
             };
         };
 
-        this.fadeOut = function (cb)
+        this.fadeOut = function (duration, cb)
         {
             var fn;
             cb = typeof cb === "function" ? cb : function () {};
 
             fn = function ()
             {
-                if (self.current.volume < 0.01)
+                //console.log("fadeOut timer callback is called");
+
+                var newVolume = self.current.volume - 1.0 * 10 / duration;
+                self.current.volume = newVolume > 0.0 ? newVolume : 0.0;
+                if (self.current.volume > 0.0)
                 {
-                    self.current.volume = 0;
-                    cb();
-                    return;
+                    self.locked = true;
+                    setTimeout(fn, 10);
                 }
-                
-                self.current.volume -= 0.01;
-                setTimeout(fn, 10);
+                else
+                {
+                    self.locked = false;
+                    cb();
+                }
             };
 
             setTimeout(fn, 10);
@@ -420,6 +443,7 @@
                 if (self.isPlaying === true)
                 {
                     self.fadeOut(
+                        1000,
                         function ()
                         {
                             self.current.pause();
@@ -438,7 +462,7 @@
                 if (self.isPlaying === true)
                 {
                     self.current.play();
-                    self.fadeIn();
+                    self.fadeIn(1000);
                 }
             }
         );
@@ -455,11 +479,13 @@
      */
     out.assets.Audio.prototype.set = function (command)
     {
-        var name, isPlaying, self;
+        var name, wasPlaying, self;
+        var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : this.fade;
+        var fadeoutDuration = parseInt(command.getAttribute("fadeout")) || this.fadeoutDuration;
 
         self = this;
         name = command.getAttribute("track");
-        isPlaying = this.isPlaying === true && this.loop === true ? true : false;
+        wasPlaying = this.isPlaying;
 
         if (typeof this.tracks[name] === "undefined" || this.tracks[name] === null)
         {
@@ -476,29 +502,35 @@
             };
         }
 
-        if (this.isPlaying === true)
+        if (wasPlaying === true && fade == true)
         {
-            this.stop();
+            self.fadeOut(
+                fadeoutDuration,
+                function ()
+                {
+                    self.current.pause();
+                    self.currentTime = 0.1;
+                    self.renewCurrent();
+                    self.isPlaying = false;
+                    self.currentIndex = name;
+                    self.current = self.tracks[name];
+                    self.play(command);
+                }
+            );
         }
-
-        this.currentIndex = name;
-        this.current = this.tracks[name];
-
-        if (isPlaying === true)
+        else
         {
-            if (this.fade === true)
+            if (wasPlaying === true)
             {
-                setTimeout(
-                    function ()
-                    {
-                        self.play();
-                    }, 
-                    1010
-                );
+                this.stop(command);
             }
-            else
+            
+            this.currentIndex = name;
+            this.current = this.tracks[name];
+
+            if (wasPlaying === true)
             {
-                this.play();
+                this.play(command);
             }
         }
         
@@ -520,6 +552,8 @@
             assetType: "Audio",
             isPlaying: this.isPlaying,
             fade: this.fade,
+            fadeinDuration: this.fadeinDuration,
+            fadeoutDuration: this.fadeoutDuration,
             currentIndex: this.currentIndex,
             currentTime: 0
         };
@@ -544,6 +578,8 @@
     {
         this.isPlaying = vals.isPlaying;
         this.fade = vals.fade;
+        this.fadeinDuration = vals.fadeinDuration;
+        this.fadeoutDuration = vals.fadeoutDuration;
         this.currentIndex = vals.currentIndex;
         
         if (this.tracks[this.currentIndex]) 
@@ -551,6 +587,8 @@
             this.current = this.tracks[this.currentIndex];
             this.current.currentTime = vals.currentTime;
         }
+
+        this.locked = false;
         
         if (this.isPlaying)
         {
