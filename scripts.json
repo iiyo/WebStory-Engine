@@ -16,6 +16,7 @@
         "js/WSE.assets.mixins.displayable.flicker.js",
         "js/WSE.assets.mixins.displayable.hide.js",
         "js/WSE.assets.mixins.displayable.move.js",
+        "js/WSE.assets.mixins.displayable.shake.js",
         "js/WSE.assets.mixins.displayable.show.js",
 
         "js/WSE.assets.Animation.js",
