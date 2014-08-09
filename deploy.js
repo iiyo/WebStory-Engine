@@ -1,7 +1,19 @@
-var fs, processScriptsFileFn, concatJsFiles, scriptsFilePath;
+var fs, mkdirSync, processScriptsFileFn, concatJsFiles, scriptsFilePath;
 
 fs = require('fs');
 scriptsFilePath = 'scripts.json';
+
+mkdirSync = function (path)
+{
+  try
+  {
+    fs.mkdirSync(path);
+  }
+  catch(e)
+  {
+    if ( e.code != 'EEXIST' ) throw e;
+  }
+}
 
 processScriptsFileFn = function (data)
 {
@@ -60,6 +72,8 @@ writeFileFn = function (concatFile)
         console.log('WebStory Engine file created.');
     };
     
+    mkdirSync('./releases')
+    mkdirSync('./releases/current')
     fs.writeFile('./releases/current/WebStoryEngine.js', concatFile, errFn);
 };
 
