@@ -36,7 +36,7 @@
     {
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
         var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage, fx = out.fx;
-        var xAnchor, yAnchor, xAnchorUnit = "%", yAnchorUnit = "%";
+        var xAnchor, yAnchor, interpreter = this.interpreter;
         var offsetLeft, offsetTop, oldElementDisplayStyle;
 
         args = args || {};
@@ -58,8 +58,14 @@
             yAnchor = this.yAnchor;
         }
         
-        duration = command.getAttribute("duration") || 500;
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        x = out.tools.replaceVariables(x, this.interpreter);
+        y = out.tools.replaceVariables(y, this.interpreter);
+        z = out.tools.replaceVariables(z, this.interpreter);
+        xAnchor = out.tools.replaceVariables(xAnchor, this.interpreter);
+        yAnchor = out.tools.replaceVariables(yAnchor, this.interpreter);
+        
+        duration = out.tools.getParsedAttribute(command, "duration", interpreter, 500);
+        easingType = out.tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;
@@ -99,7 +105,7 @@
         
         element.style.display = oldElementDisplayStyle;
 
-        wait = command.getAttribute("wait") === "yes" ? true : false;
+        wait = out.tools.getParsedAttribute(command, "wait", interpreter) === "yes" ? true : false;
         waitX = false;
         waitY = false;
         waitZ = false;

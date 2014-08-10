@@ -98,9 +98,30 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
         stageclick_enable: function (interpreter)
         {
             interpreter.game.subscribeListeners();
+        },
+        
+        execute: function (interpreter, command) {
+            
+            var commands = [].slice.call(command.children).filter(function (child) {
+                if (child.tagName &&
+                        out.functions.execute.allowedCommands.indexOf(child.tagName) >= 0) {
+                    
+                    return true;
+                }
+            });
+            
+            commands.forEach(function (varCommand) {
+                interpreter.runCommand(varCommand);
+            });
         }
         
     };
+    
+    out.functions.execute.allowedCommands = [
+        "var", "global", "localize", "globalize", "set_vars", "move", "hide", "show",
+        "flash", "flicker", "shake", "play", "set", "fn", "restart", "trigger",
+        "confirm", "alert", "prompt", "with"
+    ];
     
     return out;
 
