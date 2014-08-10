@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
+        </triggers>
+    </settings>
+    <assets>
+        <textbox name="tb" cssid="tb" />
+        <character name="n" textbox="tb"></character>
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            <var name="state" value="first" />
+            <trigger name="next_on_right" action="activate" />
+            <trigger name="next_on_space" action="activate" />
+            <show asset="tb" />
+            <wait />
+            <goto scene="loop" />
+        </scene>
+        
+        <scene id="loop">
+            <with var="state">
+                <when is="first">
+                    <var name="text" value="The first round." />
+                    <var name="state" value="second" />
+                </when>
+                <when is="second">
+                    <var name="text" value="The second round." />
+                    <var name="state" value="third" />
+                </when>
+                <when is="third">
+                    <var name="text" value="The third round." />
+                    <var name="state" value="first" />
+                </when>
+            </with>
+            
+            <line s="n">{$text}</line>
+            
+            <goto scene="loop" />
+        </scene>
+        
+    </scenes>
+</ws>
