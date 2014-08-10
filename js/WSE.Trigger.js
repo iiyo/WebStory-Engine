@@ -154,7 +154,7 @@
             
             fn = function ()
             {
-                out.functions[self.fnName](self.interpreter);
+                out.functions[self.fnName](self.interpreter, trigger);
             };
         }
 

@@ -106,6 +106,8 @@
     {
         var f1, f2;
         
+        text = typeof text === "string" ? text : "";
+        
         f1 = function ()
         {
             var name = arguments[1];
@@ -137,6 +139,19 @@
         text = text.replace(/\{\$([a-zA-Z0-9_]+)\}/g, f2);
         
         return text;
+    };
+    
+    out.tools.getParsedAttribute = function (element, attributeName, interpreter, defaultValue) {
+        
+        var value;
+        
+        if (arguments.length < 3) {
+            defaultValue = "";
+        }
+        
+        value = element.getAttribute(attributeName) || defaultValue;
+        
+        return out.tools.replaceVariables(value, interpreter);
     };
     
     /**

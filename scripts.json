@@ -40,6 +40,8 @@
         "js/WSE.commands.sub.js",
         "js/WSE.commands.trigger.js",
         "js/WSE.commands.var.js",
-        "js/WSE.commands.wait.js"
+        "js/WSE.commands.set_vars.js",
+        "js/WSE.commands.wait.js",
+        "js/WSE.commands.with.js"
     ]
 }

@@ -32,71 +32,33 @@
 {
     "use strict";
     
-    out.commands.sub = function (command, interpreter)
+    out.commands["with"] = function (command, interpreter)
     {
-        var sceneId, scene, doNext;
-
-        interpreter.bus.trigger(
-            "wse.interpreter.commands.sub",
-            {
-                interpreter: interpreter,
-                command: command
-            }, 
-            false
-        );
-
-        sceneId = command.getAttribute("scene") || null;
-        doNext = command.getAttribute("next") === false ? false : true;
-
-        //console.log("doNext in .sub() is: ", doNext);
-
-        if (sceneId === null)
-        {
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing 'scene' attribute on 'sub' command!"
-                }
-            );
-            
-            return {
-                doNext: true
-            };
-        }
-
-        sceneId = out.tools.replaceVariables(sceneId, interpreter);
-        scene = interpreter.getSceneById(sceneId);
+        var container = interpreter.runVars;
+        var whens = [].slice.call(command.querySelectorAll("when"));
+        var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
+        var i, numberOfWhens = whens.length, currentWhen;
         
-        if (!scene) {
+        for (i = 0; i < numberOfWhens; i += 1) {
             
-            interpreter.bus.trigger("wse.interpreter.error", {
-                message: "No such scene '" + sceneId + "'!",
-                command: command
-            });
+            currentWhen = whens[i];
             
-            return {doNext: true};
+            if (currentWhen.hasAttribute("is") &&
+                    out.tools.getParsedAttribute(currentWhen, "is") === container[variableName]) {
+                
+                out.functions.execute(interpreter, currentWhen);
+                
+                break;
+            }
+            else {
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    message: "Element 'when' without a condition. Ignored.", command: command
+                });
+            }
         }
-
-        interpreter.bus.trigger(
-            "wse.interpreter.message", 
-            "Entering sub scene '" + sceneId + "'...",
-            false
-        );
-
-        interpreter.pushToCallStack();
-
-        interpreter.currentCommands = scene.childNodes;
-        interpreter.index = -1;
-        interpreter.sceneId = sceneId;
-        interpreter.currentElement = -1;
         
-        if (command.getAttribute("names")) {
-            out.commands.set_vars(command, interpreter);
-        }
-
         return {
-            doNext: doNext
+            doNext: true
         };
     };
 }(WSE));

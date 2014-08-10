@@ -1,6 +1,6 @@
 /* global WSE */
 /*
-    Copyright (c) 2012, 2013 The WebStory Engine Contributors
+    Copyright (c) 2012 - 2014 The WebStory Engine Contributors
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -32,71 +32,30 @@
 {
     "use strict";
     
-    out.commands.sub = function (command, interpreter)
+    out.commands.set_vars = function (command, interpreter)
     {
-        var sceneId, scene, doNext;
-
-        interpreter.bus.trigger(
-            "wse.interpreter.commands.sub",
-            {
-                interpreter: interpreter,
-                command: command
-            }, 
-            false
-        );
-
-        sceneId = command.getAttribute("scene") || null;
-        doNext = command.getAttribute("next") === false ? false : true;
-
-        //console.log("doNext in .sub() is: ", doNext);
-
-        if (sceneId === null)
-        {
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing 'scene' attribute on 'sub' command!"
-                }
-            );
+        var container = interpreter.runVars, keys, values;
+        
+        keys = (command.getAttribute("names") || "").split(",");
+        values = (command.getAttribute("values") || "").split(",");
+        
+        if (keys.length !== values.length) {
             
+            interpreter.bus.trigger("wse.interpreter.error", {
+                message: "Number of names does not match number of values in <set_vars> command."
+            });
+
             return {
                 doNext: true
             };
         }
-
-        sceneId = out.tools.replaceVariables(sceneId, interpreter);
-        scene = interpreter.getSceneById(sceneId);
         
-        if (!scene) {
-            
-            interpreter.bus.trigger("wse.interpreter.error", {
-                message: "No such scene '" + sceneId + "'!",
-                command: command
-            });
-            
-            return {doNext: true};
-        }
-
-        interpreter.bus.trigger(
-            "wse.interpreter.message", 
-            "Entering sub scene '" + sceneId + "'...",
-            false
-        );
-
-        interpreter.pushToCallStack();
-
-        interpreter.currentCommands = scene.childNodes;
-        interpreter.index = -1;
-        interpreter.sceneId = sceneId;
-        interpreter.currentElement = -1;
+        keys.forEach(function (key, i) {
+            container[key.trim()] = "" + values[i].trim();
+        });
         
-        if (command.getAttribute("names")) {
-            out.commands.set_vars(command, interpreter);
-        }
-
         return {
-            doNext: doNext
+            doNext: true
         };
     };
 }(WSE));
