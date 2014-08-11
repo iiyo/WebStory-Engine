@@ -1,3 +1,4 @@
+/* global WSE, document */
 /*
     Copyright (c) 2012, 2013, 2014 The WebStory Engine Contributors
     All rights reserved.
@@ -46,29 +47,21 @@
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
 
+        if (dx === null && dy === null)
+        {
+            dy = "-10px";
+        }
+
         if (dx !== null)
         {
-            xUnit = dx.replace(/^(-){0,1}[0-9]*/, "");
+            xUnit = out.tools.extractUnit(dx);
             dx = parseInt(dx, 10);
         }
 
         if (dy !== null)
         {
-            yUnit = dy.replace(/^(-){0,1}[0-9]*/, "");
+            yUnit = out.tools.extractUnit(dy);
             dy = parseInt(dy, 10);
-        }
-
-        if (dx === null && dy === null)
-        {
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Can't apply command 'shake' to asset '" + 
-                        this.name + "' because no dx or dy of position " +
-                        "has been supplied."
-                }
-            );
         }
 
         easing = function (d, t)
@@ -83,7 +76,7 @@
                 x = 2.0 - x;
             }
             return x;
-        }
+        };
 
         if (dx !== null)
         {

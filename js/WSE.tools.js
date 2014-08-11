@@ -214,7 +214,7 @@
     };
     
     out.tools.extractUnit = function (numberString) {
-        return numberString === null ? null : numberString.replace(/^(-){0,1}[0-9]*/, "");
+        return typeof numberString !== "string" ? "" : numberString.replace(/^(-){0,1}[0-9]*/, "");
     };
     
     out.tools.calculateValueWithAnchor = function (oldValue, anchor, maxValue) {
