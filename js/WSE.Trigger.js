@@ -1,6 +1,7 @@
+/*<ON_DEPLOY_REMOVE>*/
 /* global console, WSE */
 /*
-    Copyright (c) 2012, 2013 The WebStory Engine Contributors
+    Copyright (c) 2012 - 2014 The WebStory Engine Contributors
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -28,6 +29,7 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+/*</ON_DEPLOY_REMOVE>*/
 (function (out)
 {
     "use strict";

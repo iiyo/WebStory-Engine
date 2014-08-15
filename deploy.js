@@ -51,7 +51,7 @@ concatJsFiles = function (fileNames)
         
         concFn = function (data)
         {
-            concatFile += "\n\n" + data;
+            concatFile += "\n\n" + removeUnwantedSections(data);
         };
         
         concFn(fs.readFileSync('./' + path, 'utf-8'));
@@ -78,6 +78,13 @@ function writeFileFn (concatFile)
     
     mkdirSync('./bin');
     fs.writeFile('./bin/WebStoryEngine.js', concatFile, errFn);
+}
+
+function removeUnwantedSections (fileContents) {
+    
+    fileContents = fileContents.replace(/\/\*<ON_DEPLOY_REMOVE>\*\/[\s\S]*\/\*<\/ON_DEPLOY_REMOVE>\*\//g, "");
+    
+    return fileContents;
 }
 
 processScriptsFileFn(fs.readFileSync(scriptsFilePath, 'utf-8'));

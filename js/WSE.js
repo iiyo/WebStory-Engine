@@ -1,3 +1,4 @@
+/*<ON_DEPLOY_REMOVE>*/
 /* global console, XMLHttpRequest, Squiddle, MO5, STEINBECK */
 /*
     Copyright (c) 2012, 2013 The WebStory Engine Contributors
@@ -28,6 +29,7 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+/*</ON_DEPLOY_REMOVE>*/
 var WSE = (function (Squiddle, MO5, STEINBECK)
 {
     "use strict";
