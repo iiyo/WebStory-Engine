@@ -1,6 +1,7 @@
 /* global require, console */
 
 var fs, mkdirSync, processScriptsFileFn, concatJsFiles, scriptsFilePath;
+var minifier = require("minify");
 
 fs = require('fs');
 scriptsFilePath = 'scripts.json';
@@ -63,21 +64,31 @@ concatJsFiles = function (fileNames)
 
 function writeFileFn (concatFile)
 {
-    var errFn;
-    
-    errFn = function (err)
-    {
-        if (err)
+    function makeErrorFn (successText) {
+        return function (err)
         {
-            console.log(err);
-            return;
-        }
-        
-        console.log('WebStory Engine file created.');
-    };
+            if (err)
+            {
+                console.log(err);
+                return;
+            }
+
+            console.log(successText);
+        };
+    }
     
     mkdirSync('./bin');
-    fs.writeFile('./bin/WebStoryEngine.js', concatFile, errFn);
+    fs.writeFile('./bin/WebStoryEngine.js', concatFile, makeErrorFn('WebStory Engine file created.'));
+    
+    minifier.optimizeData({ext: '.js', data: concatFile}, function(error, data) {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            fs.writeFile('./bin/WebStoryEngine.min.js', data, 
+                makeErrorFn("Minified WebStory Engine file created."));
+        }
+    });
 }
 
 function removeUnwantedSections (fileContents) {
