@@ -37,16 +37,19 @@
         var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
         var bus, stage, element, isAnimation, easing, easingType, interpreter;
         var offsetWidth, offsetHeight, startX, startY, fx = out.fx;
+        var parse = out.tools.getParsedAttribute;
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        effect = command.getAttribute("effect") || "fade";
-        direction = command.getAttribute("direction") || "right";
+        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
+        duration = parse(command, "duration", this.interpreter, 500);
+        effect = parse(command, "effect", this.interpreter, "fade");
+        direction = parse(command, "direction", this.interpreter, "right");
         element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
+        
+        console.log("duration:", duration);
 
         if (!element)
         {
@@ -66,7 +69,7 @@
         interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;
@@ -143,15 +146,6 @@
             {
                 startY = element.offsetTop;
             }
-            
-//             console.log('direction: ' + direction);
-//             console.log('prop: ' + prop);
-//             console.log('xUnit: ' + xUnit);
-//             console.log('yUnit: ' + yUnit);
-//             console.log('startX: ' + startX);
-//             console.log('startY: ' + startY);
-//             console.log('offsetWidth: ' + offsetWidth);
-//             console.log('offsetHeight: ' + offsetHeight);
 
             fx.transform(
                 function (v)
