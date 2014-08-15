@@ -35,7 +35,12 @@
     out.commands["with"] = function (command, interpreter)
     {
         var container = interpreter.runVars;
-        var whens = [].slice.call(command.querySelectorAll("when"));
+        var whens = [].slice.call(command.children).filter(function (child) {
+            if (child.tagName && child.tagName === "when") {
+                
+                return true;
+            }
+        });
         var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
         var i, numberOfWhens = whens.length, currentWhen;
         
