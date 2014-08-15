@@ -37,16 +37,17 @@
         var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
         var ox, oy, to, prop, isAnimation, element, easingType, easing, stage;
         var xUnit, yUnit, fx = out.fx;
+        var parse = out.tools.getParsedAttribute;
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        effect = command.getAttribute("effect") || "fade";
-        direction = command.getAttribute("direction") || "left";
+        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
+        duration = parse(command, "duration", this.interpreter, 500);
+        effect = parse(command, "effect", this.interpreter, "fade");
+        direction = parse(command, "direction", this.interpreter, "left");
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
-        easingType = command.getAttribute("easing") || "sineEaseOut";
+        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
         easing = (typeof fx.easing[easingType] !== null) ? 
             fx.easing[easingType] : 
             fx.easing.sineEaseOut;
