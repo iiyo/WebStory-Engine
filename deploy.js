@@ -76,8 +76,7 @@ function writeFileFn (concatFile)
         console.log('WebStory Engine file created.');
     };
     
-    mkdirSync('./releases');
-    mkdirSync('./releases/current');
+    mkdirSync('./bin');
     fs.writeFile('./bin/WebStoryEngine.js', concatFile, errFn);
 }
 
