@@ -1,4 +1,4 @@
-/* global require */
+/* global require, console */
 
 var fs, mkdirSync, processScriptsFileFn, concatJsFiles, scriptsFilePath;
 
