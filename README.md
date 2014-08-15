@@ -24,8 +24,8 @@ The license agreements are contained within the source code.
 
 If you've contributed something to the project, please add yourself to this list.
 
-C7N
-lolbot-iichan
+ * C7N
+ * lolbot-iichan
 
 ## License ##
 
