@@ -106,7 +106,12 @@
     {
         var f1, f2;
         
-        text = typeof text === "string" ? text : "";
+        if (typeof text !== "string") {
+            interpreter.bus.trigger("wse.interpreter.error", {
+                message: "Argument supplied to the replaceVariables function must be a string."
+            });
+            text = "";
+        }
         
         f1 = function ()
         {
@@ -149,7 +154,7 @@
             defaultValue = "";
         }
         
-        value = element.getAttribute(attributeName) || defaultValue;
+        value = element.getAttribute(attributeName) || ("" + defaultValue);
         
         return out.tools.replaceVariables(value, interpreter);
     };
