@@ -91,6 +91,7 @@
         interpreter.currentCommands = scene.childNodes;
         interpreter.index = -1;
         interpreter.sceneId = sceneId;
+        interpreter.scenePath = [];
         interpreter.currentElement = -1;
         
         if (command.getAttribute("names")) {

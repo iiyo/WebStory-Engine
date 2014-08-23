@@ -37,36 +37,40 @@
     out.commands["with"] = function (command, interpreter)
     {
         var container = interpreter.runVars;
-        var children = [].slice.call(command.children).filter(function (child) {
-            if (child.tagName && (child.tagName === "when" || child.tagName === "else")) {
-                
-                return true;
-            }
-        });
+        var children = command.childNodes;
         var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
-        var i, numberOfChildren = children.length, currentChild;
+        var i, numberOfChildren = children.length, current;
         
         for (i = 0; i < numberOfChildren; i += 1) {
             
-            currentChild = children[i];
+            current = children[i];
+            if (!current.tagName || !interpreter.checkIfvar(current) ||
+                    (current.tagName !== "when" && current.tagName !== "else")) {
+                continue;
+            }
             
-            if (currentChild.tagName === "when" && ! currentChild.hasAttribute("is")) {
+            if (current.tagName === "when" && ! current.hasAttribute("is")) {
                 interpreter.bus.trigger("wse.interpreter.warning", {
                     message: "Element 'when' without a condition. Ignored.", command: command
                 });
             }
 
-            if (currentChild.tagName === "else" && currentChild.hasAttribute("is")) {
+            if (current.tagName === "else" && current.hasAttribute("is")) {
                 interpreter.bus.trigger("wse.interpreter.warning", {
                     message: "Element 'else' with a condition. Ignored.", command: command
                 });
             }
 
-            if (currentChild.tagName === "else" ||
-                    currentChild.tagName === "when" && currentChild.hasAttribute("is") &&
-                    out.tools.getParsedAttribute(currentChild, "is") === container[variableName]) {
+            if (current.tagName === "else" ||
+                    current.tagName === "when" && current.hasAttribute("is") &&
+                    out.tools.getParsedAttribute(current, "is") === container[variableName]) {
                 
-                out.functions.execute(interpreter, currentChild);
+                interpreter.pushToCallStack();
+                interpreter.currentCommands = current.childNodes;
+                interpreter.scenePath.push(interpreter.index);
+                interpreter.scenePath.push(i);
+                interpreter.index = -1;
+                interpreter.currentElement = -1;
                 
                 break;
             }

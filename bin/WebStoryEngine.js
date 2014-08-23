@@ -3583,6 +3583,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         this.index = 0;
         this.currentElement = 0;
         this.sceneId = null;
+        this.scenePath = [];
         this.currentCommands = [];
         this.wait = false;
         this.startTime = Math.round(+new Date() / 1000);
@@ -3736,7 +3737,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, current, self;
+        var scenes, len, i, startScene, self;
 
         self = this;
 
@@ -3763,16 +3764,12 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         this.scenes = scenes;
         len = scenes.length;
         
-        for (i = 0; i < len; i += 1)
+        startScene = this.getSceneById("start");
+        if (startScene !== null)
         {
-            current = scenes[i];
-
-            if (current.getAttribute("id") === "start")
-            {
-                this.changeScene(current);
-                
-                return;
-            }
+            this.changeScene(startScene);
+            
+            return;
         }
         
         if (len < 1)
@@ -3832,10 +3829,17 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         }
 
         bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
+
+        while (this.scenePath.length > 0)
+        {
+            this.popFromCallStack();
+        }
+
         this.currentCommands = scene.childNodes;
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
+        this.scenePath = [];
         this.currentElement = 0;
 
         if (len < 1)
@@ -3871,6 +3875,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         
         obj.index = this.index;
         obj.sceneId = this.sceneId;
+        obj.scenePath = this.scenePath.slice();
         obj.currentElement = this.currentElement;
         
         this.callStack.push(obj);
@@ -3878,7 +3883,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.popFromCallStack = function ()
     {
-        var top = this.callStack.pop();
+        var top = this.callStack.pop(), scenePath = top.scenePath.slice();
 
         this.bus.trigger(
             "wse.interpreter.message", 
@@ -3888,9 +3893,15 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
         this.index = top.index + 1;
         this.sceneId = top.sceneId;
+        this.scenePath = top.scenePath;
         this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
+
         this.currentCommands = this.currentScene.childNodes;
+        while (scenePath.length > 0)
+        {
+            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+        }
     };
 
     out.Interpreter.prototype.getSceneById = function (sceneName)
@@ -4031,21 +4042,9 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         bus.trigger("wse.interpreter.next.after.nonext", this, false);
     };
 
-    out.Interpreter.prototype.runCommand = function (command)
+    out.Interpreter.prototype.checkIfvar = function (command)
     {
-        var tagName, ifvar, ifval, ifnot, varContainer, assetName, bus = this.bus;
-
-        this.bus.trigger(
-            "wse.interpreter.runcommand.before", 
-            {
-                interpreter: this,
-                command: command
-            }, 
-            false
-        );
-
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        var ifvar, ifval, ifnot, varContainer, bus = this.bus;
 
         ifvar = command.getAttribute("ifvar") || null;
         ifval = command.getAttribute("ifvalue");
@@ -4075,9 +4074,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
 
             if (ifnot !== null && ("" + varContainer[ifvar] === "" + ifnot))
@@ -4092,9 +4089,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
             else if (ifval !== null && ("" + varContainer[ifvar]) !== "" + ifval)
             {
@@ -4108,9 +4103,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
 
             bus.trigger(
@@ -4123,6 +4116,32 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             );
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
+        }
+
+        return true;
+    };
+
+    out.Interpreter.prototype.runCommand = function (command)
+    {
+        var tagName, assetName, bus = this.bus;
+
+        this.bus.trigger(
+            "wse.interpreter.runcommand.before", 
+            {
+                interpreter: this,
+                command: command
+            }, 
+            false
+        );
+
+        tagName = command.tagName;
+        assetName = command.getAttribute("asset") || null;
+
+        if (!this.checkIfvar(command))
+        {
+            return {
+                doNext: true
+            };        
         }
 
         if (tagName in this.commands)
@@ -4432,6 +4451,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         savegame.waitForTimer = this.waitForTimer;
         savegame.currentElement = this.currentElement;
         savegame.sceneId = this.sceneId;
+        savegame.scenePath = this.scenePath;
         savegame.listenersSubscribed = this.game.listenersSubscribed;
         savegame.callStack = this.callStack;
         savegame.waitCounter = this.waitCounter;
@@ -4552,7 +4572,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.load = function (name)
     {
-        var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId, bus = this.bus;
+        var ds, savegame, scene, sceneId, scenePath, scenes, i, len, self, savegameId, bus = this.bus;
         self = this;
 
         savegameId = this.buildSavegameId(name);
@@ -4623,7 +4643,14 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             return false;
         }
 
+        scenePath = savegame.scenePath;
+        this.scenePath = scenePath.slice();
+
         this.currentCommands = scene.childNodes;
+        while (scenePath.length > 0)
+        {
+            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+        }
 
         // Re-insert choice menu to get back the DOM events associated with it:
         // Remove savegame menu on load:
@@ -8111,13 +8138,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         buttons = [];
         scenes = [];
         self = interpreter;
-        children = command.getElementsByTagName("option");
+        children = command.childNodes;
         len = children.length;
         duration = command.getAttribute("duration") || 500;
         duration = parseInt(duration, 10);
         cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
 
-        makeButtonClickFn = function (cur, me, sc)
+        makeButtonClickFn = function (cur, me, sc, idx)
         {
             sc = sc || null;
             
@@ -8133,20 +8160,33 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, noNext;
+                        var cmds, i, len, noNext, childrenLen = cur.children.length;
                         noNext = cur.getAttribute("next") === "false" ? true : false;
-                        cmds = cur.getElementsByTagName("var");
-                        len = cmds.length;
 
-                        for (i = 0; i < len; i += 1)
+                        if (noNext || noHide || sc !== null)
                         {
-                            interpreter.runCommand(cmds[i]);
+                            cmds = cur.getElementsByTagName("var");
+                            len = cmds.length;
+                            for (i = 0; i < len; i += 1)
+                            {
+                                interpreter.runCommand(cmds[i]);
+                            }
                         }
 
                         if (sc !== null)
                         {
                             self.changeScene(sc);
                             return;
+                        }
+
+                        if (!noNext && !noHide && childrenLen > 0)
+                        {
+                            interpreter.pushToCallStack();
+                            interpreter.currentCommands = cur.childNodes;
+                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.scenePath.push(idx);
+                            interpreter.index = 0;
+                            interpreter.currentElement = 0;
                         }
 
                         if (noNext === true)
@@ -8195,6 +8235,11 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         for (i = 0; i < len; i += 1)
         {
             current = children[i];
+            if ( !current.tagName || current.tagName !== "option" || !interpreter.checkIfvar(current))
+            {
+                continue;
+            }
+            
             currentButton = document.createElement("input");
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
@@ -8203,22 +8248,12 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             currentButton.value = current.getAttribute("label");
             sceneName = current.getAttribute("scene") || null;
             
-            for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
-            {
-                currentScene = interpreter.scenes[j];
-                if (currentScene.getAttribute("id") === sceneName)
-                {
-                    scenes[i] = currentScene;
-                    break;
-                }
-            }
-            
-            scenes[i] = scenes[i] || null;
+            scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
 
             out.tools.attachEventListener(
                 currentButton, 
                 'click',
-                makeButtonClickFn(current, menuElement, scenes[i])
+                makeButtonClickFn(current, menuElement, scenes[i], i)
             );
             
             buttons.push(currentButton);
@@ -8517,18 +8552,9 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
         sceneName = out.tools.replaceVariables(sceneName, interpreter);
 
-        for (i = 0, len = interpreter.scenes.length; i < len; i += 1)
-        {
-            current = interpreter.scenes[i];
-            
-            if (current.getAttribute("id") === sceneName)
-            {
-                scene = current;
-                break;
-            }
-        }
+        scene = interpreter.getSceneById(sceneName);
 
-        if (typeof scene === "undefined")
+        if (scene === null)
         {
             bus.trigger(
                 "wse.interpreter.error",
@@ -8806,6 +8832,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         interpreter.currentCommands = scene.childNodes;
         interpreter.index = -1;
         interpreter.sceneId = sceneId;
+        interpreter.scenePath = [];
         interpreter.currentElement = -1;
         
         if (command.getAttribute("names")) {
@@ -9127,30 +9154,42 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     out.commands["with"] = function (command, interpreter)
     {
         var container = interpreter.runVars;
-        var whens = [].slice.call(command.children).filter(function (child) {
-            if (child.tagName && child.tagName === "when") {
-                
-                return true;
-            }
-        });
+        var children = command.childNodes;
         var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
-        var i, numberOfWhens = whens.length, currentWhen;
+        var i, numberOfChildren = children.length, current;
         
-        for (i = 0; i < numberOfWhens; i += 1) {
+        for (i = 0; i < numberOfChildren; i += 1) {
             
-            currentWhen = whens[i];
-            
-            if (currentWhen.hasAttribute("is") &&
-                    out.tools.getParsedAttribute(currentWhen, "is") === container[variableName]) {
-                
-                out.functions.execute(interpreter, currentWhen);
-                
-                break;
+            current = children[i];
+            if (!current.tagName || !interpreter.checkIfvar(current) ||
+                    (current.tagName !== "when" && current.tagName !== "else")) {
+                continue;
             }
-            else {
+            
+            if (current.tagName === "when" && ! current.hasAttribute("is")) {
                 interpreter.bus.trigger("wse.interpreter.warning", {
                     message: "Element 'when' without a condition. Ignored.", command: command
                 });
+            }
+
+            if (current.tagName === "else" && current.hasAttribute("is")) {
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    message: "Element 'else' with a condition. Ignored.", command: command
+                });
+            }
+
+            if (current.tagName === "else" ||
+                    current.tagName === "when" && current.hasAttribute("is") &&
+                    out.tools.getParsedAttribute(current, "is") === container[variableName]) {
+                
+                interpreter.pushToCallStack();
+                interpreter.currentCommands = current.childNodes;
+                interpreter.scenePath.push(interpreter.index);
+                interpreter.scenePath.push(i);
+                interpreter.index = -1;
+                interpreter.currentElement = -1;
+                
+                break;
             }
         }
         

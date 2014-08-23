@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger event="keyup" function="savegames" name="savegames_by_escape" key="ESCAPE" />
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
+        </triggers>
+    </settings>
+    <assets>
+        <textbox name="tb" cssid="tb" />
+        <character name="n" textbox="tb"></character>
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            <var name="state" value="first" />
+            <trigger name="savegames_by_escape" action="activate" />
+            <trigger name="next_on_right" action="activate" />
+            <trigger name="next_on_space" action="activate" />
+            <show asset="tb" />
+            <wait />
+            <var name="money" value="0" />
+            <var name="swords" value="0" />
+            <var name="atleast18" value="0" />
+            <var name="haveCredit" value="0" />
+            <goto scene="loop" />
+        </scene>
+
+        <scene id="loop">
+            <with var="swords">
+                <when is="0">
+                    <line s="n" stop="false">
+                    You have {$money}$.</line>
+                </when>
+                <else>
+                    <line s="n" stop="false">
+                    You have {$money}$ and {$swords} swords.</line>
+                </else>
+            </with>
+
+            <var name="enoughToBuySword" lvalue="{$money}" action="not_less" value="30" />
+            
+            <choice>
+                <option label="earn money">
+                    <var name="money" action="increase" value="10" />
+                </option>
+                <option label="buy a sword for 30$">
+                    <with var="enoughToBuySword">
+                        <when is="0" ifvar="haveCredit" ifnot="1">
+                            <alert title="Oh noes!" message="You don't have enough money!" />
+                        </when>
+                        <else>
+                            <with var="atleast18">
+                                <when is="0">
+                                    <alert title="Oh noes!" message="You can't buy swords until you are 18 years old!" />
+                                </when>
+                                <when is="1">
+                                    <var name="money" action="decrease" value="30" />
+                                    <var name="swords" action="increase" />
+                                </when>
+                            </with>
+                        </else>
+                    </with>
+                </option>
+                <option label="get a credit card" ifvar="haveCredit" ifnot="1">
+                    <var name="haveCredit" action="set" />
+                </option>
+                <option label="become 18 years old" ifvar="atleast18" ifvalue="0" >
+                    <var name="atleast18" action="increase" />
+                </option>
+                <option label="fight crime" scene="theend" ifvar="swords" ifnot="0" />
+            </choice>
+
+            <goto scene="loop" />
+        </scene>
+
+        <scene id="theend">
+            <with var="swords">
+                <when is="1">
+                    <line s="n">You are fighting crime with your sword.</line>
+                </when>
+                <else>
+                    <line s="n">You are fighting crime with your {$swords} swords.</line>
+                </else>
+            </with>
+        </scene>
+        
+    </scenes>
+</ws>

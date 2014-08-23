@@ -55,13 +55,13 @@
         buttons = [];
         scenes = [];
         self = interpreter;
-        children = command.getElementsByTagName("option");
+        children = command.childNodes;
         len = children.length;
         duration = command.getAttribute("duration") || 500;
         duration = parseInt(duration, 10);
         cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
 
-        makeButtonClickFn = function (cur, me, sc)
+        makeButtonClickFn = function (cur, me, sc, idx)
         {
             sc = sc || null;
             
@@ -77,20 +77,33 @@
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, noNext;
+                        var cmds, i, len, noNext, childrenLen = cur.children.length;
                         noNext = cur.getAttribute("next") === "false" ? true : false;
-                        cmds = cur.getElementsByTagName("var");
-                        len = cmds.length;
 
-                        for (i = 0; i < len; i += 1)
+                        if (noNext || noHide || sc !== null)
                         {
-                            interpreter.runCommand(cmds[i]);
+                            cmds = cur.getElementsByTagName("var");
+                            len = cmds.length;
+                            for (i = 0; i < len; i += 1)
+                            {
+                                interpreter.runCommand(cmds[i]);
+                            }
                         }
 
                         if (sc !== null)
                         {
                             self.changeScene(sc);
                             return;
+                        }
+
+                        if (!noNext && !noHide && childrenLen > 0)
+                        {
+                            interpreter.pushToCallStack();
+                            interpreter.currentCommands = cur.childNodes;
+                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.scenePath.push(idx);
+                            interpreter.index = 0;
+                            interpreter.currentElement = 0;
                         }
 
                         if (noNext === true)
@@ -139,6 +152,11 @@
         for (i = 0; i < len; i += 1)
         {
             current = children[i];
+            if ( !current.tagName || current.tagName !== "option" || !interpreter.checkIfvar(current))
+            {
+                continue;
+            }
+            
             currentButton = document.createElement("input");
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
@@ -147,22 +165,12 @@
             currentButton.value = current.getAttribute("label");
             sceneName = current.getAttribute("scene") || null;
             
-            for (j = 0, jlen = interpreter.scenes.length; j < jlen; j += 1)
-            {
-                currentScene = interpreter.scenes[j];
-                if (currentScene.getAttribute("id") === sceneName)
-                {
-                    scenes[i] = currentScene;
-                    break;
-                }
-            }
-            
-            scenes[i] = scenes[i] || null;
+            scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
 
             out.tools.attachEventListener(
                 currentButton, 
                 'click',
-                makeButtonClickFn(current, menuElement, scenes[i])
+                makeButtonClickFn(current, menuElement, scenes[i], i)
             );
             
             buttons.push(currentButton);

@@ -25,16 +25,24 @@
         <scene id="loop">
             <with var="state">
                 <when is="first">
-                    <var name="text" value="The first round." />
+                    <var name="text" value="The 1st round." />
                     <var name="state" value="second" />
                 </when>
                 <when is="second">
-                    <var name="text" value="The second round." />
+                    <var name="text" value="The 2nd round." />
                     <var name="state" value="third" />
                 </when>
                 <else>
-                    <var name="text" value="The third round." />
-                    <var name="state" value="first" />
+                    <with var="state">
+                        <when is="third">
+                            <var name="text" value="The 3rd round." />
+                            <var name="state" value="first" />
+                        </when>
+                        <else>
+                            <var name="text" value="WTF?!" />
+                            <var name="state" value="WTF?!" />
+                        </else>
+                    </with>
                 </else>
             </with>
             
