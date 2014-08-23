@@ -32,10 +32,10 @@
                     <var name="text" value="The second round." />
                     <var name="state" value="third" />
                 </when>
-                <when is="third">
+                <else>
                     <var name="text" value="The third round." />
                     <var name="state" value="first" />
-                </when>
+                </else>
             </with>
             
             <line s="n">{$text}</line>

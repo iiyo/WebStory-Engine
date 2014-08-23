@@ -37,30 +37,38 @@
     out.commands["with"] = function (command, interpreter)
     {
         var container = interpreter.runVars;
-        var whens = [].slice.call(command.children).filter(function (child) {
-            if (child.tagName && child.tagName === "when") {
+        var children = [].slice.call(command.children).filter(function (child) {
+            if (child.tagName && (child.tagName === "when" || child.tagName === "else")) {
                 
                 return true;
             }
         });
         var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
-        var i, numberOfWhens = whens.length, currentWhen;
+        var i, numberOfChildren = children.length, currentChild;
         
-        for (i = 0; i < numberOfWhens; i += 1) {
+        for (i = 0; i < numberOfChildren; i += 1) {
             
-            currentWhen = whens[i];
+            currentChild = children[i];
             
-            if (currentWhen.hasAttribute("is") &&
-                    out.tools.getParsedAttribute(currentWhen, "is") === container[variableName]) {
-                
-                out.functions.execute(interpreter, currentWhen);
-                
-                break;
-            }
-            else {
+            if (currentChild.tagName === "when" && ! currentChild.hasAttribute("is")) {
                 interpreter.bus.trigger("wse.interpreter.warning", {
                     message: "Element 'when' without a condition. Ignored.", command: command
                 });
+            }
+
+            if (currentChild.tagName === "else" && currentChild.hasAttribute("is")) {
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    message: "Element 'else' with a condition. Ignored.", command: command
+                });
+            }
+
+            if (currentChild.tagName === "else" ||
+                    currentChild.tagName === "when" && currentChild.hasAttribute("is") &&
+                    out.tools.getParsedAttribute(currentChild, "is") === container[variableName]) {
+                
+                out.functions.execute(interpreter, currentChild);
+                
+                break;
             }
         }
         
