@@ -8986,6 +8986,8 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             };
         }
 
+        val  = out.tools.replaceVariables(val,  interpreter);
+
         if (action === "set")
         {
             container[key] = "" + val;
@@ -8996,7 +8998,6 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
         lval = command.getAttribute("lvalue") || container[key];
         lval = out.tools.replaceVariables(lval, interpreter);
-        val  = out.tools.replaceVariables(val,  interpreter);
 
         switch (action)
         {
