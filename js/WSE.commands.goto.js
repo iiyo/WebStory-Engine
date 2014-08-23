@@ -61,18 +61,9 @@
 
         sceneName = out.tools.replaceVariables(sceneName, interpreter);
 
-        for (i = 0, len = interpreter.scenes.length; i < len; i += 1)
-        {
-            current = interpreter.scenes[i];
-            
-            if (current.getAttribute("id") === sceneName)
-            {
-                scene = current;
-                break;
-            }
-        }
+        scene = interpreter.getSceneById(sceneName);
 
-        if (typeof scene === "undefined")
+        if (scene === null)
         {
             bus.trigger(
                 "wse.interpreter.error",
