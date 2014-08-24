@@ -37,30 +37,42 @@
     out.commands["with"] = function (command, interpreter)
     {
         var container = interpreter.runVars;
-        var whens = [].slice.call(command.children).filter(function (child) {
-            if (child.tagName && child.tagName === "when") {
-                
-                return true;
-            }
-        });
+        var children = command.childNodes;
         var variableName = out.tools.getParsedAttribute(command, "var", interpreter);
-        var i, numberOfWhens = whens.length, currentWhen;
+        var i, numberOfChildren = children.length, current;
         
-        for (i = 0; i < numberOfWhens; i += 1) {
+        for (i = 0; i < numberOfChildren; i += 1) {
             
-            currentWhen = whens[i];
-            
-            if (currentWhen.hasAttribute("is") &&
-                    out.tools.getParsedAttribute(currentWhen, "is") === container[variableName]) {
-                
-                out.functions.execute(interpreter, currentWhen);
-                
-                break;
+            current = children[i];
+            if (!current.tagName || !interpreter.checkIfvar(current) ||
+                    (current.tagName !== "when" && current.tagName !== "else")) {
+                continue;
             }
-            else {
+            
+            if (current.tagName === "when" && ! current.hasAttribute("is")) {
                 interpreter.bus.trigger("wse.interpreter.warning", {
                     message: "Element 'when' without a condition. Ignored.", command: command
                 });
+            }
+
+            if (current.tagName === "else" && current.hasAttribute("is")) {
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    message: "Element 'else' with a condition. Ignored.", command: command
+                });
+            }
+
+            if (current.tagName === "else" ||
+                    current.tagName === "when" && current.hasAttribute("is") &&
+                    out.tools.getParsedAttribute(current, "is") === container[variableName]) {
+                
+                interpreter.pushToCallStack();
+                interpreter.currentCommands = current.childNodes;
+                interpreter.scenePath.push(interpreter.index);
+                interpreter.scenePath.push(i);
+                interpreter.index = -1;
+                interpreter.currentElement = -1;
+                
+                break;
             }
         }
         

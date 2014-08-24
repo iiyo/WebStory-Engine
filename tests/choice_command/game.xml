@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger event="keyup" function="savegames" name="savegames_by_escape" key="ESCAPE" />
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
+        </triggers>
+    </settings>
+    <assets>
+        <textbox name="tb" cssid="tb" />
+        <character name="n" textbox="tb"></character>
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            <var name="state" value="first" />
+            <trigger name="savegames_by_escape" action="activate" />
+            <trigger name="next_on_right" action="activate" />
+            <trigger name="next_on_space" action="activate" />
+            <show asset="tb" />
+            <wait />
+            <goto scene="select" />
+        </scene>
+
+        <scene id="select">
+            <choice>
+                <option label="Nested choices" scene="nested"/>
+                <option label="Subs insite nested choices" scene="subs_n_choices"/>
+                <option label="Legacy behaviour" scene="legacy"/>
+            </choice>
+        </scene>
+
+        <scene id="legacy">
+            <line s="n" stop="false"></line>
+            <var name="text" value="NOTHING" />
+            <choice>
+                <option label="no modifiers, no children" />
+                <option label="no modifiers, var children">
+                    <var name="text" value="SIMPLE" />
+                </option>
+                <option label="noHide, no children" hide="false" />
+                <option label="noHide, var children" hide="false">
+                    <var name="text" value="NOHIDE" />
+                </option>
+                <option label="noNext, no children" hide="false" />
+                <option label="noNext, var children" next="false">
+                    <var name="text" value="NONEXT" />
+                </option>
+            </choice>
+            <line s="n">{$text}</line>
+            <goto scene="legacy" />
+        </scene>
+
+        <scene id="subs_n_choices">
+            <choice>
+                <option label="Press me!">
+                    <choice>
+                        <option label="Press me x2!">
+                            <goto scene="sub1" />
+                        </option>
+                    </choice>
+                </option>
+            </choice>
+            <line s="n">This line should never be displayed!</line>
+        </scene>
+
+        <scene id="sub1">
+            <choice>
+                <option label="Press me x3!">
+                    <choice>
+                        <option label="Press me x4!">
+                            <sub scene="sub2" />
+                            <line s="n">This line should be shown.</line>
+                        </option>
+                    </choice>
+                </option>
+            </choice>
+            <line s="n">This line should be the last.</line>
+        </scene>
+
+        <scene id="sub2">
+            <choice>
+                <option label="Press me x5!">
+                    <choice>
+                        <option label="Press me x6!" scene="sub3" />
+                    </choice>
+                </option>
+            </choice>
+            <line s="n">This line should never be displayed!</line>
+        </scene>
+
+        <scene id="sub3">
+            <line s="n">Let's wind the stack back...</line>
+        </scene>
+                
+        <scene id="nested">
+            <line s="n" stop="false"></line>
+            <choice>
+                <option label="1 (with lines)">
+                    <line s="n">Entering lvl.1</line>
+                    <choice>
+                        <option label="1-1">
+                            <line s="n">Entering lvl.2</line>
+                            <choice>
+                                <option label="1-1-1">
+                                    <line s="n">Entering lvl.3</line>
+                                    <var name="text" value="1-1-1" />
+                                    <line s="n">Leaving lvl.3</line>
+                                </option>
+                                <option label="1-1-2">
+                                    <line s="n">Entering lvl.3</line>
+                                    <var name="text" value="1-1-2" />
+                                    <line s="n">Leaving lvl.3</line>
+                                </option>
+                            </choice>
+                            <line s="n">Leaving lvl.2</line>
+                        </option>
+                        <option label="1-2">
+                            <line s="n">Entering lvl.2</line>
+                            <choice>
+                                <option label="1-2-1">
+                                    <line s="n">Entering lvl.3</line>
+                                    <var name="text" value="1-2-1" />
+                                    <line s="n">Leaving lvl.3</line>
+                                </option>
+                                <option label="1-2-2">
+                                    <line s="n">Entering lvl.3</line>
+                                    <var name="text" value="1-2-2" />
+                                    <line s="n">Leaving lvl.3</line>
+                                </option>
+                            </choice>
+                            <line s="n">Leaving lvl.2</line>
+                        </option>
+                    </choice>
+                    <line s="n">Leaving lvl.1</line>
+                </option>
+                <option label="2 (without lines)">
+                    <choice>
+                        <option label="2-1">
+                            <choice>
+                                <option label="2-1-1">
+                                    <var name="text" value="2-1-1" />
+                                </option>
+                                <option label="2-1-2">
+                                    <var name="text" value="2-1-2" />
+                                </option>
+                            </choice>
+                        </option>
+                        <option label="2-2">
+                            <choice>
+                                <option label="2-2-1">
+                                    <var name="text" value="2-2-1" />
+                                </option>
+                                <option label="2-2-2">
+                                    <var name="text" value="2-2-2" />
+                                </option>
+                            </choice>
+                        </option>
+                    </choice>
+                </option>
+            </choice>
+            
+            <line s="n">You have been to {$text}</line>
+            
+            <goto scene="nested" />
+        </scene>
+        
+    </scenes>
+</ws>

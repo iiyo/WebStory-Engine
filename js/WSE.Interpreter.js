@@ -212,6 +212,7 @@
         this.index = 0;
         this.currentElement = 0;
         this.sceneId = null;
+        this.scenePath = [];
         this.currentCommands = [];
         this.wait = false;
         this.startTime = Math.round(+new Date() / 1000);
@@ -365,7 +366,7 @@
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, current, self;
+        var scenes, len, i, startScene, self;
 
         self = this;
 
@@ -392,16 +393,12 @@
         this.scenes = scenes;
         len = scenes.length;
         
-        for (i = 0; i < len; i += 1)
+        startScene = this.getSceneById("start");
+        if (startScene !== null)
         {
-            current = scenes[i];
-
-            if (current.getAttribute("id") === "start")
-            {
-                this.changeScene(current);
-                
-                return;
-            }
+            this.changeScene(startScene);
+            
+            return;
         }
         
         if (len < 1)
@@ -461,10 +458,17 @@
         }
 
         bus.trigger("wse.interpreter.message", "Entering scene '" + id + "'.");
+
+        while (this.scenePath.length > 0)
+        {
+            this.popFromCallStack();
+        }
+
         this.currentCommands = scene.childNodes;
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
+        this.scenePath = [];
         this.currentElement = 0;
 
         if (len < 1)
@@ -500,6 +504,7 @@
         
         obj.index = this.index;
         obj.sceneId = this.sceneId;
+        obj.scenePath = this.scenePath.slice();
         obj.currentElement = this.currentElement;
         
         this.callStack.push(obj);
@@ -507,7 +512,7 @@
 
     out.Interpreter.prototype.popFromCallStack = function ()
     {
-        var top = this.callStack.pop();
+        var top = this.callStack.pop(), scenePath = top.scenePath.slice();
 
         this.bus.trigger(
             "wse.interpreter.message", 
@@ -517,9 +522,15 @@
 
         this.index = top.index + 1;
         this.sceneId = top.sceneId;
+        this.scenePath = top.scenePath;
         this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
+
         this.currentCommands = this.currentScene.childNodes;
+        while (scenePath.length > 0)
+        {
+            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+        }
     };
 
     out.Interpreter.prototype.getSceneById = function (sceneName)
@@ -660,21 +671,9 @@
         bus.trigger("wse.interpreter.next.after.nonext", this, false);
     };
 
-    out.Interpreter.prototype.runCommand = function (command)
+    out.Interpreter.prototype.checkIfvar = function (command)
     {
-        var tagName, ifvar, ifval, ifnot, varContainer, assetName, bus = this.bus;
-
-        this.bus.trigger(
-            "wse.interpreter.runcommand.before", 
-            {
-                interpreter: this,
-                command: command
-            }, 
-            false
-        );
-
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        var ifvar, ifval, ifnot, varContainer, bus = this.bus;
 
         ifvar = command.getAttribute("ifvar") || null;
         ifval = command.getAttribute("ifvalue");
@@ -704,9 +703,7 @@
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
 
             if (ifnot !== null && ("" + varContainer[ifvar] === "" + ifnot))
@@ -721,9 +718,7 @@
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
             else if (ifval !== null && ("" + varContainer[ifvar]) !== "" + ifval)
             {
@@ -737,9 +732,7 @@
                     false
                 );
                 
-                return {
-                    doNext: true
-                };
+                return false;
             }
 
             bus.trigger(
@@ -752,6 +745,32 @@
             );
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
+        }
+
+        return true;
+    };
+
+    out.Interpreter.prototype.runCommand = function (command)
+    {
+        var tagName, assetName, bus = this.bus;
+
+        this.bus.trigger(
+            "wse.interpreter.runcommand.before", 
+            {
+                interpreter: this,
+                command: command
+            }, 
+            false
+        );
+
+        tagName = command.tagName;
+        assetName = command.getAttribute("asset") || null;
+
+        if (!this.checkIfvar(command))
+        {
+            return {
+                doNext: true
+            };        
         }
 
         if (tagName in this.commands)
@@ -1061,6 +1080,7 @@
         savegame.waitForTimer = this.waitForTimer;
         savegame.currentElement = this.currentElement;
         savegame.sceneId = this.sceneId;
+        savegame.scenePath = this.scenePath;
         savegame.listenersSubscribed = this.game.listenersSubscribed;
         savegame.callStack = this.callStack;
         savegame.waitCounter = this.waitCounter;
@@ -1181,7 +1201,7 @@
 
     out.Interpreter.prototype.load = function (name)
     {
-        var ds, savegame, scene, sceneId, scenes, i, len, self, savegameId, bus = this.bus;
+        var ds, savegame, scene, sceneId, scenePath, scenes, i, len, self, savegameId, bus = this.bus;
         self = this;
 
         savegameId = this.buildSavegameId(name);
@@ -1252,7 +1272,14 @@
             return false;
         }
 
+        scenePath = savegame.scenePath;
+        this.scenePath = scenePath.slice();
+
         this.currentCommands = scene.childNodes;
+        while (scenePath.length > 0)
+        {
+            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+        }
 
         // Re-insert choice menu to get back the DOM events associated with it:
         // Remove savegame menu on load:
