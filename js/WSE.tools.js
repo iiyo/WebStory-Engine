@@ -107,6 +107,11 @@
     out.tools.replaceVariables = function (text, interpreter)
     {
         var f1, f2;
+
+        if (text === null)
+        {
+            return text;
+        }
         
         if (typeof text !== "string") {
             interpreter.bus.trigger("wse.interpreter.error", {
