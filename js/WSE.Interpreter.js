@@ -366,7 +366,7 @@
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, startScene, self;
+        var self;
 
         self = this;
 
@@ -388,6 +388,13 @@
         }
         
         this.bus.trigger("wse.assets.loading.finished");
+        this.startTime = Math.round(+new Date() / 1000);
+        this.changeScene(this.getFirstScene());
+    };
+
+    out.Interpreter.prototype.getFirstScene = function ()
+    {
+        var scenes, len, i, startScene, self;
 
         scenes = this.story.getElementsByTagName("scene");
         this.scenes = scenes;
@@ -396,9 +403,7 @@
         startScene = this.getSceneById("start");
         if (startScene !== null)
         {
-            this.changeScene(startScene);
-            
-            return;
+            return startScene;
         }
         
         if (len < 1)
@@ -410,11 +415,10 @@
                 }
             );
             
-            return;
+            return null;
         }
         
-        this.startTime = Math.round(+new Date() / 1000);
-        this.changeScene(scenes[0]);
+        return scenes[0];
     };
 
     out.Interpreter.prototype.changeScene = function (scene)

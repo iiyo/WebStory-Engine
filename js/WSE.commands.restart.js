@@ -58,10 +58,13 @@
 
         interpreter.assets = {};
         interpreter.buildAssets();
+        
+        while (interpreter.callStack.length > 0)
+            interpreter.callStack.shift();
 
         return {
             doNext: true,
-            changeScene: interpreter.scenes[0]
+            changeScene: interpreter.getFirstScene()
         };
     };
 }(WSE));
