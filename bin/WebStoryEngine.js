@@ -2691,6 +2691,11 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     out.tools.replaceVariables = function (text, interpreter)
     {
         var f1, f2;
+
+        if (text === null)
+        {
+            return text;
+        }
         
         if (typeof text !== "string") {
             interpreter.bus.trigger("wse.interpreter.error", {
@@ -3721,7 +3726,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, startScene, self;
+        var self;
 
         self = this;
 
@@ -3743,6 +3748,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         }
         
         this.bus.trigger("wse.assets.loading.finished");
+        this.startTime = Math.round(+new Date() / 1000);
+        this.changeScene(this.getFirstScene());
+    };
+
+    out.Interpreter.prototype.getFirstScene = function ()
+    {
+        var scenes, len, i, startScene, self;
 
         scenes = this.story.getElementsByTagName("scene");
         this.scenes = scenes;
@@ -3751,9 +3763,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         startScene = this.getSceneById("start");
         if (startScene !== null)
         {
-            this.changeScene(startScene);
-            
-            return;
+            return startScene;
         }
         
         if (len < 1)
@@ -3765,11 +3775,10 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 }
             );
             
-            return;
+            return null;
         }
         
-        this.startTime = Math.round(+new Date() / 1000);
-        this.changeScene(scenes[0]);
+        return scenes[0];
     };
 
     out.Interpreter.prototype.changeScene = function (scene)
@@ -8746,10 +8755,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
         interpreter.assets = {};
         interpreter.buildAssets();
+        
+        while (interpreter.callStack.length > 0)
+            interpreter.callStack.shift();
 
         return {
             doNext: true,
-            changeScene: interpreter.scenes[0]
+            changeScene: interpreter.getFirstScene()
         };
     };
 }(WSE));
