@@ -8143,20 +8143,16 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             
             return function (ev)
             {
-                var noHide;
-
-                noHide = cur.getAttribute("hide") === "false" ? true : false;
-
                 ev.stopPropagation();
                 ev.preventDefault();
                 
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, noNext, childrenLen = cur.children.length;
-                        noNext = cur.getAttribute("next") === "false" ? true : false;
+                        var cmds, i, len, childrenLen = cur.children.length;
 
-                        if (noNext || noHide || sc !== null)
+                        //legacy behaviour
+                        if (sc !== null)
                         {
                             cmds = cur.getElementsByTagName("var");
                             len = cmds.length;
@@ -8172,7 +8168,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                             return;
                         }
 
-                        if (!noNext && !noHide && childrenLen > 0)
+                        if (childrenLen > 0)
                         {
                             interpreter.pushToCallStack();
                             interpreter.currentCommands = cur.childNodes;
@@ -8182,21 +8178,12 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                             interpreter.currentElement = 0;
                         }
 
-                        if (noNext === true)
-                        {
-                            return;
-                        }
-
                         self.next();
                     },
                     0
                 );
 
-                if (noHide === true)
-                {
-                    return;
-                }
-
+                // return here if you want to leave the menu shown
                 self.stage.removeChild(me);
                 interpreter.waitCounter -= 1;
                 interpreter.state = oldState;

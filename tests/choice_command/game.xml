@@ -36,19 +36,19 @@
             <line s="n" stop="false"></line>
             <var name="text" value="NOTHING" />
             <choice>
-                <option label="no modifiers, no children" />
-                <option label="no modifiers, var children">
+                <option label="no scene, no children" />
+                <option label="no scene, var children">
                     <var name="text" value="SIMPLE" />
                 </option>
-                <option label="noHide, no children" hide="false" />
-                <option label="noHide, var children" hide="false">
-                    <var name="text" value="NOHIDE" />
-                </option>
-                <option label="noNext, no children" hide="false" />
-                <option label="noNext, var children" next="false">
-                    <var name="text" value="NONEXT" />
+                <option label="scene, no children" scene="text" />
+                <option label="scene, var children" scene="text">
+                    <var name="text" value="SIMPLE" />
                 </option>
             </choice>
+            <goto scene="text" />
+        </scene>
+
+        <scene id="text">
             <line s="n">{$text}</line>
             <goto scene="legacy" />
         </scene>
