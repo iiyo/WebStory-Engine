@@ -8225,7 +8225,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
             currentButton.setAttribute("value", current.getAttribute("label"));
-            currentButton.value = current.getAttribute("label");
+            currentButton.value = out.tools.replaceVariables(current.getAttribute("label"),  interpreter);
             sceneName = current.getAttribute("scene") || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
@@ -9176,6 +9176,28 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 break;
             }
         }
+        
+        return {
+            doNext: true
+        };
+    };
+}(WSE));
+
+
+
+(function (out)
+{
+    "use strict";
+    
+    out.commands.while = function (command, interpreter)
+    {
+        interpreter.index -= 1;
+        interpreter.currentElement -= 1;
+        interpreter.pushToCallStack();
+        interpreter.currentCommands = command.childNodes;
+        interpreter.scenePath.push(interpreter.index+1);
+        interpreter.index = -1;
+        interpreter.currentElement = -1;
         
         return {
             doNext: true

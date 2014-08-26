@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger event="keyup" function="savegames" name="savegames_by_escape" key="ESCAPE" />
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
+        </triggers>
+    </settings>
+    <assets>
+        <textbox name="tb" cssid="tb" />
+        <character name="n" textbox="tb"></character>
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            <var name="state" value="first" />
+            <trigger name="savegames_by_escape" action="activate" />
+            <trigger name="next_on_right" action="activate" />
+            <trigger name="next_on_space" action="activate" />
+            <wait />
+            <var name="play" value="true" />
+            <while ifvar="play" ifvalue="true">
+                <var name="n" value="3" />
+                <while ifvar="n" ifnot="0">
+                    <choice>
+                        <option label="Press this button x{$n} times">
+                            <var name="n" action="decrease" />
+                        </option>
+                    </choice>
+                </while>
+                <show asset="tb" />
+                <line s="n">YOU WIN</line>
+                <hide asset="tb" />
+                <confirm var="play" message="PLAY AGAIN?" />
+            </while>
+            <show asset="tb" />
+            <line s="n">GAME OVER</line>
+        </scene>
+        
+    </scenes>
+</ws>

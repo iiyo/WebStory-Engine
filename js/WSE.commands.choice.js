@@ -149,7 +149,7 @@
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
             currentButton.setAttribute("value", current.getAttribute("label"));
-            currentButton.value = current.getAttribute("label");
+            currentButton.value = out.tools.replaceVariables(current.getAttribute("label"),  interpreter);
             sceneName = current.getAttribute("scene") || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
