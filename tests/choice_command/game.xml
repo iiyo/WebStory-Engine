@@ -27,12 +27,12 @@
         <scene id="select">
             <choice>
                 <option label="Nested choices" scene="nested"/>
-                <option label="Subs insite nested choices" scene="subs_n_choices"/>
-                <option label="Legacy behaviour" scene="legacy"/>
+                <option label="Subs inside nested choices" scene="subs_n_choices"/>
+                <option label="Simple behaviour" scene="simple"/>
             </choice>
         </scene>
 
-        <scene id="legacy">
+        <scene id="simple">
             <line s="n" stop="false"></line>
             <var name="text" value="NOTHING" />
             <choice>
@@ -40,9 +40,23 @@
                 <option label="no scene, var children">
                     <var name="text" value="SIMPLE" />
                 </option>
+                <option label="no scene, line children">
+                    <line s="n">HELLO</line>
+                </option>
                 <option label="scene, no children" scene="text" />
                 <option label="scene, var children" scene="text">
                     <var name="text" value="SIMPLE" />
+                </option>
+                <option label="scene, line children" scene="text">
+                    <line s="n">HELLO</line>
+                </option>
+                <option label="scene, goto children" scene="text">
+                    <goto scene="other" />
+                </option>
+                <option label="scene, sub children" scene="text">
+                    <var name="text" action="set" value="0" />
+                    <sub scene="sub" names="dx" values="15" />
+                    <sub scene="sub" names="dx" values="27" />
                 </option>
             </choice>
             <goto scene="text" />
@@ -50,7 +64,17 @@
 
         <scene id="text">
             <line s="n">{$text}</line>
-            <goto scene="legacy" />
+            <goto scene="simple" />
+        </scene>
+
+        <scene id="other">
+            <var name="text" action="set" value="WRONG, YOU SHOULD NOT SEE THIS" />
+            <line s="n">OK: OTHER SCENE, NOT scene="text"</line>
+            <goto scene="simple" />
+        </scene>
+
+        <scene id="sub">
+            <var name="text" action="increase" value="{$dx}" />
         </scene>
 
         <scene id="subs_n_choices">

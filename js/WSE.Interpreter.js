@@ -423,6 +423,12 @@
 
     out.Interpreter.prototype.changeScene = function (scene)
     {
+        this.changeSceneNoNext(scene);
+        this.next();
+    };
+
+    out.Interpreter.prototype.changeSceneNoNext = function (scene)
+    {
         var len, id, bus = this.bus;
 
         bus.trigger(
@@ -498,8 +504,6 @@
             },
             false
         );
-
-        this.next();
     };
 
     out.Interpreter.prototype.pushToCallStack = function ()

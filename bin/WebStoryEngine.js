@@ -3783,6 +3783,12 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.changeScene = function (scene)
     {
+        this.changeSceneNoNext(scene);
+        this.next();
+    };
+
+    out.Interpreter.prototype.changeSceneNoNext = function (scene)
+    {
         var len, id, bus = this.bus;
 
         bus.trigger(
@@ -3858,8 +3864,6 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             },
             false
         );
-
-        this.next();
     };
 
     out.Interpreter.prototype.pushToCallStack = function ()
@@ -8151,30 +8155,26 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     {
                         var cmds, i, len, childrenLen = cur.children.length;
 
-                        //legacy behaviour
-                        if (sc !== null)
-                        {
-                            cmds = cur.getElementsByTagName("var");
-                            len = cmds.length;
-                            for (i = 0; i < len; i += 1)
-                            {
-                                interpreter.runCommand(cmds[i]);
-                            }
-                        }
+                        var oldIndex = interpreter.index;
+                        var oldSceneId = interpreter.sceneId;
+                        var oldScenePath = interpreter.scenePath.slice();
+                        var oldCurrentScene = interpreter.currentScene;
 
                         if (sc !== null)
-                        {
-                            self.changeScene(sc);
-                            return;
+                        {  
+                            self.changeSceneNoNext(sc);
                         }
 
                         if (childrenLen > 0)
                         {
                             interpreter.pushToCallStack();
                             interpreter.currentCommands = cur.childNodes;
-                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.sceneId = oldSceneId;
+                            interpreter.scenePath = oldScenePath;
+                            interpreter.scenePath.push(oldIndex-1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
+                            interpreter.currentScene = oldCurrentScene;
                             interpreter.currentElement = 0;
                         }
 

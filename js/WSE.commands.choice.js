@@ -75,30 +75,26 @@
                     {
                         var cmds, i, len, childrenLen = cur.children.length;
 
-                        //legacy behaviour
-                        if (sc !== null)
-                        {
-                            cmds = cur.getElementsByTagName("var");
-                            len = cmds.length;
-                            for (i = 0; i < len; i += 1)
-                            {
-                                interpreter.runCommand(cmds[i]);
-                            }
-                        }
+                        var oldIndex = interpreter.index;
+                        var oldSceneId = interpreter.sceneId;
+                        var oldScenePath = interpreter.scenePath.slice();
+                        var oldCurrentScene = interpreter.currentScene;
 
                         if (sc !== null)
-                        {
-                            self.changeScene(sc);
-                            return;
+                        {  
+                            self.changeSceneNoNext(sc);
                         }
 
                         if (childrenLen > 0)
                         {
                             interpreter.pushToCallStack();
                             interpreter.currentCommands = cur.childNodes;
-                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.sceneId = oldSceneId;
+                            interpreter.scenePath = oldScenePath;
+                            interpreter.scenePath.push(oldIndex-1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
+                            interpreter.currentScene = oldCurrentScene;
                             interpreter.currentElement = 0;
                         }
 
