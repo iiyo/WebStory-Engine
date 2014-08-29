@@ -399,6 +399,7 @@
         var title, message, doNext;
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
+        message = module.tools.textToHtml(message);
         doNext = command.getAttribute("next") === "false" ? false : true;
         module.tools.ui.alert(
             interpreter,
