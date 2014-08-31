@@ -3,48 +3,11 @@
     <settings>
         <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
         <triggers>
-            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" function="execute">
-                <var name="duration" action="increase" value="100" />
-            </trigger>
-            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" function="execute">
-                <var name="duration" action="decrease" value="100" />
-            </trigger>
-            <trigger name="change_effect" event="keyup" key="E" function="execute">
-                <with var="effect">
-                    <when is="fade">
-                        <var name="effect" value="slide" />
-                    </when>
-                    <when is="slide">
-                        <var name="effect" value="fade" />
-                    </when>
-                </with>
-            </trigger>
-            <trigger name="change_direction" event="keyup" key="D" function="execute">
-                <with var="direction">
-                    <when is="left">
-                        <var name="direction" value="top" />
-                    </when>
-                    <when is="top">
-                        <var name="direction" value="right" />
-                    </when>
-                    <when is="right">
-                        <var name="direction" value="bottom" />
-                    </when>
-                    <when is="bottom">
-                        <var name="direction" value="left" />
-                    </when>
-                </with>
-            </trigger>
-            <trigger name="change_easing" event="keyup" key="SPACE" function="execute">
-                <with var="easing">
-                    <when is="sineEaseOut">
-                        <var name="easing" value="easeOutBounce" />
-                    </when>
-                    <when is="easeOutBounce">
-                        <var name="easing" value="sineEaseOut" />
-                    </when>
-                </with>
-            </trigger>
+            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" scene="increase_duration_scene" />
+            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" scene="decrease_duration_scene" />
+            <trigger name="change_effect" event="keyup" key="E" scene="change_effect_scene" />
+            <trigger name="change_direction" event="keyup" key="D" scene="change_direction_scene" />
+            <trigger name="change_easing" event="keyup" key="SPACE" scene="change_easing_scene" />
         </triggers>
     </settings>
     <assets>
@@ -62,6 +25,53 @@
     </assets>
     <scenes>
         
+        <scene id="increase_duration_scene">
+            <var name="duration" action="increase" value="100" />
+        </scene>
+        
+        <scene id="decrease_duration_scene">
+            <var name="duration" action="decrease" value="100" />
+        </scene>
+        
+        <scene id="change_effect_scene">
+            <with var="effect">
+                <when is="fade">
+                    <var name="effect" value="slide" />
+                </when>
+                <when is="slide">
+                    <var name="effect" value="fade" />
+                </when>
+            </with>
+        </scene>
+        
+        <scene id="change_direction_scene">
+            <with var="direction">
+                <when is="left">
+                    <var name="direction" value="top" />
+                </when>
+                <when is="top">
+                    <var name="direction" value="right" />
+                </when>
+                <when is="right">
+                    <var name="direction" value="bottom" />
+                </when>
+                <when is="bottom">
+                    <var name="direction" value="left" />
+                </when>
+            </with>
+        </scene>
+        
+        <scene id="change_easing_scene">
+            <with var="easing">
+                <when is="sineEaseOut">
+                    <var name="easing" value="easeOutBounce" />
+                </when>
+                <when is="easeOutBounce">
+                    <var name="easing" value="sineEaseOut" />
+                </when>
+            </with>
+        </scene>
+
         <scene id="start">
             <trigger name="increase_duration_trigger" action="activate" />
             <trigger name="decrease_duration_trigger" action="activate" />
