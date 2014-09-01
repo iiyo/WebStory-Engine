@@ -2715,6 +2715,18 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         
         return text;
     };
+
+    out.tools.getSerializedNodes = function (element) {
+        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;        
+        var text = '';
+        
+        for (i = 0, len = nodes.length; i < len; i += 1)
+        {
+            text += ser.serializeToString(nodes[i]);
+        }
+        
+        return text;
+    }
     
     out.tools.getParsedAttribute = function (element, attributeName, interpreter, defaultValue) {
         
@@ -8597,7 +8609,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 
                 try
                 {
-                    speakerName = current.getElementsByTagName("displayname")[0].childNodes[0].nodeValue;
+                    speakerName = out.tools.getSerializedNodes(current.getElementsByTagName("displayname")[0]);
                 }
                 catch (e) {}
                 
@@ -8620,19 +8632,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             };
         }
 
-        //text = new XMLSerializer().serializeToString(command);//command.childNodes[0].nodeValue;
-        
-        (function ()
-        {
-            var ser = new XMLSerializer(), nodes = command.childNodes, i, len;
-            
-            text = '';
-            
-            for (i = 0, len = nodes.length; i < len; i += 1)
-            {
-                text += ser.serializeToString(nodes[i]);
-            }
-        }());
+        text = out.tools.getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName);
