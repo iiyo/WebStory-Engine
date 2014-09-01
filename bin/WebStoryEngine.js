@@ -3328,7 +3328,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
      */
     out.Game.prototype.start = function ()
     {
-        var fn, self;
+        var fn, contextmenu_proxy, self;
         
         self = this;
         
@@ -3362,15 +3362,29 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             console.log("Next triggered by user...");
             self.interpreter.next(true);
         };
+
+        contextmenu_proxy = function (e)
+        {
+            self.bus.trigger("contextmenu", {});
+            
+            // let's try to prevent real context menu showing
+            if(e && typeof e.preventDefault === "function")
+            {
+                e.preventDefault();
+            }
+            return false;
+        }
         
         this.subscribeListeners = function ()
         {
+            out.tools.attachEventListener(this.stage, 'contextmenu', contextmenu_proxy);
             out.tools.attachEventListener(this.stage, 'click', fn);
             this.listenersSubscribed = true;
         };
         
         this.unsubscribeListeners = function ()
         {
+            out.tools.removeEventListener(this.stage, 'contextmenu', contextmenu_proxy);
             out.tools.removeEventListener(this.stage, 'click', fn);
             this.listenersSubscribed = false;
         };
