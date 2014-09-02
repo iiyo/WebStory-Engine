@@ -42,6 +42,7 @@
         "js/WSE.commands.var.js",
         "js/WSE.commands.set_vars.js",
         "js/WSE.commands.wait.js",
-        "js/WSE.commands.with.js"
+        "js/WSE.commands.with.js",
+        "js/WSE.commands.while.js"
     ]
 }

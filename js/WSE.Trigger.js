@@ -87,34 +87,18 @@
         
         if (this.scene)
         {
-            this.fn = function ()
+            fn = function ()
             {
                 console.log('Triggering event "' + self.event + '"...');
                 out.commands.sub(trigger, interpreter);
+                interpreter.index = 0;
+                interpreter.currentElement = 0;
+                interpreter.next();
             };
-            return;
         }
 
         this.isKeyEvent = false;
         this.key = null;
-
-        // FIXME: can this be deleted?
-        //
-        //         if (this.sub !== null)
-        //         {
-        //             fn = function ()
-        //             {
-        //                 if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
-        //                 {
-        //                     return;
-        //                 }
-        //                 var sub = interpreter.game.ws.createElement("sub");
-        //                 sub.setAttribute("scene", self.sub);
-        // //                 sub.setAttribute("next", "false");
-        //                 interpreter.commands.sub(sub, interpreter);
-        //                 interpreter.next();
-        //             };
-        //         }
 
         if (this.special !== null && this.special !== "next")
         {

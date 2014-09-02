@@ -67,48 +67,35 @@
             
             return function (ev)
             {
-                var noHide;
-
-                noHide = cur.getAttribute("hide") === "false" ? true : false;
-
                 ev.stopPropagation();
                 ev.preventDefault();
                 
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, noNext, childrenLen = cur.children.length;
-                        noNext = cur.getAttribute("next") === "false" ? true : false;
+                        var cmds, i, len, childrenLen = cur.children.length;
 
-                        if (noNext || noHide || sc !== null)
-                        {
-                            cmds = cur.getElementsByTagName("var");
-                            len = cmds.length;
-                            for (i = 0; i < len; i += 1)
-                            {
-                                interpreter.runCommand(cmds[i]);
-                            }
-                        }
+                        var oldIndex = interpreter.index;
+                        var oldSceneId = interpreter.sceneId;
+                        var oldScenePath = interpreter.scenePath.slice();
+                        var oldCurrentScene = interpreter.currentScene;
 
                         if (sc !== null)
-                        {
-                            self.changeScene(sc);
-                            return;
+                        {  
+                            self.changeSceneNoNext(sc);
                         }
 
-                        if (!noNext && !noHide && childrenLen > 0)
+                        if (childrenLen > 0)
                         {
                             interpreter.pushToCallStack();
                             interpreter.currentCommands = cur.childNodes;
-                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.sceneId = oldSceneId;
+                            interpreter.scenePath = oldScenePath;
+                            interpreter.scenePath.push(oldIndex-1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
+                            interpreter.currentScene = oldCurrentScene;
                             interpreter.currentElement = 0;
-                        }
-
-                        if (noNext === true)
-                        {
-                            return;
                         }
 
                         self.next();
@@ -116,11 +103,7 @@
                     0
                 );
 
-                if (noHide === true)
-                {
-                    return;
-                }
-
+                // return here if you want to leave the menu shown
                 self.stage.removeChild(me);
                 interpreter.waitCounter -= 1;
                 interpreter.state = oldState;
@@ -162,7 +145,7 @@
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
             currentButton.setAttribute("value", current.getAttribute("label"));
-            currentButton.value = current.getAttribute("label");
+            currentButton.value = out.tools.replaceVariables(current.getAttribute("label"),  interpreter);
             sceneName = current.getAttribute("scene") || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;

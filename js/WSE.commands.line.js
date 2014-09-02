@@ -1,5 +1,5 @@
 /*<ON_DEPLOY_REMOVE>*/
-/* global XMLSerializer, WSE */
+/* global WSE */
 /*
     Copyright (c) 2012 - 2014 The WebStory Engine Contributors
     All rights reserved.
@@ -94,7 +94,7 @@
                 
                 try
                 {
-                    speakerName = current.getElementsByTagName("displayname")[0].childNodes[0].nodeValue;
+                    speakerName = out.tools.getSerializedNodes(current.getElementsByTagName("displayname")[0]);
                 }
                 catch (e) {}
                 
@@ -117,19 +117,7 @@
             };
         }
 
-        //text = new XMLSerializer().serializeToString(command);//command.childNodes[0].nodeValue;
-        
-        (function ()
-        {
-            var ser = new XMLSerializer(), nodes = command.childNodes, i, len;
-            
-            text = '';
-            
-            for (i = 0, len = nodes.length; i < len; i += 1)
-            {
-                text += ser.serializeToString(nodes[i]);
-            }
-        }());
+        text = out.tools.getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName);

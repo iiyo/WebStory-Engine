@@ -2583,28 +2583,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
             interpreter.game.subscribeListeners();
         },
         
-        execute: function (interpreter, command) {
-            
-            var commands = [].slice.call(command.children).filter(function (child) {
-                if (child.tagName &&
-                        out.functions.execute.allowedCommands.indexOf(child.tagName) >= 0) {
-                    
-                    return true;
-                }
-            });
-            
-            commands.forEach(function (varCommand) {
-                interpreter.runCommand(varCommand);
-            });
-        }
-        
     };
-    
-    out.functions.execute.allowedCommands = [
-        "var", "global", "localize", "globalize", "set_vars", "move", "hide", "show",
-        "flash", "flicker", "shake", "play", "set", "fn", "restart", "trigger",
-        "confirm", "alert", "prompt", "with"
-    ];
     
     return out;
 
@@ -2691,6 +2670,11 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     out.tools.replaceVariables = function (text, interpreter)
     {
         var f1, f2;
+
+        if (text === null)
+        {
+            return text;
+        }
         
         if (typeof text !== "string") {
             interpreter.bus.trigger("wse.interpreter.error", {
@@ -2731,6 +2715,18 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         
         return text;
     };
+
+    out.tools.getSerializedNodes = function (element) {
+        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;        
+        var text = '';
+        
+        for (i = 0, len = nodes.length; i < len; i += 1)
+        {
+            text += ser.serializeToString(nodes[i]);
+        }
+        
+        return text;
+    }
     
     out.tools.getParsedAttribute = function (element, attributeName, interpreter, defaultValue) {
         
@@ -2931,34 +2927,18 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         
         if (this.scene)
         {
-            this.fn = function ()
+            fn = function ()
             {
                 console.log('Triggering event "' + self.event + '"...');
                 out.commands.sub(trigger, interpreter);
+                interpreter.index = 0;
+                interpreter.currentElement = 0;
+                interpreter.next();
             };
-            return;
         }
 
         this.isKeyEvent = false;
         this.key = null;
-
-        // FIXME: can this be deleted?
-        //
-        //         if (this.sub !== null)
-        //         {
-        //             fn = function ()
-        //             {
-        //                 if (self.interpreter.state === "pause" || self.interpreter.waitCounter > 0)
-        //                 {
-        //                     return;
-        //                 }
-        //                 var sub = interpreter.game.ws.createElement("sub");
-        //                 sub.setAttribute("scene", self.sub);
-        // //                 sub.setAttribute("next", "false");
-        //                 interpreter.commands.sub(sub, interpreter);
-        //                 interpreter.next();
-        //             };
-        //         }
 
         if (this.special !== null && this.special !== "next")
         {
@@ -3348,7 +3328,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
      */
     out.Game.prototype.start = function ()
     {
-        var fn, self;
+        var fn, contextmenu_proxy, self;
         
         self = this;
         
@@ -3382,15 +3362,29 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             console.log("Next triggered by user...");
             self.interpreter.next(true);
         };
+
+        contextmenu_proxy = function (e)
+        {
+            self.bus.trigger("contextmenu", {});
+            
+            // let's try to prevent real context menu showing
+            if(e && typeof e.preventDefault === "function")
+            {
+                e.preventDefault();
+            }
+            return false;
+        }
         
         this.subscribeListeners = function ()
         {
+            out.tools.attachEventListener(this.stage, 'contextmenu', contextmenu_proxy);
             out.tools.attachEventListener(this.stage, 'click', fn);
             this.listenersSubscribed = true;
         };
         
         this.unsubscribeListeners = function ()
         {
+            out.tools.removeEventListener(this.stage, 'contextmenu', contextmenu_proxy);
             out.tools.removeEventListener(this.stage, 'click', fn);
             this.listenersSubscribed = false;
         };
@@ -3737,7 +3731,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
     out.Interpreter.prototype.runStory = function ()
     {
-        var scenes, len, i, startScene, self;
+        var self;
 
         self = this;
 
@@ -3759,6 +3753,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         }
         
         this.bus.trigger("wse.assets.loading.finished");
+        this.startTime = Math.round(+new Date() / 1000);
+        this.changeScene(this.getFirstScene());
+    };
+
+    out.Interpreter.prototype.getFirstScene = function ()
+    {
+        var scenes, len, i, startScene, self;
 
         scenes = this.story.getElementsByTagName("scene");
         this.scenes = scenes;
@@ -3767,9 +3768,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         startScene = this.getSceneById("start");
         if (startScene !== null)
         {
-            this.changeScene(startScene);
-            
-            return;
+            return startScene;
         }
         
         if (len < 1)
@@ -3781,14 +3780,19 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 }
             );
             
-            return;
+            return null;
         }
         
-        this.startTime = Math.round(+new Date() / 1000);
-        this.changeScene(scenes[0]);
+        return scenes[0];
     };
 
     out.Interpreter.prototype.changeScene = function (scene)
+    {
+        this.changeSceneNoNext(scene);
+        this.next();
+    };
+
+    out.Interpreter.prototype.changeSceneNoNext = function (scene)
     {
         var len, id, bus = this.bus;
 
@@ -3865,8 +3869,6 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             },
             false
         );
-
-        this.next();
     };
 
     out.Interpreter.prototype.pushToCallStack = function ()
@@ -5485,6 +5487,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         var title, message, doNext;
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
+        message = module.tools.textToHtml(message);
         doNext = command.getAttribute("next") === "false" ? false : true;
         module.tools.ui.alert(
             interpreter,
@@ -8150,48 +8153,35 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             
             return function (ev)
             {
-                var noHide;
-
-                noHide = cur.getAttribute("hide") === "false" ? true : false;
-
                 ev.stopPropagation();
                 ev.preventDefault();
                 
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, noNext, childrenLen = cur.children.length;
-                        noNext = cur.getAttribute("next") === "false" ? true : false;
+                        var cmds, i, len, childrenLen = cur.children.length;
 
-                        if (noNext || noHide || sc !== null)
-                        {
-                            cmds = cur.getElementsByTagName("var");
-                            len = cmds.length;
-                            for (i = 0; i < len; i += 1)
-                            {
-                                interpreter.runCommand(cmds[i]);
-                            }
-                        }
+                        var oldIndex = interpreter.index;
+                        var oldSceneId = interpreter.sceneId;
+                        var oldScenePath = interpreter.scenePath.slice();
+                        var oldCurrentScene = interpreter.currentScene;
 
                         if (sc !== null)
-                        {
-                            self.changeScene(sc);
-                            return;
+                        {  
+                            self.changeSceneNoNext(sc);
                         }
 
-                        if (!noNext && !noHide && childrenLen > 0)
+                        if (childrenLen > 0)
                         {
                             interpreter.pushToCallStack();
                             interpreter.currentCommands = cur.childNodes;
-                            interpreter.scenePath.push(interpreter.index-1);
+                            interpreter.sceneId = oldSceneId;
+                            interpreter.scenePath = oldScenePath;
+                            interpreter.scenePath.push(oldIndex-1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
+                            interpreter.currentScene = oldCurrentScene;
                             interpreter.currentElement = 0;
-                        }
-
-                        if (noNext === true)
-                        {
-                            return;
                         }
 
                         self.next();
@@ -8199,11 +8189,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     0
                 );
 
-                if (noHide === true)
-                {
-                    return;
-                }
-
+                // return here if you want to leave the menu shown
                 self.stage.removeChild(me);
                 interpreter.waitCounter -= 1;
                 interpreter.state = oldState;
@@ -8245,7 +8231,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
             currentButton.setAttribute("value", current.getAttribute("label"));
-            currentButton.value = current.getAttribute("label");
+            currentButton.value = out.tools.replaceVariables(current.getAttribute("label"),  interpreter);
             sceneName = current.getAttribute("scene") || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
@@ -8637,7 +8623,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 
                 try
                 {
-                    speakerName = current.getElementsByTagName("displayname")[0].childNodes[0].nodeValue;
+                    speakerName = out.tools.getSerializedNodes(current.getElementsByTagName("displayname")[0]);
                 }
                 catch (e) {}
                 
@@ -8660,19 +8646,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             };
         }
 
-        //text = new XMLSerializer().serializeToString(command);//command.childNodes[0].nodeValue;
-        
-        (function ()
-        {
-            var ser = new XMLSerializer(), nodes = command.childNodes, i, len;
-            
-            text = '';
-            
-            for (i = 0, len = nodes.length; i < len; i += 1)
-            {
-                text += ser.serializeToString(nodes[i]);
-            }
-        }());
+        text = out.tools.getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName);
@@ -8762,10 +8736,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 
         interpreter.assets = {};
         interpreter.buildAssets();
+        
+        while (interpreter.callStack.length > 0)
+            interpreter.callStack.shift();
 
         return {
             doNext: true,
-            changeScene: interpreter.scenes[0]
+            changeScene: interpreter.getFirstScene()
         };
     };
 }(WSE));
@@ -9193,6 +9170,28 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 break;
             }
         }
+        
+        return {
+            doNext: true
+        };
+    };
+}(WSE));
+
+
+
+(function (out)
+{
+    "use strict";
+    
+    out.commands.while = function (command, interpreter)
+    {
+        interpreter.index -= 1;
+        interpreter.currentElement -= 1;
+        interpreter.pushToCallStack();
+        interpreter.currentCommands = command.childNodes;
+        interpreter.scenePath.push(interpreter.index+1);
+        interpreter.index = -1;
+        interpreter.currentElement = -1;
         
         return {
             doNext: true

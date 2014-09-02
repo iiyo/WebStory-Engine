@@ -1,5 +1,5 @@
 /*<ON_DEPLOY_REMOVE>*/
-/* global WSE */
+/* global XMLSerializer, WSE */
 /*
     Copyright (c) 2012 - 2014 The WebStory Engine Contributors
     All rights reserved.
@@ -107,6 +107,11 @@
     out.tools.replaceVariables = function (text, interpreter)
     {
         var f1, f2;
+
+        if (text === null)
+        {
+            return text;
+        }
         
         if (typeof text !== "string") {
             interpreter.bus.trigger("wse.interpreter.error", {
@@ -147,6 +152,18 @@
         
         return text;
     };
+
+    out.tools.getSerializedNodes = function (element) {
+        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;        
+        var text = '';
+        
+        for (i = 0, len = nodes.length; i < len; i += 1)
+        {
+            text += ser.serializeToString(nodes[i]);
+        }
+        
+        return text;
+    }
     
     out.tools.getParsedAttribute = function (element, attributeName, interpreter, defaultValue) {
         
