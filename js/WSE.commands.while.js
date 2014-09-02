@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.while = function (command, interpreter)
+    out.commands["while"] = function (command, interpreter)
     {
         interpreter.index -= 1;
         interpreter.currentElement -= 1;
