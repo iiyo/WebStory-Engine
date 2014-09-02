@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.global = function (command, interpreter)
+    out.commands["global"] = function (command, interpreter)
     {
         var name, value;
 

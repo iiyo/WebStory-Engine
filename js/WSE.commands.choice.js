@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.choice = function (command, interpreter)
+    out.commands["choice"] = function (command, interpreter)
     {
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, j, jlen, currentScene, sceneName;

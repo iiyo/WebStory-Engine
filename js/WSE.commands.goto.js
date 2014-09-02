@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.goto = function (command, interpreter)
+    out.commands["goto"] = function (command, interpreter)
     {
         var scene, sceneName, i, len, current, bus = interpreter.bus;
 

@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.trigger = function (command, interpreter)
+    out.commands["trigger"] = function (command, interpreter)
     {
         var triggerName, action;
 

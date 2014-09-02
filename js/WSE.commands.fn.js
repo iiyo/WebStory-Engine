@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.fn = function (command, interpreter)
+    out.commands["fn"] = function (command, interpreter)
     {
         var name, varName, ret;
         

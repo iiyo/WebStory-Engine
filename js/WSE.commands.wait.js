@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.wait = function (command, interpreter)
+    out.commands["wait"] = function (command, interpreter)
     {
         var duration, self;
 
