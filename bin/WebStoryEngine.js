@@ -8159,7 +8159,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, childrenLen = cur.children ? cur.children.length : 0;
+                        var cmds, i, len, childrenLen = cur.childNodes ? cur.childNodes.length : 0;
 
                         var oldIndex = interpreter.index;
                         var oldSceneId = interpreter.sceneId;
