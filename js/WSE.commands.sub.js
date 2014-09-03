@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.sub = function (command, interpreter)
+    out.commands["sub"] = function (command, interpreter)
     {
         var sceneId, scene, doNext;
 

@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.globalize = function (command, interpreter)
+    out.commands["globalize"] = function (command, interpreter)
     {
         var key;
 

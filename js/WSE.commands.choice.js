@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.choice = function (command, interpreter)
+    out.commands["choice"] = function (command, interpreter)
     {
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, j, jlen, currentScene, sceneName;
@@ -73,7 +73,7 @@
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, childrenLen = cur.children.length;
+                        var cmds, i, len, childrenLen = cur.childNodes ? cur.childNodes.length : 0;
 
                         var oldIndex = interpreter.index;
                         var oldSceneId = interpreter.sceneId;

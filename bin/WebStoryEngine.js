@@ -8120,7 +8120,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.choice = function (command, interpreter)
+    out.commands["choice"] = function (command, interpreter)
     {
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, j, jlen, currentScene, sceneName;
@@ -8159,7 +8159,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 setTimeout(
                     function ()
                     {
-                        var cmds, i, len, childrenLen = cur.children.length;
+                        var cmds, i, len, childrenLen = cur.childNodes ? cur.childNodes.length : 0;
 
                         var oldIndex = interpreter.index;
                         var oldSceneId = interpreter.sceneId;
@@ -8357,7 +8357,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.fn = function (command, interpreter)
+    out.commands["fn"] = function (command, interpreter)
     {
         var name, varName, ret;
         
@@ -8412,7 +8412,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.global = function (command, interpreter)
+    out.commands["global"] = function (command, interpreter)
     {
         var name, value;
 
@@ -8462,7 +8462,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.globalize = function (command, interpreter)
+    out.commands["globalize"] = function (command, interpreter)
     {
         var key;
 
@@ -8511,7 +8511,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.goto = function (command, interpreter)
+    out.commands["goto"] = function (command, interpreter)
     {
         var scene, sceneName, i, len, current, bus = interpreter.bus;
 
@@ -8563,7 +8563,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.line = function (command, interpreter)
+    out.commands["line"] = function (command, interpreter)
     {
         var speakerId, speakerName, textboxName, i, len, current;
         var assetElements, text, doNext, bus = interpreter.bus;
@@ -8663,7 +8663,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.localize = function (command, interpreter)
+    out.commands["localize"] = function (command, interpreter)
     {
         var key;
 
@@ -8712,7 +8712,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.restart = function (command, interpreter)
+    out.commands["restart"] = function (command, interpreter)
     {
         interpreter.bus.trigger(
             "wse.interpreter.commands.restart",
@@ -8752,7 +8752,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.sub = function (command, interpreter)
+    out.commands["sub"] = function (command, interpreter)
     {
         var sceneId, scene, doNext;
 
@@ -8827,7 +8827,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.trigger = function (command, interpreter)
+    out.commands["trigger"] = function (command, interpreter)
     {
         var triggerName, action;
 
@@ -9049,7 +9049,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.set_vars = function (command, interpreter)
+    out.commands["set_vars"] = function (command, interpreter)
     {
         var container = interpreter.runVars, keys, values;
         
@@ -9082,7 +9082,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.wait = function (command, interpreter)
+    out.commands["wait"] = function (command, interpreter)
     {
         var duration, self;
 
@@ -9183,7 +9183,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
-    out.commands.while = function (command, interpreter)
+    out.commands["while"] = function (command, interpreter)
     {
         interpreter.index -= 1;
         interpreter.currentElement -= 1;

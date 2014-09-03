@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.localize = function (command, interpreter)
+    out.commands["localize"] = function (command, interpreter)
     {
         var key;
 

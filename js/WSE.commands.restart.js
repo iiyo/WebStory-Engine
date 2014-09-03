@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.restart = function (command, interpreter)
+    out.commands["restart"] = function (command, interpreter)
     {
         interpreter.bus.trigger(
             "wse.interpreter.commands.restart",

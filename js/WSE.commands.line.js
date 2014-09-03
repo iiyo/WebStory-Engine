@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.line = function (command, interpreter)
+    out.commands["line"] = function (command, interpreter)
     {
         var speakerId, speakerName, textboxName, i, len, current;
         var assetElements, text, doNext, bus = interpreter.bus;

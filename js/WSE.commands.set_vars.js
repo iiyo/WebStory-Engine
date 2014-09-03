@@ -34,7 +34,7 @@
 {
     "use strict";
     
-    out.commands.set_vars = function (command, interpreter)
+    out.commands["set_vars"] = function (command, interpreter)
     {
         var container = interpreter.runVars, keys, values;
         
