@@ -56,13 +56,17 @@
         this.tracks = {};
         this.current = null;
         this.currentIndex = null;
+        this.currentIndexFinal = null;
         this.autopause = asset.getAttribute("autopause") === "true" ? true : false;
         this.loop = asset.getAttribute("loop") === "true" ? true : false;
         this.fade = asset.getAttribute("fade") === "true" ? true : false;
         this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
         this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
         this.id = out.tools.getUniqueId();
-        this.locked = false;
+        this.isPlaying = false;
+        this.isPlayingFinal = false;
+        this.asyncQueue = [];
+        this.asyncId = 0;
 
         tracks = asset.getElementsByTagName("track");
         len = tracks.length;
@@ -86,9 +90,22 @@
         for (i = 0; i < len; i += 1)
         {
             current = tracks[i];
+
+            trackName = current.getAttribute("title");
+            if (trackName === null)
+            {
+                this.bus.trigger(
+                    "wse.interpreter.warning",
+                    {
+                        element: asset,
+                        message: "No title defined for track '" + trackName + "' in audio element '" + this.name + "'."
+                    }
+                );
+                continue;
+            }
+
             sources = current.getElementsByTagName("source");
             jlen = sources.length;
-
             if (jlen < 1)
             {
                 this.bus.trigger(
@@ -110,19 +127,6 @@
             }
             
             trackFiles = {};
-            trackName = current.getAttribute("title");
-
-            if (trackName === null)
-            {
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No title defined for track '" + trackName + "' in audio element '" + this.name + "'."
-                    }
-                );
-                continue;
-            }
 
             for (j = 0; j < jlen; j += 1)
             {
@@ -196,8 +200,6 @@
             this.tracks[trackName] = track;
         }
 
-        this.isPlaying = false;
-
         // We need to reload the audio element because stupid Chrome is too dumb to loop.
         this.renewCurrent = function ()
         {
@@ -232,69 +234,26 @@
         {
             command = command || document.createElement("div");
             var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : this.fade;
-            var fadeinDuration = parseInt(command.getAttribute("fadein")) || this.fadeinDuration;
+            var fadeinDuration = fade ? (parseInt(command.getAttribute("fadein")) || this.fadeinDuration) : 0;
 
-            if (self.current === null)
-            {
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No usable source found for track '" + trackName + "' in audio element '" + this.name + "'."
-                    }
-                );
-                return;
-            }
-
-            if (self.isPlaying === true)
+            if (self.isPlayingFinal === true)
             {
                 self.stop(command);
             }
 
-            self.isPlaying = true;
+            self.asyncFadeOut(0); 
 
-            if (self.loop === true)
-            {
-                out.tools.attachEventListener(
-                    self.current, 
-                    'ended', 
-                    function ()
+            self.asyncAttachListeners();
+            self.asyncCall(
+                    function()
                     {
-                        self.renewCurrent();
-                        setTimeout(
-                            function ()
-                            {
-                                self.play();
-                            }, 
-                            0
-                        );
+                        self.current.play();
+                        self.isPlaying = true;
                     }
                 );
-            }
-            else
-            {
-                out.tools.attachEventListener(
-                    self.current, 
-                    'ended', 
-                    function ()
-                    {
-                        self.isPlaying = false;
-                    }
-                );
-            }
-
-            if (fade === true)
-            {
-                //console.log("Starting audio asset with fade in " + fadeinDuration + "msec");
-                self.current.volume = 0.0001;
-                self.current.play();
-                self.fadeIn(fadeinDuration);
-            }
-            else
-            {
-                //console.log("Starting audio asset without fade");
-                self.current.play();
-            }
+            self.asyncFadeIn(fadeinDuration);
+            
+            self.isPlayingFinal = true;
 
             this.bus.trigger("wse.assets.audio.play", this);
 
@@ -313,29 +272,10 @@
         {
             command = command || document.createElement("div");
             var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : self.fade;
-            var fadeoutDuration = parseInt(command.getAttribute("fadeout")) || self.fadeoutDuration;
+            var fadeoutDuration = fade ? (parseInt(command.getAttribute("fadeout")) || self.fadeoutDuration) : 0;
 
-            if (self.current === null)
-            {
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No track set for audio element '" + 
-                            this.name + "'."
-                    }
-                );
-                
-                return {
-                    doNext: true
-                };
-            }
-            
-            if (fade === true)
-            {
-                //console.log("Stopping audio asset with fade in " + fadeoutDuration + "msec");
-                self.fadeOut(
-                    fadeoutDuration,
+            self.asyncFadeOut(fadeoutDuration);
+            self.asyncCall(
                     function ()
                     {
                         self.current.pause();
@@ -344,15 +284,8 @@
                         self.isPlaying = false;
                     }
                 );
-            }
-            else
-            {
-                //console.log("Stopping audio asset without fade");
-                self.current.pause();
-                self.currentTime = 0.1;
-                self.renewCurrent();
-                self.isPlaying = false;
-            }
+
+            self.isPlayingFinal = false;
             
             this.bus.trigger("wse.assets.audio.stop", this);
             
@@ -368,29 +301,38 @@
          */
         this.pause = function ()
         {
-            this.current.pause();
+            self.asyncCall( function (){ this.current.pause() } );
             
             return {
                 doNext: true
             };
         };
 
-        this.fadeIn = function (duration)
+        this.asyncCall = function (cb, isDone)
         {
-            var fn;
-            
+            var fn, asyncId = this.asyncId;
+
+            this.asyncId += 1;
+            this.asyncQueue.push(asyncId);
+           
             fn = function ()
             {
-                if ( self.locked === false )
+                if ( self.asyncQueue.indexOf(asyncId) === -1 )
                 {
-                    //console.log("fadeIn timer callback is called");
-                    var newVolume = self.current.volume + 1.0 * 10 / duration;
-                    self.current.volume = newVolume < 1.0 ? newVolume : 1.0;
+                    return;
                 }
-                if (self.current.volume < 1.0)
+
+                if ( self.asyncQueue[0] === asyncId )
                 {
-                    setTimeout(fn, 10);
+                    //console.log(cb);
+                    cb();
+                    if ( typeof isDone === "function" ? isDone() : true )
+                    {
+                        self.asyncQueue.shift();
+                        return;
+                    }
                 }
+                setTimeout(fn, 10);
             };
             
             setTimeout(fn, 10);
@@ -400,34 +342,85 @@
             };
         };
 
-        this.fadeOut = function (duration, cb)
+        this.asyncAttachListeners = function ()
         {
-            var fn;
-            cb = typeof cb === "function" ? cb : function () {};
-
-            fn = function ()
+            var fn = function ()
             {
-                //console.log("fadeOut timer callback is called");
-
-                var newVolume = self.current.volume - 1.0 * 10 / duration;
-                self.current.volume = newVolume > 0.0 ? newVolume : 0.0;
-                if (self.current.volume > 0.0)
+                if (self.loop === true)
                 {
-                    self.locked = true;
-                    setTimeout(fn, 10);
+                    out.tools.attachEventListener(
+                        self.current, 
+                        'ended', 
+                        function ()
+                        {
+                            self.renewCurrent();
+                            setTimeout(
+                                function ()
+                                {
+                                    self.isPlaying = true;
+                                    self.play();
+                                }, 
+                                0
+                            );
+                        }
+                    );
                 }
                 else
                 {
-                    self.locked = false;
-                    cb();
+                    out.tools.attachEventListener(
+                        self.current, 
+                        'ended', 
+                        function ()
+                        {
+                            self.isPlaying = false;
+                            if ( self.asyncQueue.size == 0 )
+                            {
+                                self.isPlayingFinal = false;
+                            }
+                        }
+                    );
                 }
             };
+            return this.asyncCall(fn);
+        };
 
-            setTimeout(fn, 10);
-            
-            return {
-                doNext: true
+
+        this.asyncFadeIn = function (duration)
+        {
+            var fn = function ()
+            {
+                //console.log("fadeIn timer callback is called");
+                if ( duration > 0 )
+                {
+                    var vol = self.current.volume + 1.0 * 10 / duration;
+                    self.current.volume = vol < 1.0 ? vol : 1.0;
+                }
+                else
+                {
+                    self.current.volume = 1.0;
+                }
             };
+            var isDone = function(){return self.current.volume == 1.0;};
+            return this.asyncCall(fn, isDone);
+        };
+
+        this.asyncFadeOut = function (duration)
+        {
+            var fn = function ()
+            {
+                //console.log("fadeOut timer callback is called");
+                if ( duration > 0 )
+                {
+                    var vol = self.current.volume - 1.0 * 10 / duration;
+                    self.current.volume = vol > 0.0 ? vol : 0.0;
+                }
+                else
+                {
+                    self.current.volume = 0.0;
+                }
+            };
+            var isDone = function(){return self.current.volume == 0.0;};
+            return this.asyncCall(fn, isDone);
         };
 
         if (this.autopause === false)
@@ -441,16 +434,11 @@
             'blur', 
             function ()
             {
-                //console.log("onblur function for audio called");
-                if (self.isPlaying === true)
+                console.log("onblur function for audio called");
+                if (self.isPlayingFinal === true)
                 {
-                    self.fadeOut(
-                        1000,
-                        function ()
-                        {
-                            self.current.pause();
-                        }
-                    );
+                    self.asyncFadeOut(500);
+                    self.asyncCall( function (){ self.current.pause(); } );
                 }
             }
         );
@@ -460,11 +448,11 @@
             'focus', 
             function ()
             {
-                //console.log("onfocus function for audio called");
-                if (self.isPlaying === true)
+                console.log("onfocus function for audio called");
+                if (self.isPlayingFinal === true)
                 {
-                    self.current.play();
-                    self.fadeIn(1000);
+                    self.asyncCall( function (){ self.current.play(); } );
+                    self.asyncFadeIn(500);
                 }
             }
         );
@@ -483,11 +471,11 @@
     {
         var name, wasPlaying, self;
         var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : this.fade;
-        var fadeoutDuration = parseInt(command.getAttribute("fadeout")) || this.fadeoutDuration;
+        var fadeoutDuration = fade ? (parseInt(command.getAttribute("fadeout")) || this.fadeoutDuration) : 0;
 
         self = this;
         name = command.getAttribute("track");
-        wasPlaying = this.isPlaying;
+        wasPlaying = this.isPlayingFinal;
 
         if (typeof this.tracks[name] === "undefined" || this.tracks[name] === null)
         {
@@ -504,38 +492,27 @@
             };
         }
 
-        if (wasPlaying === true && fade === true)
+        if (wasPlaying === true)
         {
-            self.fadeOut(
-                fadeoutDuration,
+            this.stop(command);
+        }
+
+        self.asyncCall(
                 function ()
                 {
-                    self.current.pause();
-                    self.currentTime = 0.1;
-                    self.renewCurrent();
                     self.isPlaying = false;
                     self.currentIndex = name;
                     self.current = self.tracks[name];
-                    self.play(command);
                 }
             );
-        }
-        else
-        {
-            if (wasPlaying === true)
-            {
-                this.stop(command);
-            }
             
-            this.currentIndex = name;
-            this.current = this.tracks[name];
-
-            if (wasPlaying === true)
-            {
-                this.play(command);
-            }
-        }
+        self.currentIndexFinal = name;
         
+        if (wasPlaying === true)
+        {
+            this.play(command);
+        }
+
         this.bus.trigger("wse.assets.audio.set", this);
         
         return {
@@ -552,11 +529,11 @@
     {
         var obj = {
             assetType: "Audio",
-            isPlaying: this.isPlaying,
+            isPlaying: this.isPlayingFinal,
             fade: this.fade,
             fadeinDuration: this.fadeinDuration,
             fadeoutDuration: this.fadeoutDuration,
-            currentIndex: this.currentIndex,
+            currentIndex: this.currentIndexFinal,
             currentTime: 0
         };
         
@@ -579,10 +556,14 @@
     out.assets.Audio.prototype.restore = function (vals)
     {
         this.isPlaying = vals.isPlaying;
+        this.isPlayingFinal = vals.isPlaying;
         this.fade = vals.fade;
         this.fadeinDuration = vals.fadeinDuration;
         this.fadeoutDuration = vals.fadeoutDuration;
         this.currentIndex = vals.currentIndex;
+        this.currentIndexFinal = vals.currentIndex;
+        this.asyncQueue = [];
+        this.asyncId = 0;
         
         if (this.tracks[this.currentIndex]) 
         {
@@ -590,8 +571,6 @@
             this.current.currentTime = vals.currentTime;
         }
 
-        this.locked = false;
-        
         if (this.isPlaying)
         {
             this.fade = false;
