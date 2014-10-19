@@ -301,7 +301,7 @@
          */
         this.pause = function ()
         {
-            self.asyncCall( function (){ this.current.pause() } );
+            self.asyncCall( function (){ this.current.pause(); } );
             
             return {
                 doNext: true
@@ -373,7 +373,7 @@
                         function ()
                         {
                             self.isPlaying = false;
-                            if ( self.asyncQueue.size == 0 )
+                            if ( self.asyncQueue.size === 0 )
                             {
                                 self.isPlayingFinal = false;
                             }
@@ -400,7 +400,7 @@
                     self.current.volume = 1.0;
                 }
             };
-            var isDone = function(){return self.current.volume == 1.0;};
+            var isDone = function(){return self.current.volume === 1.0;};
             return this.asyncCall(fn, isDone);
         };
 
@@ -419,7 +419,7 @@
                     self.current.volume = 0.0;
                 }
             };
-            var isDone = function(){return self.current.volume == 0.0;};
+            var isDone = function(){return self.current.volume === 0.0;};
             return this.asyncCall(fn, isDone);
         };
 
@@ -470,8 +470,6 @@
     out.assets.Audio.prototype.set = function (command)
     {
         var name, wasPlaying, self;
-        var fade = command.getAttribute("fade") === "true" ? true : command.getAttribute("fade") === "false" ? false : this.fade;
-        var fadeoutDuration = fade ? (parseInt(command.getAttribute("fadeout")) || this.fadeoutDuration) : 0;
 
         self = this;
         name = command.getAttribute("track");
