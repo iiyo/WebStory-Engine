@@ -51,12 +51,13 @@
     {
         var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
         var fx = out.fx, visible;
+        var parse = out.tools.getParsedAttribute;
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
+        duration = +parse(command, "duration", this.interpreter, 500);
+        maxOpacity = +parse(command, "opacity", this.interpreter, 1);
         element = args.element || document.getElementById(this.cssid);
 
         if (!element)
@@ -104,18 +105,18 @@
                 
                     finishFn = function ()
                     {
-                            self.interpreter.waitCounter -= 1;
+                        self.interpreter.waitCounter -= 1;
                     };
                 
                     argsObj = {
                         duration: (duration / 3) * 2,
                         onFinish: !isAnimation ? finishFn : null,
-                        easing: fx.easing.easeInQuad
+                        easing: fx.easing.easeOutCubic
                     };
                 
                     fx.transform(tranformFn, visible ? 0 : maxOpacity, visible ? maxOpacity : 0, argsObj);
                 },
-                easing: fx.easing.easeInQuad
+                easing: fx.easing.easeInCubic
             }
         );
 

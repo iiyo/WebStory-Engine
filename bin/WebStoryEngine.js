@@ -5315,10 +5315,11 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         {
             var title, message, submitText, cancelText, callback, root, dialog, oldState;
             var tEl, mEl, buttonEl, cancelEl, inputEl, container, defaultValue, pause, doNext;
-
+            var allowEmptyInput, hideCancelButton;
+            
             interpreter.waitCounter += 1;
             //             interpreter.keysDisabled += 1;
-
+            
             args = args || {};
             title = args.title || "Input required";
             message = args.message || "Please enter something:";
@@ -5330,49 +5331,70 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             pause = args.pause === true ? true : false;
             oldState = interpreter.state;
             doNext = args.doNext === true ? true : false;
-
+            allowEmptyInput = args.allowEmptyInput === "no" ? false : true;
+            hideCancelButton = args.hideCancelButton === "yes" ? true : false;
+            
             if (pause === true)
             {
                 interpreter.state = "pause";
             }
-
+            
             container = document.createElement("div");
             container.setAttribute("class", "WSEUIContainer");
             container.setAttribute("data-wse-remove", "true");
             dialog = document.createElement("div");
             dialog.setAttribute("class", "WSEUIDialog WSEUIPrompt");
-
+            
             tEl = document.createElement("div");
             tEl.innerHTML = title;
             tEl.setAttribute("class", "title");
-
+            
             mEl = document.createElement("div");
             mEl.innerHTML = message;
             mEl.setAttribute("class", "message");
-
+            
             inputEl = document.createElement("input");
             inputEl.setAttribute("value", defaultValue);
             inputEl.value = defaultValue;
             inputEl.setAttribute("class", "input text");
             inputEl.setAttribute("type", "text");
-
+            
+            inputEl.addEventListener("keyup", function ()
+            {
+                if (allowEmptyInput)
+                {
+                    return;
+                }
+                
+                if (inputEl.value)
+                {
+                    buttonEl.disabled = false;
+                }
+                else
+                {
+                    buttonEl.disabled = true;
+                }
+            });
+            
             buttonEl = document.createElement("input");
             buttonEl.setAttribute("value", submitText);
             buttonEl.value = submitText;
             buttonEl.setAttribute("class", "submit button");
             buttonEl.setAttribute("type", "button");
-            buttonEl.addEventListener("click",
-
-            function (ev)
+            
+            buttonEl.addEventListener("click", function (ev)
             {
-                var val;
+                var val = inputEl.value;
                 
-                val = inputEl.value;
+                if (!allowEmptyInput && !val)
+                {
+                    return;
+                }
+                
                 ev.stopPropagation();
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true)
                 {
@@ -5389,21 +5411,19 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     }, 0);
                 }
             });
-
+            
             cancelEl = document.createElement("input");
             cancelEl.setAttribute("value", cancelText);
             cancelEl.value = cancelText;
             cancelEl.setAttribute("class", "cancel button");
             cancelEl.setAttribute("type", "button");
-            cancelEl.addEventListener("click",
-
-            function (ev)
+            
+            cancelEl.addEventListener("click", function (ev)
             {
                 ev.stopPropagation();
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true)
                 {
@@ -5420,20 +5440,25 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     }, 0);
                 }
             });
-
+            
             dialog.appendChild(tEl);
             dialog.appendChild(mEl);
             dialog.appendChild(inputEl);
             dialog.appendChild(buttonEl);
-            dialog.appendChild(cancelEl);
+            
+            if (!hideCancelButton)
+            {
+                dialog.appendChild(cancelEl);
+            }
+            
             container.appendChild(dialog);
             root.appendChild(container);
-
+            
             inputEl.focus();
         }
-
+        
     };
-
+    
 }(WSE));
 
 (function (module)
@@ -5529,12 +5554,13 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     {
         var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
         var fx = out.fx, visible;
+        var parse = out.tools.getParsedAttribute;
 
         args = args || {};
         self = this;
-        wait = command.getAttribute("wait") === "yes" ? true : false;
-        duration = command.getAttribute("duration") || 500;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
+        duration = +parse(command, "duration", this.interpreter, 500);
+        maxOpacity = +parse(command, "opacity", this.interpreter, 1);
         element = args.element || document.getElementById(this.cssid);
 
         if (!element)
@@ -5582,18 +5608,18 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 
                     finishFn = function ()
                     {
-                            self.interpreter.waitCounter -= 1;
+                        self.interpreter.waitCounter -= 1;
                     };
                 
                     argsObj = {
                         duration: (duration / 3) * 2,
                         onFinish: !isAnimation ? finishFn : null,
-                        easing: fx.easing.easeInQuad
+                        easing: fx.easing.easeOutCubic
                     };
                 
                     fx.transform(tranformFn, visible ? 0 : maxOpacity, visible ? maxOpacity : 0, argsObj);
                 },
-                easing: fx.easing.easeInQuad
+                easing: fx.easing.easeInCubic
             }
         );
 
