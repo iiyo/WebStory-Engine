@@ -27,6 +27,9 @@
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+
+/* global document, setTimeout, WSE */
+
 (function (out)
 {
     "use strict";
@@ -353,19 +356,23 @@
     {
         return function (command, interpreter)
         {
-            var title, message, container, key, doNext;
+            var title, message, container, key, doNext, submitText, cancelText;
+            
             title = command.getAttribute("title") || "Input required...";
             message = command.getAttribute("message") || "Your input is required:";
             key = command.getAttribute("var") || null;
             doNext = command.getAttribute("next") === "false" ? false : true;
+            submitText = command.getAttribute("submitText") || "";
+            cancelText = command.getAttribute("cancelText") || "";
             
             if (key === null)
             {
                 interpreter.bus.trigger("wse.interpreter.warning",
-                                        {
-                                            element: command,
-                                        message: "No 'var' attribute defined on " + type + " command. Command ignored."
-                                        });
+                {
+                    element: command,
+                    message: "No 'var' attribute defined on " + type + " command. Command ignored."
+                });
+                
                 return {
                     doNext: true
                 };
@@ -383,7 +390,9 @@
                     callback: function (decision)
                     {
                         container[key] = "" + decision;
-                    }
+                    },
+                    submitText: submitText,
+                    cancelText: cancelText
                 });
             return {
                 doNext: true
