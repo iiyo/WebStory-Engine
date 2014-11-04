@@ -5122,6 +5122,9 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
 {
     "use strict";
     
+    var KEYCODE_ENTER = 13;
+    var KEYCODE_ESCAPE = 27;
+    
     out.tools.ui = {
 
         confirm: function (interpreter, args)
@@ -5331,8 +5334,8 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             pause = args.pause === true ? true : false;
             oldState = interpreter.state;
             doNext = args.doNext === true ? true : false;
-            allowEmptyInput = args.allowEmptyInput === "no" ? false : true;
-            hideCancelButton = args.hideCancelButton === "yes" ? true : false;
+            allowEmptyInput = args.allowEmptyInput;
+            hideCancelButton = args.hideCancelButton;
             
             if (pause === true)
             {
@@ -5359,20 +5362,46 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             inputEl.setAttribute("class", "input text");
             inputEl.setAttribute("type", "text");
             
-            inputEl.addEventListener("keyup", function ()
+            inputEl.addEventListener("keyup", function (event)
             {
+                if (cancelOnEscape())
+                {
+                    return;
+                }
+                
                 if (allowEmptyInput)
                 {
+                    submitOnEnter();
                     return;
                 }
                 
                 if (inputEl.value)
                 {
                     buttonEl.disabled = false;
+                    submitOnEnter();
                 }
                 else
                 {
                     buttonEl.disabled = true;
+                }
+                
+                function submitOnEnter ()
+                {
+                    if (event.keyCode === KEYCODE_ENTER)
+                    {
+                        buttonEl.click();
+                    }
+                }
+                
+                function cancelOnEscape ()
+                {
+                    if (event.keyCode === KEYCODE_ESCAPE && !hideCancelButton)
+                    {
+                        cancelEl.click();
+                        return true;
+                    }
+                    
+                    return false;
                 }
             });
             
@@ -5381,6 +5410,10 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             buttonEl.value = submitText;
             buttonEl.setAttribute("class", "submit button");
             buttonEl.setAttribute("type", "button");
+            
+            if (!allowEmptyInput && !defaultValue) {
+                buttonEl.disabled = true;
+            }
             
             buttonEl.addEventListener("click", function (ev)
             {
@@ -5469,11 +5502,17 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     {
         return function (command, interpreter)
         {
-            var title, message, container, key, doNext;
+            var title, message, container, key, doNext, hideCancelButton, allowEmptyInput;
+            var submitText, cancelText;
+            
             title = command.getAttribute("title") || "Input required...";
             message = command.getAttribute("message") || "Your input is required:";
             key = command.getAttribute("var") || null;
             doNext = command.getAttribute("next") === "false" ? false : true;
+            hideCancelButton = command.getAttribute("hideCancelButton") === "yes" ? true : false;
+            allowEmptyInput = command.getAttribute("allowEmptyInput") === "no" ? false : true;
+            submitText = command.getAttribute("submitText") || "";
+            cancelText = command.getAttribute("cancelText") || "";
             
             if (key === null)
             {
@@ -5499,7 +5538,11 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                     callback: function (decision)
                     {
                         container[key] = "" + decision;
-                    }
+                    },
+                    allowEmptyInput: allowEmptyInput,
+                    hideCancelButton: hideCancelButton,
+                    submitText: submitText,
+                    cancelText: cancelText
                 });
             return {
                 doNext: true

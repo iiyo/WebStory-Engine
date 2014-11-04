@@ -431,3 +431,8 @@ img
     background: rgba(0, 0, 0, 0.8);
 }
 
+input:disabled
+{
+    opacity: 0.3;
+}
+
