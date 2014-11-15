@@ -778,7 +778,7 @@
         {
             return {
                 doNext: true
-            };        
+            };
         }
 
         if (tagName in this.commands)

@@ -426,13 +426,15 @@
             submitText = command.getAttribute("submitText") || "";
             cancelText = command.getAttribute("cancelText") || "";
             
+            interpreter.bus.trigger("wse.interpreter.commands." + type, command);
+            
             if (key === null)
             {
-                interpreter.bus.trigger("wse.interpreter.warning",
-                                        {
-                                            element: command,
-                                        message: "No 'var' attribute defined on " + type + " command. Command ignored."
-                                        });
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    element: command,
+                    message: "No 'var' attribute defined on " + type + " command. Command ignored."
+                });
+                
                 return {
                     doNext: true
                 };
@@ -465,10 +467,14 @@
     module.commands.alert = function (command, interpreter)
     {
         var title, message, doNext;
+        
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
         message = module.tools.textToHtml(message);
         doNext = command.getAttribute("next") === "false" ? false : true;
+        
+        interpreter.bus.trigger("wse.interpreter.commands.alert", command);
+        
         module.tools.ui.alert(
             interpreter,
             {
@@ -478,6 +484,7 @@
                 doNext: doNext
             }
         );
+        
         return {
             doNext: true
         };

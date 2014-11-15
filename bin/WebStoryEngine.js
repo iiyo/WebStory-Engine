@@ -2515,7 +2515,7 @@ var WSE = (function (Squiddle, MO5, STEINBECK)
 {
     "use strict";
     
-    var out = {}, version = "0.4.0";
+    var out = {}, version = "0.4.0-alpha.1";
     
     out.fx = MO5;
     out.Keys = STEINBECK.Keys;
@@ -4143,7 +4143,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
         {
             return {
                 doNext: true
-            };        
+            };
         }
 
         if (tagName in this.commands)
@@ -5514,13 +5514,15 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
             submitText = command.getAttribute("submitText") || "";
             cancelText = command.getAttribute("cancelText") || "";
             
+            interpreter.bus.trigger("wse.interpreter.commands." + type, command);
+            
             if (key === null)
             {
-                interpreter.bus.trigger("wse.interpreter.warning",
-                                        {
-                                            element: command,
-                                        message: "No 'var' attribute defined on " + type + " command. Command ignored."
-                                        });
+                interpreter.bus.trigger("wse.interpreter.warning", {
+                    element: command,
+                    message: "No 'var' attribute defined on " + type + " command. Command ignored."
+                });
+                
                 return {
                     doNext: true
                 };
@@ -5553,10 +5555,14 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
     module.commands.alert = function (command, interpreter)
     {
         var title, message, doNext;
+        
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
         message = module.tools.textToHtml(message);
         doNext = command.getAttribute("next") === "false" ? false : true;
+        
+        interpreter.bus.trigger("wse.interpreter.commands.alert", command);
+        
         module.tools.ui.alert(
             interpreter,
             {
@@ -5566,6 +5572,7 @@ typeof STEINBECK === "undefined" ? false : STEINBECK));
                 doNext: doNext
             }
         );
+        
         return {
             doNext: true
         };
