@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" function="execute">
+                <var name="duration" action="increase" value="100" />
+            </trigger>
+            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" function="execute">
+                <var name="duration" action="decrease" value="100" />
+            </trigger>
+            <trigger name="increase_opacity_trigger" event="keyup" key="RIGHT_ARROW" function="execute">
+                <var name="opacity" action="increase" value="0.1" />
+            </trigger>
+            <trigger name="decrease_opacity_trigger" event="keyup" key="LEFT_ARROW" function="execute">
+                <var name="opacity" action="decrease" value="0.1" />
+            </trigger>
+        </triggers>
+    </settings>
+    <assets>
+        
+        <imagepack name="cecile" x="0" y="0" z="1000">
+            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
+        </imagepack>
+        
+        <imagepack name="cecile2" x="0" y="0" z="1000">
+            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
+        </imagepack>
+        
+        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        
+        <textbox name="tb" cssid="tb" />
+        
+        <character name="n" textbox="tb"></character>
+        
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            <trigger name="increase_duration_trigger" action="activate" />
+            <trigger name="decrease_duration_trigger" action="activate" />
+            <trigger name="increase_opacity_trigger" action="activate" />
+            <trigger name="decrease_opacity_trigger" action="activate" />
+            
+            <set_vars names="duration, opacity" values="1000, 1" />
+            
+            <set asset="cecile" image="smile" />
+            <set asset="cecile2" image="smile" />
+            
+            <show asset="bg" />
+            <show asset="tb" />
+            <show asset="cecile2" />
+            <sub scene="move_sprites" />
+            <wait />
+            
+            <goto scene="loop" />
+        </scene>
+        
+        <scene id="loop">
+            <sub scene="flash" />
+            <wait duration="1000" />
+            <goto scene="loop" />
+        </scene>
+        
+        <scene id="move_sprites">
+            <move asset="cecile" x="25%" y="100%" xAnchor="50%" yAnchor="100%" duration="0" />
+            <move asset="cecile2" x="75%" y="100%" xAnchor="50%" yAnchor="100%" duration="0" />
+        </scene>
+        
+        <scene id="flash">
+            <flash asset="cecile" duration="{$duration}" opacity="{$opacity}" />
+            <flash asset="cecile2" duration="{$duration}" opacity="{$opacity}" />
+            <sub scene="log_vars" />
+            <wait />
+        </scene>
+        
+        <scene id="log_vars">
+            <line s="n" stop="false">
+                duration [UP/DOWN]: {$duration}<br />
+                opacity [LEFT/RIGHT]: {$opacity}
+            </line>
+        </scene>
+        
+    </scenes>
+</ws>
