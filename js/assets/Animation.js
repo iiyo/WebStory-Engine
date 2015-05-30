@@ -1,7 +1,21 @@
 /* global MO5 */
 
-MO5("MO5.transform", "MO5.easing", "MO5.Animation", "WSE.tools", "WSE.commands").
-define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools, commands) {
+MO5(
+    "MO5.transform",
+    "MO5.easing",
+    "MO5.Animation",
+    "WSE.tools",
+    "WSE.commands",
+    "MO5.TimerWatcher"
+).
+define("WSE.assets.Animation", function (
+    transform,
+    easing,
+    MO5Animation,
+    tools,
+    commands,
+    TimerWatcher
+) {
     
     "use strict";
     
@@ -41,9 +55,10 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools,
             }, f, t, opt);
         };
 
-        function runDoCommandFn (del, tim) {
+        function runDoCommandFn (del, watcher) {
+            
             var curDur, curDoEl;
-
+            
             curDoEl = del;
             curDur = curDoEl.getAttribute("duration");
             
@@ -52,8 +67,7 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools,
             });
 
             if (curDur !== null) {
-                tim.push(
-                tools.createTimer(curDur));
+                watcher.addTimer(tools.createTimer(curDur));
             }
         };
         
@@ -66,8 +80,10 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools,
 
             self.cbs.push(function () {
                 
-                var timers = [], from, to, unit, curTr, curAs, curAsName;
-                var dur, propName, j, easingType, opt, di;
+                var from, to, unit, curTr, curAs, curAsName;
+                var dur, propName, j, easingType, opt, di, watcher;
+                
+                watcher = new TimerWatcher();
                 
                 for (j = 0; j < jlen; j += 1) {
                     
@@ -101,14 +117,14 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools,
                         opt.easing = easing[easingType];
                     }
 
-                    timers.push(createTransformFn(curAs, from, to, propName, unit, opt));
+                    watcher.addTimer(createTransformFn(curAs, from, to, propName, unit, opt));
                 }
 
                 for (di = 0; di < dlen; di += 1) {
-                    runDoCommandFn(doEls[di], timers);
+                    runDoCommandFn(doEls[di], watcher);
                 }
                 
-                return timers;
+                return watcher;
             });
         };
         
@@ -121,7 +137,12 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools,
             loopFn(transformations, doElements);
         }
 
-        this.anim = new MO5Animation(this.cbs);
+        this.anim = new MO5Animation();
+        
+        this.cbs.forEach(function (cb) {
+            this.anim.addStep(cb);
+        }.bind(this));
+        
         this.bus.trigger("wse.assets.animation.constructor", this);
         
         (function () {

@@ -1,6 +1,6 @@
 /* global MO5 */
 
-MO5().define("WSE.tools", function () {
+MO5("MO5.Timer").define("WSE.tools", function (Timer) {
     
     "use strict";
     
@@ -240,19 +240,14 @@ MO5().define("WSE.tools", function () {
     
     tools.createTimer = function (duration) {
         
-        var timer;
+        var timer = new Timer();
         
         duration = duration || 0;
         duration = duration < 0 ? 0 : duration;
         
-        timer = setTimeout(
-            function () {
-                delete timers[timer];
-            },
-            duration
-        );
+        timer.start();
         
-        timers[timer] = true;
+        setTimeout(timer.stop.bind(timer), duration);
         
         return timer;
     };
