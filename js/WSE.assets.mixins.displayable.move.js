@@ -79,13 +79,13 @@
 
         if (x !== null)
         {
-            xUnit = out.tools.extractUnit(x);
+            xUnit = out.tools.extractUnit(x) || "px";
             x = parseInt(x, 10);
         }
 
         if (y !== null)
         {
-            yUnit = out.tools.extractUnit(y);
+            yUnit = out.tools.extractUnit(y) || "px";
             y = parseInt(y, 10);
         }
         
