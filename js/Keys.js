@@ -1,12 +1,12 @@
 /* global MO5 */
 
-MO5().define("STEINBECK.Keys", function () {
+MO5().define("WSE.Keys", function () {
     
     /**
     
-        @module STEINBECK.Keys
+        @module WSE.Keys
     
-        [Constructor] STEINBECK.Keys
+        [Constructor] WSE.Keys
         ============================
     
             A simple object to handle key press events.
@@ -261,9 +261,9 @@ MO5().define("STEINBECK.Keys", function () {
     
     /**
     
-        @module STEINBECK.Keys
+        @module WSE.Keys
     
-        [Function] STEINBECK.Keys.addListener
+        [Function] WSE.Keys.addListener
         =====================================
     
             Binds a new callback to a key.
@@ -274,7 +274,7 @@ MO5().define("STEINBECK.Keys", function () {
         
             1. key:
                 
-                [Object] One of the STEINBECK.Keys pseudo constants.
+                [Object] One of the WSE.Keys pseudo constants.
                 
             2. callback:
             
@@ -316,9 +316,9 @@ MO5().define("STEINBECK.Keys", function () {
     
     /**
     
-        @module STEINBECK.Keys
+        @module WSE.Keys
     
-        [Function] STEINBECK.Keys.removeListener
+        [Function] WSE.Keys.removeListener
         ========================================
     
             Removes the event listeners for a key.
@@ -329,7 +329,7 @@ MO5().define("STEINBECK.Keys", function () {
         
             1. key:
             
-                [Object] One of STEINBECK.Keys pseudo constants.
+                [Object] One of WSE.Keys pseudo constants.
                 
                 
     */
@@ -355,9 +355,9 @@ MO5().define("STEINBECK.Keys", function () {
     
     /** 
      
-        @module STEINBECK.Keys
+        @module WSE.Keys
     
-        [Function] STEINBECK.Keys.forAll
+        [Function] WSE.Keys.forAll
         ================================
         
             Executes a callback for any key event that occurs.

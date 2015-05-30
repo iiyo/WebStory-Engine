@@ -1,16 +1,18 @@
-(function (engine)
-{
+/* global MO5 */
+
+MO5("WSE.tools.ui", "WSE.commands").define("WSE.commands.hello", function (ui, commands) {
+    
     "use strict";
     
     console.log('Loading extension hello...');
     
     // A command is given the XML element that triggered the command
     // and a reference to the interpreter object:
-    engine.commands.hello = function (command, interpreter)
-    {
+    function hello (command, interpreter) {
+        
         // The UI tools offer equivalents to the browser's alert(), prompt() and confirm() functions
         // that don't block further execution of JavaScript.
-        engine.tools.ui.alert(
+        ui.alert(
             interpreter,
             {
                 title: "Hello extension says:",
@@ -25,5 +27,12 @@
         return {
             doNext: false
         };
-    };
-}(WSE));
+    }
+    
+    // Add it to WSE's commands:
+    commands.hello = hello;
+    
+    // Return the hello function so that others can use it, too.
+    return hello;
+    
+});
