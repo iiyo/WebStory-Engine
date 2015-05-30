@@ -165,7 +165,11 @@ define("WSE.assets.Animation", function (
     };
     
     Animation.prototype.stop = function () {
-        this.anim.stop();
+        
+        if (this.anim.isRunning()) {
+            this.anim.stop();
+        }
+        
         this.isRunning = false;
         this.bus.trigger("wse.assets.animation.stopped", this);
     };
