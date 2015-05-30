@@ -360,8 +360,8 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         y = command.getAttribute("y");
         z = command.getAttribute("z");
         
-        xAnchor = command.getAttribute("xAnchor");
-        yAnchor = command.getAttribute("yAnchor");
+        xAnchor = command.getAttribute("xAnchor") || "0";
+        yAnchor = command.getAttribute("yAnchor") || "0";
         
         if (xAnchor === null && this.xAnchor !== null) {
             xAnchor = this.xAnchor;
