@@ -39,12 +39,12 @@ processScriptsFileFn = function (data)
     concatJsFiles(json.files);
 };
 
-concatJsFiles = function (fileNames)
+concatJsFiles = function (files)
 {
-    var fn, concatFile, len;
+    var fn, concatFile, moduleName, moduleString;
     
+    moduleString = '';
     concatFile = ''; 
-    len = fileNames.length;
     
     fn = function (path)
     {
@@ -58,7 +58,22 @@ concatJsFiles = function (fileNames)
         concFn(fs.readFileSync('./' + path, 'utf-8'));
     };
     
-    fileNames.forEach(fn);
+    moduleString += "\n\nvar $__WSEScripts = document.getElementsByTagName('script');";
+    moduleString += "\nWSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;\n";
+    
+    for (moduleName in files) {
+        moduleString += "\nMO5.modules['" + moduleName + "'] = WSEPath;";
+    }
+    
+    fn("libs/MO5/js/MO5.js");
+    
+    concatFile += moduleString;
+    
+    for (moduleName in files) {
+        fn(files[moduleName]);
+    }
+    
+    
     writeFileFn(concatFile);
 };
 

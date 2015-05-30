@@ -6,54 +6,8 @@
         <link rel="stylesheet" href="styles/default.css" type="text/css" />
     </head>
     <body>
-        <!-- Needed libraries -->
-        <script src="js/libs/Squiddle.js"></script>
-        <script src="js/libs/STEINBECK.Keys.js"></script>
-        <script src="js/libs/MO5.js"></script>
-
-        <!-- Core files -->
-        <script src="js/WSE.js"></script>
-        <script src="js/WSE.tools.js"></script>
-        <script src="js/WSE.datasources.LocalStorage.js"></script>
-        <script src="js/WSE.Trigger.js"></script>
-        <script src="js/WSE.Game.js"></script>
-        <script src="js/WSE.Interpreter.js"></script>
-        <script src="js/WSE.tools.ui.js"></script>
-
-        <!-- Asset mixins -->
-        <script src="js/WSE.assets.mixins.displayable.flash.js"></script>
-        <script src="js/WSE.assets.mixins.displayable.flicker.js"></script>
-        <script src="js/WSE.assets.mixins.displayable.hide.js"></script>
-        <script src="js/WSE.assets.mixins.displayable.move.js"></script>
-        <script src="js/WSE.assets.mixins.displayable.shake.js"></script>
-        <script src="js/WSE.assets.mixins.displayable.show.js"></script>
-
-        <!-- Asset files -->
-        <script src="js/WSE.assets.Animation.js"></script>
-        <script src="js/WSE.assets.Audio.js"></script>
-        <script src="js/WSE.assets.Character.js"></script>
-        <script src="js/WSE.assets.Curtain.js"></script>
-        <script src="js/WSE.assets.Imagepack.js"></script>
-        <script src="js/WSE.assets.Textbox.js"></script>
-
-        <!-- Commands -->
-        <script src="js/WSE.commands.break.js"></script>
-        <script src="js/WSE.commands.choice.js"></script>
-        <script src="js/WSE.commands.do.js"></script>
-        <script src="js/WSE.commands.fn.js"></script>
-        <script src="js/WSE.commands.global.js"></script>
-        <script src="js/WSE.commands.globalize.js"></script>
-        <script src="js/WSE.commands.goto.js"></script>
-        <script src="js/WSE.commands.line.js"></script>
-        <script src="js/WSE.commands.localize.js"></script>
-        <script src="js/WSE.commands.restart.js"></script>
-        <script src="js/WSE.commands.sub.js"></script>
-        <script src="js/WSE.commands.trigger.js"></script>
-        <script src="js/WSE.commands.var.js"></script>
-        <script src="js/WSE.commands.set_vars.js"></script>
-        <script src="js/WSE.commands.wait.js"></script>
-        <script src="js/WSE.commands.with.js"></script>
-        <script src="js/WSE.commands.while.js"></script>
+        <script src="libs/MO5/js/MO5.js"></script>
+        <script src="js/paths.js"></script>
 
         <!-- Extensions -->
         <script src="js/extensions/hello.js"></script>
@@ -61,8 +15,17 @@
         <script src="js/extensions/button.js"></script>
 
         <script>
-            var game = new WSE.Game({ url: "game.xml", host: typeof HOST === "undefined" ? false : HOST });
-            game.start();
+            MO5("WSE.Game").run(function (Game) {
+                
+                console.log("Starting the game...");
+                
+                var game = new Game({
+                    url: "game.xml",
+                    host: typeof HOST === "undefined" ? false : HOST
+                });
+                
+                game.start();
+            });
         </script>
     </body>
 </html>
