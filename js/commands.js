@@ -1,8 +1,10 @@
 /* global MO5 */
 
 MO5(
+    "WSE.commands.alert",
     "WSE.commands.break",
     "WSE.commands.choice",
+    "WSE.commands.confirm",
     "WSE.commands.do",
     "WSE.commands.fn",
     "WSE.commands.global",
@@ -10,6 +12,7 @@ MO5(
     "WSE.commands.goto",
     "WSE.commands.line",
     "WSE.commands.localize",
+    "WSE.commands.prompt",
     "WSE.commands.restart",
     "WSE.commands.set_vars",
     "WSE.commands.sub",
@@ -20,8 +23,10 @@ MO5(
     "WSE.commands.with"
 ).
 define("WSE.commands", function (
+    alertCommand,
     breakCommand,
     choiceCommand,
+    confirmCommand,
     doCommand,
     fnCommand,
     globalCommand,
@@ -29,6 +34,7 @@ define("WSE.commands", function (
     gotoCommand,
     lineCommand,
     localizeCommand,
+    promptCommand,
     restartCommand,
     setVarsCommand,
     subCommand,
@@ -42,8 +48,10 @@ define("WSE.commands", function (
     "use strict";
     
     var commands = {
+        "alert": alertCommand,
         "break": breakCommand,
         "choice": choiceCommand,
+        "confirm": confirmCommand,
         "do": doCommand,
         "fn": fnCommand,
         "global": globalCommand,
@@ -51,6 +59,7 @@ define("WSE.commands", function (
         "goto": gotoCommand,
         "line": lineCommand,
         "localize": localizeCommand,
+        "prompt": promptCommand,
         "restart": restartCommand,
         "set_vars": setVarsCommand,
         "sub": subCommand,

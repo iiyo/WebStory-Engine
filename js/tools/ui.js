@@ -382,7 +382,7 @@ MO5().define("WSE.tools.ui", function () {
             
             container = interpreter.runVars;
             
-            module.tools.ui[type](
+            ui[type](
                 interpreter,
                 {
                     title: title,
