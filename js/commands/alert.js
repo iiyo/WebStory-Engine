@@ -1,6 +1,6 @@
 /* global MO5 */
 
-MO5("WSE.tools.ui").define("WSE.commands.alert", function (ui) {
+MO5("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
     
     function alert (command, interpreter) {
         
@@ -8,7 +8,7 @@ MO5("WSE.tools.ui").define("WSE.commands.alert", function (ui) {
         
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
-        message = module.tools.textToHtml(message);
+        message = tools.textToHtml(message);
         doNext = command.getAttribute("next") === "false" ? false : true;
         
         interpreter.bus.trigger("wse.interpreter.commands.alert", command);
