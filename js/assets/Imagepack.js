@@ -250,11 +250,11 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
             
             options = {
                 duration: duration,
-                easing: easing.easeOutCubic,
-                onFinish: finishFn
+                easing: easing.easeOutCubic
             };
             
-            transform(valFn, 0, 1, options);
+            transform(valFn, 0, 1, options).promise().
+            then(finishFn);
         }());
         
         if (this.current !== null) {
@@ -286,11 +286,11 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                     
                     options = {
                         duration: duration,
-                        easing: easing.easeInCubic,
-                        onFinish: finishFn
+                        easing: easing.easeInCubic
                     };
                     
-                    transform(valFn, 1, 0, options);
+                    transform(valFn, 1, 0, options).promise().
+                    then(finishFn);
                 };
                 
                 timeoutFn();

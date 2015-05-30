@@ -158,11 +158,11 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
                     };
                     
                     options = {
-                        duration: self.fadeDuration,
-                        onFinish: finishFn
+                        duration: self.fadeDuration
                     };
                     
-                    transform(valFn, 1, 0, options);
+                    transform(valFn, 1, 0, options).promise().
+                    then(finishFn);
                 }());
             }
             else {

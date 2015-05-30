@@ -51,36 +51,38 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             visible ? 0 : maxOpacity,
             {
                 duration: duration / 3,
-                onFinish: function () {
-                    
-                    var argsObj;
-                
-                    function tranformFn (v)
-                    {
-                        element.style.opacity = v;
-                    };
-                
-                    function finishFn ()
-                    {
-                        self.interpreter.waitCounter -= 1;
-                    };
-                
-                    argsObj = {
-                        duration: (duration / 3) * 2,
-                        onFinish: !isAnimation ? finishFn : null,
-                        easing: easing.easeOutCubic
-                    };
-                
-                    transform(
-                        tranformFn,
-                        visible ? 0 : maxOpacity,
-                        visible ? maxOpacity : 0,
-                        argsObj
-                    );
-                },
                 easing: easing.easeInCubic
             }
-        );
+        ).promise().
+        then(function () {
+            
+            var argsObj;
+        
+            function tranformFn (v) {
+                element.style.opacity = v;
+            };
+        
+            function finishFn () {
+                if (isAnimation) {
+                    return;
+                }
+                
+                self.interpreter.waitCounter -= 1;
+            };
+        
+            argsObj = {
+                duration: (duration / 3) * 2,
+                easing: easing.easeOutCubic
+            };
+        
+            transform(
+                tranformFn,
+                visible ? 0 : maxOpacity,
+                visible ? maxOpacity : 0,
+                argsObj
+            ).promise().
+            then(finishFn);
+        });
         
         return {
             doNext: true
@@ -150,36 +152,36 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 val2,
                 {
                     duration: dur1,
-                    onFinish: function ()
-                    {
-                        transform(
-                            function (v)
-                            {
-                                element.style.opacity = v;
-                            },
-                            val2,
-                            val1,
-                            {
-                                duration: dur2,
-                                onFinish: function ()
-                                {
-                                    if (iteration <= times)
-                                    {
-                                        setTimeout(fn, 0);
-                                        return;
-                                    }
-                                    if (!isAnimation)
-                                    {
-                                        self.interpreter.waitCounter -= 1;
-                                    }
-                                },
-                                easing: easing.easeInQuad
-                            }
-                        );
-                    },
                     easing: easing.easeInQuad
                 }
-            );
+            ).promise().
+            then(function () {
+                
+                transform(
+                    function (v)
+                    {
+                        element.style.opacity = v;
+                    },
+                    val2,
+                    val1,
+                    {
+                        duration: dur2,
+                        easing: easing.easeInQuad
+                    }
+                ).promise().
+                then(function () {
+                    
+                    if (iteration <= times)
+                    {
+                        setTimeout(fn, 0);
+                        return;
+                    }
+                    if (!isAnimation)
+                    {
+                        self.interpreter.waitCounter -= 1;
+                    }
+                });
+            });
         };
         
         fn();
@@ -195,6 +197,8 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
+        
+        console.log(".hide() called for asset:", command.getAttribute("asset"));
 
         args = args || {};
         self = this;
@@ -298,11 +302,11 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 options = {
                     duration: duration,
-                    easing: easingFn,
-                    onFinish: finishFn
+                    easing: easingFn
                 };
                 
-                transform(valFn, from, to, options);
+                transform(valFn, from, to, options).promise().
+                then(finishFn);
             }());
         }
         else {
@@ -330,11 +334,11 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 options = {
                     duration: duration,
-                    easing: easingFn,
-                    onFinish: finishFn
+                    easing: easingFn
                 };
                 
-                transform(valFn, 1, 0, options);
+                transform(valFn, 1, 0, options).promise().
+                then(finishFn);
             }());
         }
         
@@ -346,9 +350,11 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
     DisplayObject.prototype.move = function (command, args) {
         
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
-        var easing, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
+        var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
         var offsetLeft, offsetTop, oldElementDisplayStyle;
+        
+        console.log(".move() called for asset:", command.getAttribute("asset"));
         
         args = args || {};
         self = this;
@@ -378,7 +384,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         duration = tools.getParsedAttribute(command, "duration", interpreter, 500);
         easingType = tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
         
-        easing = (typeof easing[easingType] !== null) ? 
+        easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
             easing.sineEaseOut;
         
@@ -453,15 +459,15 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 ox,
                 x,
                 {
-                    onFinish: !isAnimation ? 
-                        function () {
-                            self.interpreter.waitCounter -= 1;
-                        } : 
-                        null,
                     duration: duration,
-                    easing: easing
+                    easing: easingFn
                 }
-            );
+            ).promise().
+            then(function () {
+                if (!isAnimation) {
+                    self.interpreter.waitCounter -= 1;
+                }
+            });
         }
         
         if (y !== null) {
@@ -484,15 +490,15 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 oy,
                 y,
                 {
-                    onFinish: !isAnimation ? 
-                        function () {
-                            self.interpreter.waitCounter -= 1;
-                        } : 
-                        null,
                     duration: duration,
-                    easing: easing
+                    easing: easingFn
                 }
-            );
+            ).promise().
+            then(function () {
+                if (!isAnimation) {
+                    self.interpreter.waitCounter -= 1;
+                }
+            });
         }
         
         if (z !== null) {
@@ -508,15 +514,15 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 element.style.zIndex || 0,
                 parseInt(z, 10),
                 {
-                    onFinish: !isAnimation ? 
-                        function () {
-                            self.interpreter.waitCounter -= 1;
-                        } : 
-                        null,
                     duration: duration,
-                    easing: easing
+                    easing: easingFn
                 }
-            );
+            ).promise().
+            then(function () {
+                if (!isAnimation) {
+                    self.interpreter.waitCounter -= 1;
+                }
+            });
         }
         
         this.bus.trigger("wse.assets.mixins.move", this);
@@ -589,15 +595,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 ox - dx,
                 ox + dx,
                 {
-                    onFinish: function ()
-                              {
-                                  element.style.left = ox + xUnit;
-                                  self.interpreter.waitCounter -= 1;
-                              },
                     duration: duration,
                     easing:   easing
                 }
-            );
+            ).
+            then(function () {
+                element.style.left = ox + xUnit;
+                self.interpreter.waitCounter -= 1;
+            });
         }
         
         if (dy !== null) {
@@ -618,14 +623,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 oy - dy,
                 oy + dy,
                 {
-                    onFinish: function () {
-                        element.style.top = oy + yUnit;
-                        self.interpreter.waitCounter -= 1;
-                    },
                     duration: duration,
                     easing:   easing
                 }
-            );
+            ).promise().
+            then(function () {
+                element.style.top = oy + yUnit;
+                self.interpreter.waitCounter -= 1;
+            });
         }
 
         this.bus.trigger("wse.assets.mixins.shake", this);
@@ -652,7 +657,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
         
-        console.log("duration:", duration);
+        console.log(".show() called for asset:", command.getAttribute("asset"));
         
         if (!element) {
             
@@ -747,14 +752,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 (prop === "left" ? ox : oy),
                 {
                     duration: duration,
-                    onFinish: !isAnimation ? 
-                        function () {
-                            interpreter.waitCounter -= 1;
-                        } : 
-                        null,
                     easing: easingFn
                 }
-            );
+            ).promise().
+            then(function () {
+                if (!isAnimation) {
+                    interpreter.waitCounter -= 1;
+                }
+            });
         }
         else {
             
@@ -771,15 +776,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 1,
                 {
                     duration: duration,
-                    onFinish: !isAnimation ? 
-                        function ()
-                        {
-                            interpreter.waitCounter -= 1;
-                        } : 
-                        null,
                     easing: easingFn
                 }
-            );
+            ).promise().
+            then(function () {
+                if (!isAnimation) {
+                    interpreter.waitCounter -= 1;
+                }
+            });
         }
         
         return {

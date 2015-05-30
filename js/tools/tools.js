@@ -221,7 +221,7 @@ MO5().define("WSE.tools", function () {
     
         var value = 0, anchorUnit = "px";
         
-        if (anchor === null) {
+        if (!anchor) {
             return oldValue;
         }
         

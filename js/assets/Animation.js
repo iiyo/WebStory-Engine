@@ -1,7 +1,7 @@
 /* global MO5 */
 
-MO5("MO5.transform", "MO5.easing", "MO5.Animation", "WSE.tools").
-define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools) {
+MO5("MO5.transform", "MO5.easing", "MO5.Animation", "WSE.tools", "WSE.commands").
+define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools, commands) {
     
     "use strict";
     
@@ -47,7 +47,7 @@ define("WSE.assets.Animation", function (transform, easing, MO5Animation, tools)
             curDoEl = del;
             curDur = curDoEl.getAttribute("duration");
             
-            interpreter.commands["do"](curDoEl, interpreter, {
+            commands["do"](curDoEl, interpreter, {
                 animation: true
             });
 
