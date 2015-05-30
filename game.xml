@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <ws>
     <settings>
-        <stage width="900px" height="460px" create="yes" center="yes" resize="no" />
+        <stage width="900px" height="460px" create="yes" center="yes" resize="yes" />
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
             <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
@@ -12,7 +12,7 @@
         <setting name="host.inspector.enable" value="true" />
     </settings>
     <assets>
-        <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px"></textbox>
+        <textbox name="tb_main" x="5px" y="355px" width="890px" height="100px" speed="50"></textbox>
         <textbox name="tb_top" x="0" y="0" z="30000" width="100%" height="100%" cssid="bla"></textbox>
         
         <rectangle name="rect" x="20px" y="20px" height="50px" width="100px" color="green" />
@@ -68,7 +68,7 @@
         <scene id="start">
             <trigger name="next_on_right" action="activate" />
             <trigger name="next_on_space" action="activate" />
-            <trigger name="sub_scene_by_key" action="activate" />
+            <!-- <trigger name="sub_scene_by_key" action="activate" /> -->
             <trigger name="game_menu_key_trigger" action="deactivate" />
             
             <show asset="rect" />
