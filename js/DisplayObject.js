@@ -197,8 +197,6 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
-        
-        console.log(".hide() called for asset:", command.getAttribute("asset"));
 
         args = args || {};
         self = this;
@@ -353,8 +351,6 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
         var offsetLeft, offsetTop, oldElementDisplayStyle;
-        
-        console.log(".move() called for asset:", command.getAttribute("asset"));
         
         args = args || {};
         self = this;
@@ -656,8 +652,6 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
-        
-        console.log(".show() called for asset:", command.getAttribute("asset"));
         
         if (!element) {
             
