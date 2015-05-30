@@ -11,6 +11,7 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
     }
     
     function styleElement (self) {
+        
         var s = self.element.style;
         
         self.element.setAttribute("id", self.cssid);
@@ -25,6 +26,8 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
     
     function Background (asset, interpreter) {
         
+        DisplayObject.call(this);
+        
         var self = this;
         
         this.asset = asset;
@@ -32,7 +35,6 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
         this.bus = interpreter.bus;
         this.stage = interpreter.stage;
         this.z = asset.getAttribute("z") || 10;
-        this.id = tools.getUniqueId();
         this.cssid = "WSEBackground_" + this.id;
         this.element = document.createElement("img");
         this.src = asset.getAttribute('src');
