@@ -24,10 +24,15 @@
         </style>
     </head>
     <body>
-        <script src="../../bin/WebStoryEngine.js"></script>
+        <script src="../../libs/MO5/js/MO5.js"></script>
+        <script src="../../js/paths.js"></script>
         <script>
-            var game = new WSE.Game({ url: "game.xml", host: typeof HOST === "undefined" ? false : HOST });
-            game.start();
+            MO5("WSE.Game").run(function (Game) {
+                
+                var game = new Game({ url: "game.xml"});
+                
+                game.start();
+            });
         </script>
     </body>
 </html>
