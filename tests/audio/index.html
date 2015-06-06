@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebStory Engine</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="../../styles/default.css" type="text/css" />
+        <style>
+            #tb {
+                background: transparent;
+                position: absolute;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                text-align: left;
+                z-index: 10000;
+                border: 0;
+                box-shadow: none;
+                text-shadow: none;
+                font-weight: bold;
+                font-size: 1.2em;
+                font-family: monospace;
+                color: black;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="../../bin/WebStoryEngine.js"></script>
+        <script>
+            MO5("WSE.Game").run(function (Game) {
+                
+                var game = new Game({
+                    url: "game.xml",
+                    host: typeof HOST === "undefined" ? false : HOST
+                });
+                
+                game.start();
+            });
+        </script>
+    </body>
+</html>

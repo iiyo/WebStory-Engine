@@ -1,6 +1,8 @@
 {
     "files": {
         
+        "howler": "libs/howler/howler.js",
+        
         "MO5.ajax": "libs/MO5/js/ajax.js",
         "MO5.Animation": "libs/MO5/js/Animation.js",
         "MO5.assert": "libs/MO5/js/assert.js",
