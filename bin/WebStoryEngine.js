@@ -11401,6 +11401,7 @@ MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
         bus = interpreter.bus;
         self = this;
         
+        this.interpreter = interpreter;
         this.bus = bus;
         this.name = asset.getAttribute("name");
         this.tracks = {};
@@ -11545,10 +11546,16 @@ MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
             this._paused = false;
             
             if (command.getAttribute("fadein")) {
+                
+                this.interpreter.waitCounter += 1;
                 fadeDuration = +command.getAttribute("fadein");
+                
                 this.tracks[this._currentTrack].volume(0);
                 this.tracks[this._currentTrack].play();
-                this.tracks[this._currentTrack].fade(0, 1, fadeDuration);
+                
+                this.tracks[this._currentTrack].fade(0, 1, fadeDuration, function () {
+                    this.interpreter.waitCounter -= 1;
+                }.bind(this));
             }
             else {
                 this.tracks[this._currentTrack].play();
@@ -11579,9 +11586,13 @@ MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
             this._paused = false;
             
             if (command && command.getAttribute("fadeout")) {
+                
+                this.interpreter.waitCounter += 1;
                 fadeDuration = +command.getAttribute("fadeout");
-                this.tracks[this._currentTrack].fadeOut(1, 0, fadeDuration, function () {
+                
+                this.tracks[this._currentTrack].fade(1, 0, fadeDuration, function () {
                     this.tracks[this._currentTrack].stop();
+                    this.interpreter.waitCounter -= 1;
                 }.bind(this));
             }
             else {
@@ -11648,9 +11659,10 @@ MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
         var wasPlaying = false;
         
         if (this._playing) {
-            this.stop();
             wasPlaying = true;
         }
+        
+        this.stop();
         
         this._currentTrack = command.getAttribute("track");
         
