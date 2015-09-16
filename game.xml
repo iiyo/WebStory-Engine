@@ -22,8 +22,8 @@
         
         <audio name="music" loop="true" fade="true">
             <track title="legend">
-                <source href="/Desktop/wlegend.mp3" type="mp3" />
-                <source href="/Desktop/wlegend.ogg" type="ogg" />
+                <source href="tests/audio/chaos-circus.mp3" type="mp3" />
+                <source href="tests/audio/chaos-circus.ogg" type="ogg" />
             </track>
         </audio>
         
