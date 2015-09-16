@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger event="keyup" function="savegames" name="savegames_by_escape" key="ESCAPE" />
+            <trigger name="next_on_right" event="keyup" key="RIGHT_ARROW" special="next" />
+            <trigger name="next_on_space" event="keyup" key="SPACE" special="next" />
+        </triggers>
+    </settings>
+    <assets>
+        <textbox name="tb" cssid="tb" namebox="yes" />
+        <character name="n" textbox="tb"></character>
+        <character name="s" textbox="tb">
+            <displayname>Sara</displayname>
+        </character>
+        <character name="p" textbox="tb">
+            <displayname>Pete Pölpel (§%&amp;&amp;%/"§$!"§())</displayname>
+        </character>
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            
+            <show asset="tb" />
+            
+            <line s="n">
+                Narrator speaking.
+            </line>
+            <line s="s">
+                Sara speaking.
+            </line>
+            <line s="p">
+                Pete Pölpel speaking.
+            </line>
+            
+            <hide asset="tb" />
+            
+            <restart />
+            
+        </scene>
+        
+    </scenes>
+</ws>

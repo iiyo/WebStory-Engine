@@ -12226,8 +12226,14 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
 
 /* global MO5 */
 
-MO5("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.dom.effects.typewriter").
-define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewriter) {
+MO5(
+    "WSE.DisplayObject",
+    "WSE.tools",
+    "MO5.transform",
+    "MO5.dom.effects.typewriter",
+    "MO5.dom.Element"
+).
+define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewriter, Element) {
     
     "use strict";
     
@@ -12252,7 +12258,7 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
         
         tools.applyAssetUnits(this, asset);
-
+        
         (function (ctx) {
             
             var el, i, len, elms;
@@ -12283,19 +12289,19 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         if (this.type === "nvl") {
             this.showNames = false;
         }
-
+        
         element = document.createElement("div");
         nameElement = document.createElement("div");
         textElement = document.createElement("div");
-
+        
         element.setAttribute("class", "textbox");
         textElement.setAttribute("class", "text");
         nameElement.setAttribute("class", "name");
-
+        
         cssid = asset.getAttribute("cssid") || this.cssid;
         element.setAttribute("id", cssid);
         this.cssid = cssid;
-
+        
         x = asset.getAttribute("x");
         
         if (x) {
@@ -12341,15 +12347,17 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
     
     Textbox.prototype = new DisplayObject();
     
-    Textbox.prototype.put = function (text, name) {
+    Textbox.prototype.put = function (text, name, speakerId) {
         
-        var textElement, nameElement, namePart, self;
+        var textElement, nameElement, namePart, self, cssClass = "wse_no_character", element;
         
         name = name || null;
+        speakerId = speakerId || "_no_one";
         
         self = this;
         textElement = document.getElementById(this.textElement);
         nameElement = document.getElementById(this.nameElement);
+        element = Element.fromDomElement(document.getElementById(this.cssid));
         
         text = tools.replaceVariables(text, this.interpreter);
         
@@ -12361,10 +12369,33 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
             namePart = this.nameTemplate.replace(/\{name\}/g, name);
         }
         
+        console.log(name);
+        
         if (name === null) {
+            
+            if (this.showNames) {
+                nameElement.style.display = "none";
+            }
+            
             name = "";
         }
-
+        else {
+            
+            if (this.showNames) {
+                nameElement.style.display = "";
+            }
+            
+            cssClass = "wse_character_" + speakerId.split(" ").join("_");
+        }
+        
+        if (this._lastCssClass) {
+            element.removeCssClass(this._lastCssClass);
+        }
+        
+        this._lastCssClass = cssClass;
+        
+        element.addCssClass(cssClass);
+        
         if (this.speed < 1) {
             
             if (this.fadeDuration > 0) {
@@ -13250,7 +13281,7 @@ MO5("WSE.tools").define("WSE.commands.line", function (tools) {
         text = tools.getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
-        interpreter.assets[textboxName].put(text, speakerName);
+        interpreter.assets[textboxName].put(text, speakerName, speakerId);
         
         return {
             doNext: doNext,

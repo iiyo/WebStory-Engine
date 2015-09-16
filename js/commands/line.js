@@ -91,7 +91,7 @@ MO5("WSE.tools").define("WSE.commands.line", function (tools) {
         text = tools.getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
-        interpreter.assets[textboxName].put(text, speakerName);
+        interpreter.assets[textboxName].put(text, speakerName, speakerId);
         
         return {
             doNext: doNext,
