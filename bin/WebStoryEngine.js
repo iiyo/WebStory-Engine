@@ -12369,8 +12369,6 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
             namePart = this.nameTemplate.replace(/\{name\}/g, name);
         }
         
-        console.log(name);
-        
         if (name === null) {
             
             if (this.showNames) {
