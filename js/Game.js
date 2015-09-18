@@ -125,7 +125,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         height = "480px";
         id = "Stage";
         
-        if (stageElements.length < 1) {
+        if (!stageElements || stageElements.length < 1) {
             throw new Error("No stage definition found!");
         }
         
