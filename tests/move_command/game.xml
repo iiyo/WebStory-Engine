@@ -11,7 +11,7 @@
     <assets>
         
         <imagepack name="cecile" x="0" y="0" z="1000">
-            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
+            <image src="../../assets/images/cecile/smile.png" name="smile" />
         </imagepack>
         
         <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />

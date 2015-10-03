@@ -3,35 +3,9 @@
     <settings>
         <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
         <triggers>
-            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" function="execute">
-                <var name="duration" action="increase" value="100" />
-            </trigger>
-            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" function="execute">
-                <var name="duration" action="decrease" value="100" />
-            </trigger>
-            <trigger name="change_easing" event="keyup" key="E" function="execute">
-                <with var="easing">
-                    <when is="sineEaseOut">
-                        <var name="easing" value="sineEaseIn" />
-                    </when>
-                    <when is="sineEaseIn">
-                        <var name="easing" value="sineEaseInOut" />
-                    </when>
-                    <when is="sineEaseInOut">
-                        <var name="easing" value="easeOutBounce" />
-                    </when>
-                    <when is="easeOutBounce">
-                        <var name="easing" value="sineEaseOut" />
-                    </when>
-                </with>
-            </trigger>
         </triggers>
     </settings>
     <assets>
-        
-        <imagepack name="cecile" x="0" y="0" z="1000">
-            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
-        </imagepack>
         
         <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
         
