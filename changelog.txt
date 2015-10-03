@@ -1,5 +1,21 @@
 ====== WebStory Engine Changelog ======
 
+===== Version 2015.10.x ======
+
+==== Version 2015.10.1 ====
+
+ * Added a **while** command
+ * Added **with** command
+ * Added **set_vars** command
+ * Variables can now be used in most attributes using the `{$var}` syntax
+ * Options in **choice** now support inline commands
+ * The **move** command now supports anchors for x and y
+ * Added various tests / example games
+ * Added full public domain sprite packs "Cecile" and "Jack"
+ * Textboxes can now be styled differently for each speaker
+ * WSE now uses MO5's module loader
+ * Fixed various sound issues
+
 ===== Version 0.4.x =====
 
 ==== Version 0.4.0 ====
