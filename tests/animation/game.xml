@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" scene="increase_duration_scene" />
+            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" scene="decrease_duration_scene" />
+            <trigger name="change_effect" event="keyup" key="E" scene="change_effect_scene" />
+            <trigger name="change_direction" event="keyup" key="D" scene="change_direction_scene" />
+            <trigger name="change_easing" event="keyup" key="SPACE" scene="change_easing_scene" />
+        </triggers>
+    </settings>
+    <assets>
+        
+        <imagepack name="cecile" x="0" y="0" z="1000">
+            <image src="../../assets/images/cecile/smile.png" name="smile" />
+        </imagepack>
+        
+        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        
+        <textbox name="tb" cssid="tb" />
+        
+        <character name="n" textbox="tb"></character>
+            
+        <animation name="my_anim">
+            <group>
+                <do action="move" asset="cecile" x="0" y="-500" duration="2000" easing="linear" />
+            </group>
+            <group>
+                <do action="move" asset="cecile" x="0" y="-0" duration="2000" easing="linear" />
+            </group>
+        </animation>
+        
+    </assets>
+    <scenes>
+        
+        <scene id="increase_duration_scene">
+            <var name="duration" action="increase" value="100" />
+        </scene>
+        
+        <scene id="decrease_duration_scene">
+            <var name="duration" action="decrease" value="100" />
+        </scene>
+        
+        <scene id="change_effect_scene">
+            <with var="effect">
+                <when is="fade">
+                    <var name="effect" value="slide" />
+                </when>
+                <when is="slide">
+                    <var name="effect" value="fade" />
+                </when>
+            </with>
+        </scene>
+        
+        <scene id="change_direction_scene">
+            <with var="direction">
+                <when is="left">
+                    <var name="direction" value="top" />
+                </when>
+                <when is="top">
+                    <var name="direction" value="right" />
+                </when>
+                <when is="right">
+                    <var name="direction" value="bottom" />
+                </when>
+                <when is="bottom">
+                    <var name="direction" value="left" />
+                </when>
+            </with>
+        </scene>
+        
+        <scene id="change_easing_scene">
+            <with var="easing">
+                <when is="sineEaseOut">
+                    <var name="easing" value="easeOutBounce" />
+                </when>
+                <when is="easeOutBounce">
+                    <var name="easing" value="sineEaseOut" />
+                </when>
+            </with>
+        </scene>
+
+        <scene id="start">
+            <trigger name="increase_duration_trigger" action="activate" />
+            <trigger name="decrease_duration_trigger" action="activate" />
+            <trigger name="change_effect" action="activate" />
+            <trigger name="change_direction" action="activate" />
+            <trigger name="change_easing" action="activate" />
+            
+            <set_vars
+                names="x, y, xAnchor, yAnchor, effect, duration, direction, easing"
+                values="50%, 100%, 50%, 100%, fade, 1000, left, sineEaseOut" />
+            
+            <set asset="cecile" image="smile" />
+            
+            <show asset="bg" />
+            <show asset="tb" />
+            
+            <start asset="my_anim" />
+            
+            <sub scene="move_sprite_to_center" />
+            
+            <show asset="cecile" duration="0" />
+            
+            <goto scene="doNothingLoop" />
+            
+            <!-- 
+            <wait />
+            
+            <goto scene="loop" />
+            
+            <restart /> -->
+        </scene>
+        
+        <scene id="doNothingLoop">
+            <wait duration="5000" />
+            <goto scene="doNothingLoop" />
+        </scene>
+        
+        <scene id="loop">
+            <sub scene="show_sprite" />
+            <sub scene="hide_sprite" />
+            <goto scene="loop" />
+        </scene>
+        
+        <scene id="move_sprite_to_center">
+            <move asset="cecile" x="{$x}" y="{$y}" xAnchor="{$xAnchor}" yAnchor="{$yAnchor}" duration="0" />
+        </scene>
+        
+        <scene id="show_sprite">
+            <show asset="cecile" effect="{$effect}" direction="{$direction}"
+                  duration="{$duration}" easing="{$easing}" />
+            <sub scene="log_vars" />
+            <wait />
+        </scene>
+        
+        <scene id="hide_sprite">
+            <hide asset="cecile" effect="{$effect}" direction="{$direction}"
+                  duration="{$duration}" easing="{$easing}" />
+            <sub scene="log_vars" />
+            <wait />
+        </scene>
+        
+        <scene id="log_vars">
+            <line s="n" stop="false">
+                effect [E]: {$effect}<br />
+                direction [D]: {$direction}<br />
+                duration [UP/DOWN]: {$duration}<br />
+                easing [SPACE]: {$easing}
+            </line>
+        </scene>
+        
+    </scenes>
+</ws>
