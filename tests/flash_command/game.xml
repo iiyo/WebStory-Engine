@@ -3,28 +3,40 @@
     <settings>
         <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
         <triggers>
-            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" function="execute">
-                <var name="duration" action="increase" value="100" />
+            <trigger
+                name="increase_duration_trigger"
+                event="keyup"
+                key="UP_ARROW"
+                scene="increase_duration">
             </trigger>
-            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" function="execute">
-                <var name="duration" action="decrease" value="100" />
+            <trigger
+                name="decrease_duration_trigger"
+                event="keyup"
+                key="DOWN_ARROW"
+                scene="decrease_duration">
             </trigger>
-            <trigger name="increase_opacity_trigger" event="keyup" key="RIGHT_ARROW" function="execute">
-                <var name="opacity" action="increase" value="0.1" />
+            <trigger
+                name="increase_opacity_trigger"
+                event="keyup"
+                key="RIGHT_ARROW"
+                scene="increase_opacity">
             </trigger>
-            <trigger name="decrease_opacity_trigger" event="keyup" key="LEFT_ARROW" function="execute">
-                <var name="opacity" action="decrease" value="0.1" />
+            <trigger
+                name="decrease_opacity_trigger"
+                event="keyup"
+                key="LEFT_ARROW"
+                scene="decrease_opacity">
             </trigger>
         </triggers>
     </settings>
     <assets>
         
         <imagepack name="cecile" x="0" y="0" z="1000">
-            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
+            <image src="../../assets/images/cecile/smile.png" name="smile" />
         </imagepack>
         
         <imagepack name="cecile2" x="0" y="0" z="1000">
-            <image src="../../assets/images/public_domain_sprite___cecile_by_tirinity-d572qor.png" name="smile" />
+            <image src="../../assets/images/cecile/crying.png" name="smile" />
         </imagepack>
         
         <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
@@ -72,6 +84,22 @@
             <flash asset="cecile2" duration="{$duration}" opacity="{$opacity}" />
             <sub scene="log_vars" />
             <wait />
+        </scene>
+        
+        <scene id="increase_duration">
+            <var name="duration" action="increase" value="100" />
+        </scene>
+        
+        <scene id="decrease_duration">
+            <var name="duration" action="decrease" value="100" />
+        </scene>
+        
+        <scene id="increase_opacity">
+            <var name="opacity" action="increase" value="0.1" />
+        </scene>
+        
+        <scene id="decrease_opacity">
+            <var name="opacity" action="decrease" value="0.1" />
         </scene>
         
         <scene id="log_vars">
