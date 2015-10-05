@@ -9,10 +9,9 @@ define("WSE.assets.Button", function (assets, DisplayObject, tools, functions) {
     
     function Button (asset, interpreter) {
         
-        var el, id, cssid, width, height, x, y, z, clickFn, text;
+        var el, cssid, width, height, x, y, z, clickFn, text;
         
-        // generate a unique ID for this asset:
-        id = tools.getUniqueId();
+        DisplayObject.call(this);
         
         // read the preferences from the definition:
         width = asset.getAttribute("width") || "20px";
@@ -20,7 +19,7 @@ define("WSE.assets.Button", function (assets, DisplayObject, tools, functions) {
         x = asset.getAttribute("x") || 0;
         y = asset.getAttribute("y") || 0;
         z = asset.getAttribute("z") || 10000;
-        cssid = asset.getAttribute("cssid") || "WSEButton" + id;
+        cssid = asset.getAttribute("cssid") || "WSEButton" + this.id;
         text = asset.getAttribute("text") || "";
         
         tools.applyAssetUnits(this, asset);
