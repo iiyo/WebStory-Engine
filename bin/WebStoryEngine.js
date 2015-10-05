@@ -1,5 +1,328 @@
 
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ Using.js - Simple JavaScript module loader.
+
+ Copyright (c) 2015 Jonathan Steinbeck
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+ * Neither the name using.js nor the names of its contributors 
+   may be used to endorse or promote products derived from this software 
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+/* global document, console */
+
+var using = (function () {
+    
+    "use strict";
+    
+    var modules = {}, loadedScripts = {}, dependencies = {}, definitions = {}, dependingOn = {};
+    var runners = [];
+    
+    function updateModule (moduleName) {
+        
+        var deps = [], depNames = dependencies[moduleName], moduleResult;
+        
+        if (depNames.length === 0) {
+            
+            moduleResult = definitions[moduleName]();
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing");
+            }
+            
+            modules[moduleName] = moduleResult;
+            
+            dependingOn[moduleName].forEach(updateModule);
+        }
+        else if (allModulesLoaded(depNames)) {
+            
+            depNames.forEach(function (name) {
+                deps.push(modules[name]);
+            });
+            
+            moduleResult = definitions[moduleName].apply(undefined, deps);
+            
+            if (!moduleResult) {
+                console.error("Module '" + moduleName + "' returned nothing.");
+            }
+            
+            modules[moduleName] = moduleResult;
+            
+            dependingOn[moduleName].forEach(updateModule);
+        }
+        
+        runners.forEach(function (runner) {
+            runner();
+        });
+    }
+    
+    function allModulesLoaded (moduleNames) {
+        
+        var loaded = true;
+        
+        moduleNames.forEach(function (name) {
+            if (!modules[name]) {
+                loaded = false;
+            }
+        });
+        
+        return loaded;
+    }
+    
+    function using (/* module names */) {
+        
+        var moduleNames, capabilityObject;
+        
+        moduleNames = [].slice.call(arguments);
+        
+        moduleNames.forEach(function (moduleName) {
+            
+            if (!(moduleName in dependencies) && !(moduleName in modules)) {
+                
+                dependencies[moduleName] = [];
+                
+                if (!dependingOn[moduleName]) {
+                    dependingOn[moduleName] = [];
+                }
+                
+                if (moduleName.match(/^ajax:/)) {
+                    using.ajax(using.ajax.HTTP_METHOD_GET, moduleName.replace(/^ajax:/, ""),
+                        null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
+                }
+                else {
+                    loadModule(moduleName);
+                }
+            }
+            
+            function ajaxResourceSuccessFn (request) {
+                modules[moduleName] = request;
+                dependingOn[moduleName].forEach(updateModule);
+            }
+        });
+        
+        capabilityObject = {
+            run: run,
+            define: define
+        };
+        
+        return capabilityObject;
+        
+        
+        function run (callback) {
+            
+            if (!runner(true)) {
+                runners.push(runner);
+            }
+            
+            return capabilityObject;
+            
+            function runner (doNotRemove) {
+                
+                var deps = [];
+                
+                if (allModulesLoaded(moduleNames)) {
+                    
+                    moduleNames.forEach(function (name) {
+                        deps.push(modules[name]);
+                    });
+                    
+                    callback.apply(undefined, deps);
+                    
+                    if (!doNotRemove) {
+                        runners.splice(runners.indexOf(runner), 1);
+                    }
+                    
+                    return true;
+                }
+                
+                return false;
+            }
+        }
+        
+        function define (moduleName, callback) {
+            
+            if (moduleName in definitions) {
+                throw new Error("Module '" + moduleName + "' is already defined.");
+            }
+            
+            definitions[moduleName] = callback;
+            dependencies[moduleName] = moduleNames;
+            
+            if (!dependingOn[moduleName]) {
+                dependingOn[moduleName] = [];
+            }
+            
+            moduleNames.forEach(function (name) {
+                
+                if (!dependingOn[name]) {
+                    dependingOn[name] = [];
+                }
+                
+                dependingOn[name].push(moduleName);
+            });
+            
+            updateModule(moduleName);
+            
+            return capabilityObject;
+            
+        }
+    }
+    
+    using.path = "";
+    
+    (function () {
+        
+        var scripts = document.getElementsByTagName("script");
+        
+        using.path = scripts[scripts.length - 1].src.replace(/using\.js$/, "");
+        
+    }());
+    
+    using.modules = {};
+    
+    function loadModule (moduleName) {
+        
+        if (!(moduleName in using.modules)) {
+            throw new Error("Unknown module '" + moduleName + "'.");
+        }
+        
+        using.loadScript(using.modules[moduleName]);
+    }
+    
+    using.loadScript = function (url) {
+        
+        var script = document.createElement("script");
+        var scriptId = "using_script_" + url;
+        
+        if (loadedScripts[url] || document.getElementById(scriptId)) {
+            return;
+        }
+        
+        script.setAttribute("id", scriptId);
+        
+        script.src = url;
+        
+        document.body.appendChild(script);
+    };
+    
+    return using;
+    
+}());
+
+/* global using, XMLHttpRequest, ActiveXObject */
+
+using.ajax = (function () {
+    
+    var HTTP_STATUS_OK = 200;
+    var READY_STATE_UNSENT = 0;
+    var READY_STATE_OPENED = 1;
+    var READY_STATE_HEADERS_RECEIVED = 2;
+    var READY_STATE_LOADING = 3;
+    var READY_STATE_DONE = 4;
+    
+    function ajax (method, url, data, onSuccess, onError, timeout) {
+        
+        var requestObject = XMLHttpRequest ?
+            new XMLHttpRequest() :
+            new ActiveXObject("Microsoft.XMLHTTP");
+        
+        requestObject.open(method, url + "?random=" + Math.random(), true);
+        
+        if (timeout) {
+            
+            requestObject.timeout = timeout;
+            
+            requestObject.ontimeout = function () {
+                
+                requestObject.abort();
+                
+                if (!onError) {
+                    return;
+                }
+                
+                onError(new Error("Connection has reached the timeout of " + timeout + " ms."));
+            };
+        }
+        
+        requestObject.onreadystatechange = function() {
+            
+            var done, statusOk;
+            
+            done = requestObject.readyState === READY_STATE_DONE;
+            
+            if (done) {
+                
+                try {
+                    statusOk = requestObject.status === HTTP_STATUS_OK;
+                }
+                catch (error) {
+                    console.error(error);
+                    statusOk = false;
+                }
+                
+                if (statusOk) {
+                    onSuccess(requestObject);
+                }
+                else {
+                    onError(requestObject);
+                }
+            }
+        };
+        
+        if (data) {
+            requestObject.send(data);
+        }
+        else {
+            requestObject.send();
+        }
+        
+        return requestObject;
+    }
+    
+    ajax.HTTP_STATUS_OK = HTTP_STATUS_OK;
+    
+    ajax.READY_STATE_UNSENT = READY_STATE_UNSENT;
+    ajax.READY_STATE_OPENED = READY_STATE_OPENED;
+    ajax.READY_STATE_HEADERS_RECEIVED = READY_STATE_HEADERS_RECEIVED;
+    ajax.READY_STATE_LOADING = READY_STATE_LOADING;
+    ajax.READY_STATE_DONE = READY_STATE_DONE;
+    
+    ajax.HTTP_METHOD_GET = "GET";
+    ajax.HTTP_METHOD_POST = "POST";
+    ajax.HTTP_METHOD_PUT = "PUT";
+    ajax.HTTP_METHOD_DELETE = "DELETE";
+    ajax.HTTP_METHOD_HEAD = "HEAD";
+    
+    return ajax;
+    
+}());
+
+
 /*/////////////////////////////////////////////////////////////////////////////////
 
  MO5.js - Modular JavaScript. Batteries included.
@@ -34,7 +357,7 @@
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global window, require, process, document, console */
+/* global using, window, require, process, document, console */
 
 if (typeof window !== "undefined") {
     // If the browser doesn't support requestAnimationFrame, use a fallback.
@@ -139,400 +462,114 @@ if (!console.warn) {
 }
 
 
-var MO5 = (function () {
+(function () {
     
-    "use strict";
+    var scripts = document.getElementsByTagName("script");
+    var path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
     
-    var modules = {}, loadedScripts = {}, dependencies = {}, definitions = {}, dependingOn = {};
-    var runners = [];
-    
-    function updateModule (moduleName) {
-        
-        var deps = [], depNames = dependencies[moduleName], moduleResult;
-        
-        if (depNames.length === 0) {
-            
-            moduleResult = definitions[moduleName]();
-            
-            if (!moduleResult) {
-                console.error("Module '" + moduleName + "' returned nothing");
-            }
-            
-            modules[moduleName] = moduleResult;
-            
-            dependingOn[moduleName].forEach(updateModule);
-        }
-        else if (allModulesLoaded(depNames)) {
-            
-            depNames.forEach(function (name) {
-                deps.push(modules[name]);
-            });
-            
-            moduleResult = definitions[moduleName].apply(undefined, deps);
-            
-            if (!moduleResult) {
-                console.error("Module '" + moduleName + "' returned nothing.");
-            }
-            
-            modules[moduleName] = moduleResult;
-            
-            dependingOn[moduleName].forEach(updateModule);
-        }
-        
-        runners.forEach(function (runner) {
-            runner();
-        });
-    }
-    
-    function allModulesLoaded (moduleNames) {
-        
-        var loaded = true;
-        
-        moduleNames.forEach(function (name) {
-            if (!modules[name]) {
-                loaded = false;
-            }
-        });
-        
-        return loaded;
-    }
-    
-    function MO5 (/* module names */) {
-        
-        var moduleNames, capabilityObject;
-        
-        moduleNames = [].slice.call(arguments);
-        
-        moduleNames.forEach(function (moduleName) {
-            
-            if (!(moduleName in dependencies) && !(moduleName in modules)) {
-                
-                dependencies[moduleName] = [];
-                
-                if (!dependingOn[moduleName]) {
-                    dependingOn[moduleName] = [];
-                }
-                
-                if (moduleName.match(/^ajax:/)) {
-                    MO5.ajax(MO5.ajax.HTTP_METHOD_GET, moduleName.replace(/^ajax:/, ""),
-                        null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
-                }
-                else {
-                    loadModule(moduleName);
-                }
-            }
-            
-            function ajaxResourceSuccessFn (request) {
-                modules[moduleName] = request;
-                dependingOn[moduleName].forEach(updateModule);
-            }
-        });
-        
-        capabilityObject = {
-            run: run,
-            define: define
-        };
-        
-        return capabilityObject;
-        
-        ///////////////////////////////////
-        // Helper functions
-        ///////////////////////////////////
-        
-        function run (callback) {
-            
-            if (!runner(true)) {
-                runners.push(runner);
-            }
-            
-            return capabilityObject;
-            
-            function runner (doNotRemove) {
-                
-                var deps = [];
-                
-                if (allModulesLoaded(moduleNames)) {
-                    
-                    moduleNames.forEach(function (name) {
-                        deps.push(modules[name]);
-                    });
-                    
-                    callback.apply(undefined, deps);
-                    
-                    if (!doNotRemove) {
-                        runners.splice(runners.indexOf(runner), 1);
-                    }
-                    
-                    return true;
-                }
-                
-                return false;
-            }
-        }
-        
-        function define (moduleName, callback) {
-            
-            if (moduleName in definitions) {
-                throw new Error("Module '" + moduleName + "' is already defined.");
-            }
-            
-            definitions[moduleName] = callback;
-            dependencies[moduleName] = moduleNames;
-            
-            if (!dependingOn[moduleName]) {
-                dependingOn[moduleName] = [];
-            }
-            
-            moduleNames.forEach(function (name) {
-                
-                if (!dependingOn[name]) {
-                    dependingOn[name] = [];
-                }
-                
-                dependingOn[name].push(moduleName);
-            });
-            
-            updateModule(moduleName);
-            
-            return capabilityObject;
-            
-        }
-    }
-    
-    MO5.path = "";
-    
-    (function () {
-        
-        var scripts = document.getElementsByTagName("script");
-        
-        MO5.path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
-        
-    }());
-    
-    MO5.modules = {
-        "MO5.ajax": MO5.path + "ajax.js",
-        "MO5.assert": MO5.path + "assert.js",
-        "MO5.Exception": MO5.path + "Exception.js",
-        "MO5.fail": MO5.path + "fail.js",
-        "MO5.EventBus": MO5.path + "EventBus.js",
-        "MO5.CoreObject": MO5.path + "CoreObject.js",
-        "MO5.List": MO5.path + "List.js",
-        "MO5.Queue": MO5.path + "Queue.js",
-        "MO5.Map": MO5.path + "Map.js",
-        "MO5.Set": MO5.path + "Set.js",
-        "MO5.Result": MO5.path + "Result.js", // deprecated - use MO5.Promise instead!
-        "MO5.Promise": MO5.path + "Promise.js",
-        "MO5.Timer": MO5.path + "Timer.js",
-        "MO5.TimerWatcher": MO5.path + "TimerWatcher.js",
-        "MO5.easing": MO5.path + "easing.js",
-        "MO5.transform": MO5.path + "transform.js",
-        "MO5.range": MO5.path + "range.js",
-        "MO5.tools": MO5.path + "tools.js",
-        "MO5.Point": MO5.path + "Point.js",
-        "MO5.Size": MO5.path + "Size.js",
-        "MO5.Animation": MO5.path + "Animation.js",
-        "MO5.dom.effects.typewriter": MO5.path + "dom.effects.typewriter.js",
-        "MO5.dom.Element": MO5.path + "dom.Element.js",
-        "MO5.dom.escape": MO5.path + "dom.escape.js",
-        "MO5.globals.document": MO5.path + "globals.document.js",
-        "MO5.globals.window": MO5.path + "globals.window.js",
-        "MO5.types": MO5.path + "types.js"
+    using.modules = {
+        "MO5.ajax": path + "ajax.js",
+        "MO5.assert": path + "assert.js",
+        "MO5.Exception": path + "Exception.js",
+        "MO5.fail": path + "fail.js",
+        "MO5.EventBus": path + "EventBus.js",
+        "MO5.CoreObject": path + "CoreObject.js",
+        "MO5.List": path + "List.js",
+        "MO5.Queue": path + "Queue.js",
+        "MO5.Map": path + "Map.js",
+        "MO5.Set": path + "Set.js",
+        "MO5.Result": path + "Result.js", // deprecated - use MO5.Promise instead!
+        "MO5.Promise": path + "Promise.js",
+        "MO5.Timer": path + "Timer.js",
+        "MO5.TimerWatcher": path + "TimerWatcher.js",
+        "MO5.easing": path + "easing.js",
+        "MO5.transform": path + "transform.js",
+        "MO5.range": path + "range.js",
+        "MO5.tools": path + "tools.js",
+        "MO5.Point": path + "Point.js",
+        "MO5.Size": path + "Size.js",
+        "MO5.Animation": path + "Animation.js",
+        "MO5.dom.effects.typewriter": path + "dom.effects.typewriter.js",
+        "MO5.dom.Element": path + "dom.Element.js",
+        "MO5.dom.escape": path + "dom.escape.js",
+        "MO5.globals.document": path + "globals.document.js",
+        "MO5.globals.window": path + "globals.window.js",
+        "MO5.types": path + "types.js"
     };
-    
-    function loadModule (moduleName) {
-        
-        if (!(moduleName in MO5.modules)) {
-            throw new Error("Unknown module '" + moduleName + "'.");
-        }
-        
-        MO5.loadScript(MO5.modules[moduleName]);
-    }
-    
-    MO5.loadScript = function (url) {
-        
-        var script = document.createElement("script");
-        var scriptId = "MO5_script_" + url;
-        
-        if (loadedScripts[url] || document.getElementById(scriptId)) {
-            return;
-        }
-        
-        script.setAttribute("id", scriptId);
-        
-        script.src = url;
-        
-        document.body.appendChild(script);
-    };
-    
-    MO5.defaults = {
-        fps: 60,
-        debug: true,
-        canvas: {
-            width: 640, // default width for canvas elements
-            height: 480 // default height for canvas elements
-        }
-    };
-    
-    return MO5;
-    
 }());
 
-/* global MO5, XMLHttpRequest, ActiveXObject */
-
-MO5.ajax = (function () {
-    
-    var HTTP_STATUS_OK = 200;
-    var READY_STATE_UNSENT = 0;
-    var READY_STATE_OPENED = 1;
-    var READY_STATE_HEADERS_RECEIVED = 2;
-    var READY_STATE_LOADING = 3;
-    var READY_STATE_DONE = 4;
-    
-    function ajax (method, url, data, onSuccess, onError, timeout) {
-        
-        var requestObject = XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-        
-        requestObject.open(method, url + "?random=" + Math.random(), true);
-        
-        if (timeout) {
-            
-            requestObject.timeout = timeout;
-            
-            requestObject.ontimeout = function () {
-                
-                requestObject.abort();
-                
-                if (!onError) {
-                    return;
-                }
-                
-                onError(new Error("Connection has reached the timeout of " + timeout + " ms."));
-            };
-        }
-        
-        requestObject.onreadystatechange = function() {
-            
-            var done, statusOk;
-            
-            done = requestObject.readyState === READY_STATE_DONE;
-            
-            if (done) {
-                
-                try {
-                    statusOk = requestObject.status === HTTP_STATUS_OK;
-                }
-                catch (error) {
-                    console.error(error);
-                    statusOk = false;
-                }
-                
-                if (statusOk) {
-                    onSuccess(requestObject);
-                }
-                else {
-                    onError(requestObject);
-                }
-            }
-        };
-        
-        if (data) {
-            requestObject.send(data);
-        }
-        else {
-            requestObject.send();
-        }
-        
-        return requestObject;
-    }
-    
-    ajax.HTTP_STATUS_OK = HTTP_STATUS_OK;
-    
-    ajax.READY_STATE_UNSENT = READY_STATE_UNSENT;
-    ajax.READY_STATE_OPENED = READY_STATE_OPENED;
-    ajax.READY_STATE_HEADERS_RECEIVED = READY_STATE_HEADERS_RECEIVED;
-    ajax.READY_STATE_LOADING = READY_STATE_LOADING;
-    ajax.READY_STATE_DONE = READY_STATE_DONE;
-    
-    ajax.HTTP_METHOD_GET = "GET";
-    ajax.HTTP_METHOD_POST = "POST";
-    ajax.HTTP_METHOD_PUT = "PUT";
-    ajax.HTTP_METHOD_DELETE = "DELETE";
-    ajax.HTTP_METHOD_HEAD = "HEAD";
-    
-    return ajax;
-}());
 
 var $__WSEScripts = document.getElementsByTagName('script');
 WSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;
 
-MO5.modules['howler'] = WSEPath;
-MO5.modules['MO5.ajax'] = WSEPath;
-MO5.modules['MO5.Animation'] = WSEPath;
-MO5.modules['MO5.assert'] = WSEPath;
-MO5.modules['MO5.CoreObject'] = WSEPath;
-MO5.modules['MO5.dom.effects.typewriter'] = WSEPath;
-MO5.modules['MO5.dom.Element'] = WSEPath;
-MO5.modules['MO5.dom.escape'] = WSEPath;
-MO5.modules['MO5.easing'] = WSEPath;
-MO5.modules['MO5.EventBus'] = WSEPath;
-MO5.modules['MO5.Exception'] = WSEPath;
-MO5.modules['MO5.fail'] = WSEPath;
-MO5.modules['MO5.globals.document'] = WSEPath;
-MO5.modules['MO5.globals.window'] = WSEPath;
-MO5.modules['MO5.List'] = WSEPath;
-MO5.modules['MO5.Map'] = WSEPath;
-MO5.modules['MO5.Point'] = WSEPath;
-MO5.modules['MO5.Promise'] = WSEPath;
-MO5.modules['MO5.Queue'] = WSEPath;
-MO5.modules['MO5.range'] = WSEPath;
-MO5.modules['MO5.Result'] = WSEPath;
-MO5.modules['MO5.Set'] = WSEPath;
-MO5.modules['MO5.Size'] = WSEPath;
-MO5.modules['MO5.Timer'] = WSEPath;
-MO5.modules['MO5.TimerWatcher'] = WSEPath;
-MO5.modules['MO5.tools'] = WSEPath;
-MO5.modules['MO5.transform'] = WSEPath;
-MO5.modules['MO5.types'] = WSEPath;
-MO5.modules['WSE.assets'] = WSEPath;
-MO5.modules['WSE.commands'] = WSEPath;
-MO5.modules['WSE.functions'] = WSEPath;
-MO5.modules['WSE.dataSources'] = WSEPath;
-MO5.modules['WSE'] = WSEPath;
-MO5.modules['WSE.Keys'] = WSEPath;
-MO5.modules['WSE.tools'] = WSEPath;
-MO5.modules['WSE.dataSources.LocalStorage'] = WSEPath;
-MO5.modules['WSE.Trigger'] = WSEPath;
-MO5.modules['WSE.Game'] = WSEPath;
-MO5.modules['WSE.Interpreter'] = WSEPath;
-MO5.modules['WSE.tools.ui'] = WSEPath;
-MO5.modules['WSE.DisplayObject'] = WSEPath;
-MO5.modules['WSE.assets.Animation'] = WSEPath;
-MO5.modules['WSE.assets.Audio'] = WSEPath;
-MO5.modules['WSE.assets.Character'] = WSEPath;
-MO5.modules['WSE.assets.Curtain'] = WSEPath;
-MO5.modules['WSE.assets.Imagepack'] = WSEPath;
-MO5.modules['WSE.assets.Textbox'] = WSEPath;
-MO5.modules['WSE.assets.Background'] = WSEPath;
-MO5.modules['WSE.commands.alert'] = WSEPath;
-MO5.modules['WSE.commands.break'] = WSEPath;
-MO5.modules['WSE.commands.choice'] = WSEPath;
-MO5.modules['WSE.commands.confirm'] = WSEPath;
-MO5.modules['WSE.commands.do'] = WSEPath;
-MO5.modules['WSE.commands.fn'] = WSEPath;
-MO5.modules['WSE.commands.global'] = WSEPath;
-MO5.modules['WSE.commands.globalize'] = WSEPath;
-MO5.modules['WSE.commands.goto'] = WSEPath;
-MO5.modules['WSE.commands.line'] = WSEPath;
-MO5.modules['WSE.commands.localize'] = WSEPath;
-MO5.modules['WSE.commands.prompt'] = WSEPath;
-MO5.modules['WSE.commands.restart'] = WSEPath;
-MO5.modules['WSE.commands.sub'] = WSEPath;
-MO5.modules['WSE.commands.trigger'] = WSEPath;
-MO5.modules['WSE.commands.var'] = WSEPath;
-MO5.modules['WSE.commands.set_vars'] = WSEPath;
-MO5.modules['WSE.commands.wait'] = WSEPath;
-MO5.modules['WSE.commands.with'] = WSEPath;
-MO5.modules['WSE.commands.while'] = WSEPath;
+using.modules['howler'] = WSEPath;
+using.modules['MO5.ajax'] = WSEPath;
+using.modules['MO5.Animation'] = WSEPath;
+using.modules['MO5.assert'] = WSEPath;
+using.modules['MO5.CoreObject'] = WSEPath;
+using.modules['MO5.dom.effects.typewriter'] = WSEPath;
+using.modules['MO5.dom.Element'] = WSEPath;
+using.modules['MO5.dom.escape'] = WSEPath;
+using.modules['MO5.easing'] = WSEPath;
+using.modules['MO5.EventBus'] = WSEPath;
+using.modules['MO5.Exception'] = WSEPath;
+using.modules['MO5.fail'] = WSEPath;
+using.modules['MO5.globals.document'] = WSEPath;
+using.modules['MO5.globals.window'] = WSEPath;
+using.modules['MO5.List'] = WSEPath;
+using.modules['MO5.Map'] = WSEPath;
+using.modules['MO5.Point'] = WSEPath;
+using.modules['MO5.Promise'] = WSEPath;
+using.modules['MO5.Queue'] = WSEPath;
+using.modules['MO5.range'] = WSEPath;
+using.modules['MO5.Result'] = WSEPath;
+using.modules['MO5.Set'] = WSEPath;
+using.modules['MO5.Size'] = WSEPath;
+using.modules['MO5.Timer'] = WSEPath;
+using.modules['MO5.TimerWatcher'] = WSEPath;
+using.modules['MO5.tools'] = WSEPath;
+using.modules['MO5.transform'] = WSEPath;
+using.modules['MO5.types'] = WSEPath;
+using.modules['WSE.assets'] = WSEPath;
+using.modules['WSE.commands'] = WSEPath;
+using.modules['WSE.functions'] = WSEPath;
+using.modules['WSE.dataSources'] = WSEPath;
+using.modules['WSE'] = WSEPath;
+using.modules['WSE.Keys'] = WSEPath;
+using.modules['WSE.tools'] = WSEPath;
+using.modules['WSE.dataSources.LocalStorage'] = WSEPath;
+using.modules['WSE.Trigger'] = WSEPath;
+using.modules['WSE.Game'] = WSEPath;
+using.modules['WSE.Interpreter'] = WSEPath;
+using.modules['WSE.tools.ui'] = WSEPath;
+using.modules['WSE.DisplayObject'] = WSEPath;
+using.modules['WSE.assets.Animation'] = WSEPath;
+using.modules['WSE.assets.Audio'] = WSEPath;
+using.modules['WSE.assets.Character'] = WSEPath;
+using.modules['WSE.assets.Curtain'] = WSEPath;
+using.modules['WSE.assets.Imagepack'] = WSEPath;
+using.modules['WSE.assets.Textbox'] = WSEPath;
+using.modules['WSE.assets.Background'] = WSEPath;
+using.modules['WSE.commands.alert'] = WSEPath;
+using.modules['WSE.commands.break'] = WSEPath;
+using.modules['WSE.commands.choice'] = WSEPath;
+using.modules['WSE.commands.confirm'] = WSEPath;
+using.modules['WSE.commands.do'] = WSEPath;
+using.modules['WSE.commands.fn'] = WSEPath;
+using.modules['WSE.commands.global'] = WSEPath;
+using.modules['WSE.commands.globalize'] = WSEPath;
+using.modules['WSE.commands.goto'] = WSEPath;
+using.modules['WSE.commands.line'] = WSEPath;
+using.modules['WSE.commands.localize'] = WSEPath;
+using.modules['WSE.commands.prompt'] = WSEPath;
+using.modules['WSE.commands.restart'] = WSEPath;
+using.modules['WSE.commands.sub'] = WSEPath;
+using.modules['WSE.commands.trigger'] = WSEPath;
+using.modules['WSE.commands.var'] = WSEPath;
+using.modules['WSE.commands.set_vars'] = WSEPath;
+using.modules['WSE.commands.wait'] = WSEPath;
+using.modules['WSE.commands.with'] = WSEPath;
+using.modules['WSE.commands.while'] = WSEPath;
 
 /*!
  *  howler.js v1.1.26
@@ -1889,13 +1926,13 @@ MO5.modules['WSE.commands.while'] = WSEPath;
 })();
 
 
-/* global MO5 */
+/* global using */
 
 /**
  * A wrapper module for ajax.
  */
-MO5().define("MO5.ajax", function () {
-    return MO5.ajax;
+using().define("MO5.ajax", function () {
+    return using.ajax;
 });
 
 /*/////////////////////////////////////////////////////////////////////////////////
@@ -1936,8 +1973,8 @@ MO5().define("MO5.ajax", function () {
 
 (function MO5AnimationBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.Queue", "MO5.Timer", "MO5.TimerWatcher").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject", "MO5.Queue", "MO5.Timer", "MO5.TimerWatcher").
         define("MO5.Animation", MO5AnimationModule);
     }
     else if (typeof window !== "undefined") {
@@ -2167,9 +2204,9 @@ MO5().define("MO5.ajax", function () {
 }());
 
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.Exception").define("MO5.assert", function (Exception) {
+using("MO5.Exception").define("MO5.assert", function (Exception) {
     
     function AssertionException () {
         Exception.apply(this, arguments);
@@ -2226,8 +2263,8 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
 
 (function MO5CoreObjectBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.fail", "MO5.EventBus").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.fail", "MO5.EventBus").
         define("MO5.CoreObject", MO5CoreObjectModule);
     }
     else if (typeof window !== "undefined") {
@@ -2281,6 +2318,9 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
             EventBus.inject(this, args.bus);
             
             flags[this.id] = {};
+            
+            this.$children = [];
+            this.$parent = null;
         }
         
         /**
@@ -2303,6 +2343,34 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
          */
         CoreObject.isCoreObject = function (obj) {
             return obj instanceof CoreObject;
+        };
+        
+        CoreObject.prototype.addChild = function (child) {
+            
+            if (this.$children.indexOf(child) >= 0) {
+                return;
+            }
+            
+            child.$parent = this;
+            
+            this.$children.push(child);
+        };
+        
+        CoreObject.prototype.removeChild = function (child) {
+            
+            var index = this.$children.indexOf(child);
+            
+            if (index < 0) {
+                return;
+            }
+            
+            child.$parent = null;
+            
+            this.$children.splice(index, 1);
+        };
+        
+        CoreObject.prototype.hasChild = function (child) {
+            return this.$children.indexOf(child) >= 0;
         };
         
         /**
@@ -2483,6 +2551,16 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
             
             var id = this.id;
             
+            if (this.$parent) {
+                this.$parent.removeChild(this);
+            }
+            
+            this.$children.forEach(function (child) {
+                if (typeof child === "object" && typeof child.destroy === "function") {
+                    child.destroy();
+                }
+            });
+            
             this.destroyed = true;
             this.trigger("destroyed", null, false);
             
@@ -2498,6 +2576,46 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
             delete this.toString;
             delete this.valueOf;
             
+        };
+        
+        CoreObject.prototype.subscribeTo = function (bus, event, listener) {
+            
+            var self = this;
+            
+            if (!(typeof bus.subscribe === "function" && typeof bus.unsubscribe === "function")) {
+                fail(new Exception("Cannot subscribe: Parameter 1 is " +
+                    "expected to be of type CoreObject or EventBus."));
+                return this;
+            }
+            if (typeof event !== "string") {
+                fail(new Exception("Cannot subscribe: Parameter 2 is " +
+                    "expected to be of type String."));
+                return this;
+            }
+            if (typeof listener !== "function") {
+                fail(new Exception("Cannot subscribe: Parameter 3 is " +
+                    "expected to be of type Function."));
+                return this;
+            }
+            
+            listener = listener.bind(this);
+            
+            bus.subscribe(event, listener);
+            
+            function thisDestroyed () {
+                bus.unsubscribe(event, listener);
+                self.unsubscribe("destroyed", thisDestroyed);
+                bus.unsubscribe("destroyed", busDestroyed);
+            }
+            function busDestroyed () {
+                bus.unsubscribe("destroyed", busDestroyed);
+                self.unsubscribe("destroyed", thisDestroyed);
+            }
+            
+            this.subscribe("destroyed", thisDestroyed);
+            bus.subscribe("destroyed", busDestroyed);
+            
+            return this;
         };
         
         return CoreObject;
@@ -2552,9 +2670,9 @@ MO5("MO5.Exception").define("MO5.assert", function (Exception) {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, setTimeout */
+/* global using, setTimeout */
 
-MO5().define("MO5.dom.effects.typewriter", function () {
+using().define("MO5.dom.effects.typewriter", function () {
     
     function typewriter (element, args)
     {
@@ -2682,9 +2800,9 @@ MO5().define("MO5.dom.effects.typewriter", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, document, console */
+/* global using, document, console */
 
-MO5("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter",
+using("MO5.CoreObject", "MO5.transform", "MO5.TimerWatcher", "MO5.dom.effects.typewriter",
         "MO5.types", "MO5.Point", "MO5.Size").
 define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         typewriter, types, Point, Size) {
@@ -2712,7 +2830,8 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
     // If you want to add a method with the same name as a DOM element's
     // property to the prototype, you need to add the method's name to this array.
     Element.propertiesToExclude = [
-        "appendChild"
+        "appendChild",
+        "removeChild"
     ];
     
     /**
@@ -2981,18 +3100,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
             console.log(e);
         }
         
-        this.element = null;
-        
-        this.destroyed = true;
-        this.trigger("destroyed", null, false);
-        
-        for (var key in this) {
-            if (this.hasOwnProperty(key)) {
-                delete this[key];
-            }
-        }
-        
-        this.destroyed = true;
+        CoreObject.prototype.destroy.call(this);
     };
     
     ////////////////////////////////////////
@@ -3035,8 +3143,9 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
 
 });
 
-/* global MO5 */
-MO5().define("MO5.dom.escape", function () {
+/* global using */
+
+using().define("MO5.dom.escape", function () {
 
     function escape (unescapedHtml) {
         
@@ -3085,9 +3194,9 @@ MO5().define("MO5.dom.escape", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window */
+/* global using, window */
 
-MO5().define("MO5.easing", function () {
+using().define("MO5.easing", function () {
     
     /**
      * Acceleration functions for use in MO5.transform().
@@ -3302,12 +3411,12 @@ MO5().define("MO5.easing", function () {
     
 });
 
-/* global MO5, setTimeout, console, window, module */
+/* global using, setTimeout, console, window, module */
 
 (function MO5EventBusBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.EventBus", MO5EventBusModule);
+    if (typeof using === "function") {
+        using().define("MO5.EventBus", MO5EventBusModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5 = MO5 || {};
@@ -3638,6 +3747,10 @@ MO5().define("MO5.easing", function () {
             
             obj.triggerSync = squid.triggerSync.bind(squid);
             obj.triggerAsync = squid.triggerAsync.bind(squid);
+            
+            obj.subscribe("destroyed", function () {
+                squid.callbacks = [];
+            });
         };
         
         return EventBus;
@@ -3680,12 +3793,12 @@ MO5().define("MO5.easing", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, module, window */
+/* global using, module, window */
 
 (function MO5ExceptionBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.Exception", MO5ExceptionModule);
+    if (typeof using === "function") {
+        using().define("MO5.Exception", MO5ExceptionModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5 = window.MO5 || {};
@@ -3754,12 +3867,12 @@ MO5().define("MO5.easing", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, console, module */
+/* global using, window, console, module */
 
 (function MO5failBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.fail", MO5failModule);
+    if (typeof using === "function") {
+        using().define("MO5.fail", MO5failModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.fail = MO5failModule();
@@ -3796,16 +3909,16 @@ MO5().define("MO5.easing", function () {
 }());
 
 
-/* global MO5, document */
+/* global using, document */
 
-MO5().define("MO5.globals.document", function () {
+using().define("MO5.globals.document", function () {
     return document;
 });
 
 
-/* global MO5, window */
+/* global using, window */
 
-MO5().define("MO5.globals.window", function () {
+using().define("MO5.globals.window", function () {
     return window;
 });
 
@@ -3848,8 +3961,8 @@ MO5().define("MO5.globals.window", function () {
 
 (function MO5ListBootstrap () {
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Queue", "MO5.types").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Queue", "MO5.types").
         define("MO5.List", MO5ListModule);
     }
     else if (typeof window !== "undefined") {
@@ -3903,6 +4016,7 @@ MO5().define("MO5.globals.window", function () {
             if (CoreObject.isCoreObject(value)) {
                 this.unsubscribers[value.id] = unsubscribe;
                 value.subscribe(listener, "destroyed");
+                value.subscribe("destroyed", function () {value = null;});
             }
 
             this.items.push(value);
@@ -3922,6 +4036,15 @@ MO5().define("MO5.globals.window", function () {
             this.items.splice(i, 1);
 
             return this;
+        };
+        
+        List.prototype.clear = function () {
+            
+            var list = this;
+            
+            this.forEach(function (item, i) {
+                list.remove(i);
+            });
         };
 
         List.prototype.at = function (i) {
@@ -4003,6 +4126,20 @@ MO5().define("MO5.globals.window", function () {
             return new List(this.items.slice());
         };
         
+        List.prototype.destroy = function () {
+            
+            if (this.destroyed) {
+                return;
+            }
+            
+            for (var i = 0; i < this.unsubscribers.length; i++) {
+                this.unsubscribers[i]();
+                delete this.unsubscribers[i];
+            };
+            
+            CoreObject.prototype.destroy.apply(this, arguments);
+        }
+        
         return List;
         
     }
@@ -4043,12 +4180,12 @@ MO5().define("MO5.globals.window", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, module, require, window */
+/* global using, module, require, window */
 
 (function MO5MapBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Exception").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Exception").
         define("MO5.Map", MO5MapModule);
     }
     else if (typeof window !== "undefined") {
@@ -4105,8 +4242,9 @@ MO5().define("MO5.globals.window", function () {
             var self = this, key = makeKey(k);
 
             function whenDestroyed () {
-                delete self.items[key];
-                self.count -= 1;
+                if (self.has(k)) {
+                    self.remove(k);
+                }
             }
 
             if (!k) {
@@ -4418,9 +4556,9 @@ MO5().define("MO5.globals.window", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global using */
 
-MO5().define("MO5.Point", function () {
+using().define("MO5.Point", function () {
     
     function Point (x, y)
     {
@@ -4441,7 +4579,7 @@ MO5().define("MO5.Point", function () {
     
 });
 
-/* global global, window, process, document, MO5, Promise, module */
+/* global global, window, process, document, using, Promise, module */
 
 (function() {
 var define, requireModule, require, requirejs;
@@ -5132,8 +5270,8 @@ requireModule('promise/polyfill').polyfill();
 
 (function MO5PromiseBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.Promise", MO5PromiseModule);
+    if (typeof using === "function") {
+        using().define("MO5.Promise", MO5PromiseModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.Promise = MO5PromiseModule();
@@ -5229,8 +5367,8 @@ requireModule('promise/polyfill').polyfill();
 
 (function MO5QueueBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject").
         define("MO5.Queue", MO5QueueModule);
     }
     else if (typeof window !== "undefined") {
@@ -5380,8 +5518,8 @@ requireModule('promise/polyfill').polyfill();
 
 (function MO5rangeBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.range", MO5rangeModule);
+    if (typeof using === "function") {
+        using().define("MO5.range", MO5rangeModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.range = MO5rangeModule();
@@ -5442,14 +5580,14 @@ requireModule('promise/polyfill').polyfill();
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, setTimeout, module, require, process, console */
+/* global using, window, setTimeout, module, require, process, console */
 
 (function MO5ResultBootstrap () {
     
     console.warn("MO5.Result is deprecated - use MO5.Promise instead!");
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
         define("MO5.Result", MO5ResultModule);
     }
     else if (typeof window !== "undefined") {
@@ -5622,12 +5760,12 @@ requireModule('promise/polyfill').polyfill();
 }());
 
 
-/* global MO5, module, require, window */
+/* global using, module, require, window */
 
 (function MO5SetBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.CoreObject", "MO5.types").
+    if (typeof using === "function") {
+        using("MO5.CoreObject", "MO5.types").
         define("MO5.Set", MO5SetModule);
     }
     else if (typeof window !== "undefined") {
@@ -5955,9 +6093,9 @@ requireModule('promise/polyfill').polyfill();
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5 */
+/* global using */
 
-MO5().define("MO5.Size", function () {
+using().define("MO5.Size", function () {
     
     function Size (width, height) {
         this.width = width || 0;
@@ -6002,12 +6140,12 @@ MO5().define("MO5.Size", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, module, require */
+/* global using, window, module, require */
 
 (function MO5TimerBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Promise").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Promise").
         define("MO5.Timer", MO5TimerModule);
     }
     else if (typeof window !== "undefined") {
@@ -6215,12 +6353,12 @@ MO5().define("MO5.Size", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, module, require */
+/* global using, window, module, require */
 
 (function MO5TimerWatcherBootstrap () {
 
-    if (typeof MO5 === "function") {
-        MO5("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
+    if (typeof using === "function") {
+        using("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
         define("MO5.TimerWatcher", MO5TimerWatcherModule);
     }
     else if (typeof window !== "undefined") {
@@ -6440,9 +6578,9 @@ MO5().define("MO5.Size", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, document, console */
+/* global using, window, document, console */
 
-MO5().define("MO5.tools", function () {
+using().define("MO5.tools", function () {
     
     var tools = {};
     
@@ -6645,9 +6783,9 @@ MO5().define("MO5.tools", function () {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, requestAnimationFrame, console */
+/* global using, requestAnimationFrame, console */
 
-MO5("MO5.Exception", "MO5.Timer", "MO5.easing").
+using("MO5.Exception", "MO5.Timer", "MO5.easing").
 define("MO5.transform", function (Exception, Timer, easing) {
     
     /**
@@ -6732,7 +6870,7 @@ define("MO5.transform", function (Exception, Timer, easing) {
             doLog = args.log || false,
             c = 0, // number of times func get's executed
             lastExecution = 0,
-            fps = args.fps || MO5.defaults.fps;
+            fps = args.fps || 60;
 
         f = args.easing || easing.sineEaseOut;
 
@@ -6792,12 +6930,12 @@ define("MO5.transform", function (Exception, Timer, easing) {
     
 });
 
-/* global MO5, window, module */
+/* global using, window, module */
 
 (function MO5typesBootstrap () {
     
-    if (typeof MO5 === "function") {
-        MO5().define("MO5.types", MO5typesModule);
+    if (typeof using === "function") {
+        using().define("MO5.types", MO5typesModule);
     }
     else if (typeof window !== "undefined") {
         window.MO5.types = MO5typesModule();
@@ -6848,9 +6986,9 @@ define("MO5.transform", function (Exception, Timer, easing) {
     }
 }());
 
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.assets.Animation",
     "WSE.assets.Audio",
     "WSE.assets.Background",
@@ -6883,9 +7021,9 @@ define("WSE.assets", function (
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.commands.alert",
     "WSE.commands.break",
     "WSE.commands.choice",
@@ -6959,9 +7097,9 @@ define("WSE.commands", function (
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.functions", function () {
+using().define("WSE.functions", function () {
     
     "use strict";
     
@@ -6988,9 +7126,9 @@ MO5().define("WSE.functions", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.dataSources.LocalStorage").
+using("WSE.dataSources.LocalStorage").
 define("WSE.dataSources", function (LocalStorageDataSource) {
     
     var dataSources = {
@@ -7001,9 +7139,9 @@ define("WSE.dataSources", function (LocalStorageDataSource) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
+using("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
 define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
@@ -7025,9 +7163,9 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.Keys", function () {
+using().define("WSE.Keys", function () {
     
     /**
     
@@ -7439,13 +7577,12 @@ MO5().define("WSE.Keys", function () {
 
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.Timer").define("WSE.tools", function (Timer) {
+using("MO5.Timer").define("WSE.tools", function (Timer) {
     
     "use strict";
     
-    var timers = {};
     var tools = {};
     
     /**
@@ -7738,9 +7875,9 @@ MO5("MO5.Timer").define("WSE.tools", function (Timer) {
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
+using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
     
     "use strict";
     
@@ -7807,9 +7944,9 @@ MO5("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
     
 });
 
-/* global WSE */
+/* global using */
 
-MO5("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, functions) {
+using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, functions) {
     
     "use strict";
     
@@ -8004,9 +8141,9 @@ MO5("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, f
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.EventBus", "MO5.ajax", "WSE.Keys", "WSE.Interpreter", "WSE.tools", "WSE").
+using("MO5.EventBus", "MO5.ajax", "WSE.Keys", "WSE.Interpreter", "WSE.tools", "WSE").
 define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
     
     "use strict";
@@ -8317,9 +8454,9 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "MO5.transform",
     "WSE.dataSources.LocalStorage",
     "WSE.Trigger",
@@ -10004,9 +10141,9 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
     return Interpreter;
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.tools.ui", function () {
+using().define("WSE.tools.ui", function () {
     
     "use strict";
     
@@ -10414,9 +10551,9 @@ MO5().define("WSE.tools.ui", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
+using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
 define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
     
     function DisplayObject () {
@@ -11206,9 +11343,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "MO5.transform",
     "MO5.easing",
     "MO5.Animation",
@@ -11423,9 +11560,9 @@ define("WSE.assets.Animation", function (
     
 });
 
-/* global MO5, Howl */
+/* global using, Howl */
 
-MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
+using("WSE.tools").define("WSE.assets.Audio", function (tools) {
     
     "use strict";
     
@@ -11760,9 +11897,9 @@ MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.DisplayObject", "WSE.tools").
+using("WSE.DisplayObject", "WSE.tools").
 define("WSE.assets.Character", function (DisplayObject, tools) {
     
     "use strict";
@@ -11817,9 +11954,9 @@ define("WSE.assets.Character", function (DisplayObject, tools) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.DisplayObject", "WSE.tools").
+using("WSE.DisplayObject", "WSE.tools").
 define("WSE.assets.Curtain", function (DisplayObject, tools) {
     
     "use strict";
@@ -11897,9 +12034,9 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
+using("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
 define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing) {
     
     "use strict";
@@ -12268,9 +12405,9 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.DisplayObject",
     "WSE.tools",
     "MO5.transform",
@@ -12588,9 +12725,9 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools", "WSE.DisplayObject").
+using("WSE.tools", "WSE.DisplayObject").
 define("WSE.assets.Background", function (tools, DisplayObject) {
     
     "use strict";
@@ -12687,9 +12824,9 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
+using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
     
     function alert (command, interpreter) {
         
@@ -12722,9 +12859,9 @@ MO5("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tool
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.break", function () {
+using().define("WSE.commands.break", function () {
     
     "use strict";
     
@@ -12749,9 +12886,9 @@ MO5().define("WSE.commands.break", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools", "WSE.DisplayObject").
+using("WSE.tools", "WSE.DisplayObject").
 define("WSE.commands.choice", function (tools, DisplayObject) {
     
     "use strict";
@@ -12914,16 +13051,16 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools.ui").define("WSE.commands.confirm", function (ui) {
+using("WSE.tools.ui").define("WSE.commands.confirm", function (ui) {
     return ui.makeInputFn("confirm");
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.do", function () {
+using().define("WSE.commands.do", function () {
     
     "use strict";
     
@@ -13009,9 +13146,9 @@ MO5().define("WSE.commands.do", function () {
       
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.functions").define("WSE.commands.fn", function (functions) {
+using("WSE.functions").define("WSE.commands.fn", function (functions) {
     
     "use strict";
     
@@ -13068,9 +13205,9 @@ MO5("WSE.functions").define("WSE.commands.fn", function (functions) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.global", function () {
+using().define("WSE.commands.global", function () {
     
     "use strict";
     
@@ -13122,9 +13259,9 @@ MO5().define("WSE.commands.global", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.globalize", function () {
+using().define("WSE.commands.globalize", function () {
     
     "use strict";
     
@@ -13175,9 +13312,9 @@ MO5().define("WSE.commands.globalize", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools").define("WSE.commands.goto", function (tools) {
+using("WSE.tools").define("WSE.commands.goto", function (tools) {
     
     "use strict";
     
@@ -13230,9 +13367,9 @@ MO5("WSE.tools").define("WSE.commands.goto", function (tools) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools").define("WSE.commands.line", function (tools) {
+using("WSE.tools").define("WSE.commands.line", function (tools) {
     
     "use strict";
     
@@ -13335,9 +13472,9 @@ MO5("WSE.tools").define("WSE.commands.line", function (tools) {
      
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.localize", function () {
+using().define("WSE.commands.localize", function () {
     
     "use strict";
     
@@ -13388,16 +13525,16 @@ MO5().define("WSE.commands.localize", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools.ui").define("WSE.commands.prompt", function (ui) {
+using("WSE.tools.ui").define("WSE.commands.prompt", function (ui) {
     return ui.makeInputFn("prompt");
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.restart", function () {
+using().define("WSE.commands.restart", function () {
     
     "use strict";
     
@@ -13440,9 +13577,9 @@ MO5().define("WSE.commands.restart", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools", "WSE.commands.set_vars").
+using("WSE.tools", "WSE.commands.set_vars").
 define("WSE.commands.sub", function (tools, setVars) {
     
     "use strict";
@@ -13518,9 +13655,9 @@ define("WSE.commands.sub", function (tools, setVars) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.trigger", function () {
+using().define("WSE.commands.trigger", function () {
     
     "use strict";
     
@@ -13614,9 +13751,9 @@ MO5().define("WSE.commands.trigger", function () {
      
 });
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools").define("WSE.commands.var", function (tools) {
+using("WSE.tools").define("WSE.commands.var", function (tools) {
     
     "use strict";
     
@@ -13749,9 +13886,9 @@ MO5("WSE.tools").define("WSE.commands.var", function (tools) {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.set_vars", function () {
+using().define("WSE.commands.set_vars", function () {
     
     "use strict";
     
@@ -13786,9 +13923,9 @@ MO5().define("WSE.commands.set_vars", function () {
     
 });
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.wait", function () {
+using().define("WSE.commands.wait", function () {
     
     "use strict";
     
@@ -13837,9 +13974,9 @@ MO5().define("WSE.commands.wait", function () {
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools").define("WSE.commands.with", function (tools) {
+using("WSE.tools").define("WSE.commands.with", function (tools) {
     
     "use strict";
     
@@ -13896,9 +14033,9 @@ MO5("WSE.tools").define("WSE.commands.with", function (tools) {
 });
 
 
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.while", function () {
+using().define("WSE.commands.while", function () {
     
     "use strict";
     

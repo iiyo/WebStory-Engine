@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
+using("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
 define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing) {
     
     "use strict";

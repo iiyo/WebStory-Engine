@@ -1,3 +1,4 @@
+/* global using */
 
 /**
  * An extension that adds side-image capabilities.
@@ -6,7 +7,7 @@
  * the character says something and hidden when someone else
  * says something.
  */
-MO5().define("WSE.extensions.sideImages", function () {
+using().define("WSE.extensions.sideImages", function () {
     
     "use strict";
     

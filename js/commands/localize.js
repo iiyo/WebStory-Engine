@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.localize", function () {
+using().define("WSE.commands.localize", function () {
     
     "use strict";
     

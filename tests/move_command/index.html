@@ -24,10 +24,11 @@
         </style>
     </head>
     <body>
+        <script src="../../libs/MO5/libs/using.js/using.js"></script>
         <script src="../../libs/MO5/js/MO5.js"></script>
         <script src="../../js/paths.js"></script>
         <script>
-            MO5("WSE.Game").run(function (Game) {
+            using("WSE.Game").run(function (Game) {
                 
                 var game = new Game({ url: "game.xml"});
                 

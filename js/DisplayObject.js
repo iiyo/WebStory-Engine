@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
+using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
 define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
     
     function DisplayObject () {

@@ -1,4 +1,6 @@
-MO5("WSE.commands").run(function (commands) {
+/* global using */
+
+using("WSE.commands").run(function (commands) {
     
     "use strict";
     

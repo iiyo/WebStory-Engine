@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "MO5.transform",
     "MO5.easing",
     "MO5.Animation",

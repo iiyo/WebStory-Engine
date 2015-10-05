@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools", "WSE.commands.set_vars").
+using("WSE.tools", "WSE.commands.set_vars").
 define("WSE.commands.sub", function (tools, setVars) {
     
     "use strict";

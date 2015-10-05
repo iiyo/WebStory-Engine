@@ -62,9 +62,10 @@ concatJsFiles = function (files)
     moduleString += "\nWSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;\n";
     
     for (moduleName in files) {
-        moduleString += "\nMO5.modules['" + moduleName + "'] = WSEPath;";
+        moduleString += "\nusing.modules['" + moduleName + "'] = WSEPath;";
     }
     
+    fn("libs/MO5/libs/using.js/using.js");
     fn("libs/MO5/js/MO5.js");
     
     concatFile += moduleString;

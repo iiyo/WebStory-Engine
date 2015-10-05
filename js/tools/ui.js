@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.tools.ui", function () {
+using().define("WSE.tools.ui", function () {
     
     "use strict";
     

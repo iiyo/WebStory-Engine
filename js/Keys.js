@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.Keys", function () {
+using().define("WSE.Keys", function () {
     
     /**
     

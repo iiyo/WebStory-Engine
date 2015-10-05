@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.dataSources.LocalStorage").
+using("WSE.dataSources.LocalStorage").
 define("WSE.dataSources", function (LocalStorageDataSource) {
     
     var dataSources = {

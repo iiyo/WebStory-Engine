@@ -1,6 +1,6 @@
-/* global MO5, Howl */
+/* global using, Howl */
 
-MO5("WSE.tools").define("WSE.assets.Audio", function (tools) {
+using("WSE.tools").define("WSE.assets.Audio", function (tools) {
     
     "use strict";
     

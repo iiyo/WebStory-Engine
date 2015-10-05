@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.set_vars", function () {
+using().define("WSE.commands.set_vars", function () {
     
     "use strict";
     

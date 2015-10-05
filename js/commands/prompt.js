@@ -1,5 +1,5 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools.ui").define("WSE.commands.prompt", function (ui) {
+using("WSE.tools.ui").define("WSE.commands.prompt", function (ui) {
     return ui.makeInputFn("prompt");
 });

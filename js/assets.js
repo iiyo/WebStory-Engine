@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.assets.Animation",
     "WSE.assets.Audio",
     "WSE.assets.Background",

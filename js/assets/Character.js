@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.DisplayObject", "WSE.tools").
+using("WSE.DisplayObject", "WSE.tools").
 define("WSE.assets.Character", function (DisplayObject, tools) {
     
     "use strict";

@@ -1,10 +1,9 @@
-/* global MO5 */
+/* global using */
 
-MO5("MO5.Timer").define("WSE.tools", function (Timer) {
+using("MO5.Timer").define("WSE.tools", function (Timer) {
     
     "use strict";
     
-    var timers = {};
     var tools = {};
     
     /**

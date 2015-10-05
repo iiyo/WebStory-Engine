@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.assets", "WSE.DisplayObject", "WSE.tools").
+using("WSE.assets", "WSE.DisplayObject", "WSE.tools").
 define("WSE.assets.Rectangle", function (assets, DisplayObject, tools) {
     
     "use strict";

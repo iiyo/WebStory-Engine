@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
+using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
     
     function alert (command, interpreter) {
         

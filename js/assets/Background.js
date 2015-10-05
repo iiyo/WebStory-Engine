@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("WSE.tools", "WSE.DisplayObject").
+using("WSE.tools", "WSE.DisplayObject").
 define("WSE.assets.Background", function (tools, DisplayObject) {
     
     "use strict";

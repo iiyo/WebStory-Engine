@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.commands.alert",
     "WSE.commands.break",
     "WSE.commands.choice",

@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5().define("WSE.commands.restart", function () {
+using().define("WSE.commands.restart", function () {
     
     "use strict";
     

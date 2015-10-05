@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
+using("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
 define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";

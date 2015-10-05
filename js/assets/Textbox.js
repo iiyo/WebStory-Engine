@@ -1,6 +1,6 @@
-/* global MO5 */
+/* global using */
 
-MO5(
+using(
     "WSE.DisplayObject",
     "WSE.tools",
     "MO5.transform",

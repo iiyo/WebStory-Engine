@@ -1,6 +1,6 @@
-/* global WSE */
+/* global using */
 
-MO5("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, functions) {
+using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, functions) {
     
     "use strict";
     
