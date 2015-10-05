@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+        </triggers>
+    </settings>
+    <assets>
+        
+        <imagepack name="jack_head" x="0" y="0" z="10000">
+            <image src="../../assets/images/jack/head-smile.png" name="smile" />
+        </imagepack>
+        
+        <imagepack name="cecile_head" x="0" y="0" z="10000">
+            <image src="../../assets/images/cecile/head-smile.png" name="smile" />
+        </imagepack>
+        
+        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        
+        <textbox
+            name="tb"
+            namebox="yes"
+            width="95%" height="120px"
+            speed="0"></textbox>
+        
+        <character name="c" textbox="tb" imagepack="cecile_head">
+            <displayname>Cecile</displayname>
+        </character>
+        <character name="j" textbox="tb" imagepack="jack_head">
+            <displayname>Jack</displayname>
+        </character>
+        <character name="n" textbox="tb"></character>
+        
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            
+            <set asset="cecile_head" image="smile" />
+            <set asset="jack_head" image="smile" />
+            
+            <move asset="tb" x="50%" xAnchor="50%" y="95%" yAnchor="100%" duration="0" />
+            <move asset="cecile_head" x="88%" xAnchor="50%" y="95%" yAnchor="100%" duration="0" />
+            <move asset="jack_head" x="88%" xAnchor="50%" y="95%" yAnchor="100%" duration="0" />
+            
+            <wait />
+            
+            <show asset="bg" />
+            <show asset="tb" />
+            <wait />
+            
+            <line s="c">Hi, I'm Cecile!</line>
+            <line s="n">I'm the narrator.</line>
+            <line s="j">And I'm Jack.</line>
+            
+            <restart />
+        </scene>
+        
+    </scenes>
+</ws>
+

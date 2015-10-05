@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebStory Engine</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="../../styles/default.css" type="text/css" />
+        <style>
+            .textbox .text {
+                margin-right: 25%;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="../../libs/MO5/js/MO5.js"></script>
+        <script src="../../js/paths.js"></script>
+        <script>
+            MO5.modules["WSE.extensions.sideImages"] = "../../js/extensions/side-images.js";
+        </script>
+        <script>
+            MO5("WSE.Game", "WSE.extensions.sideImages").run(function (Game, injectSideImages) {
+                
+                var game = new Game({ url: "game.xml"});
+                
+                injectSideImages(game);
+                
+                game.start();
+            });
+        </script>
+    </body>
+</html>
