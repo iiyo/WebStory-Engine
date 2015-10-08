@@ -14,7 +14,7 @@ using().define("WSE.commands.restart", function () {
             }, 
             false
         );
-
+        
         interpreter.bus.trigger("wse.interpreter.message", "Restarting game...", false);
         interpreter.bus.trigger("wse.interpreter.restart", interpreter, false);
         

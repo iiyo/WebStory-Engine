@@ -12,8 +12,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
      * @trigger wse.interpreter.warning@interpreter
      * @trigger wse.assets.audio.constructor@interpreter
      */
-    function Audio (asset, interpreter)
-    {
+    function Audio (asset, interpreter) {
+        
         var self, sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
@@ -184,7 +184,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
                 doNext: true
             };
         };
-
+        
         /**
          * Stops playing the current track.
          * 
@@ -265,7 +265,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             }
         }.bind(this));
     };
-
+    
     /**
      * Changes the currently active track.
      * 
@@ -273,8 +273,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
      * @trigger wse.interpreter.warning@interpreter
      * @trigger wse.assets.audio.set@interpreter
      */
-    Audio.prototype.set = function (command)
-    {
+    Audio.prototype.set = function (command) {
+        
         var wasPlaying = false;
         
         if (this._playing) {

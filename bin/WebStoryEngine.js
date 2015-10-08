@@ -2259,7 +2259,7 @@ using("MO5.Exception").define("MO5.assert", function (Exception) {
 
 /////////////////////////////////////////////////////////////////////////////////*/
 
-/* global MO5, window, module, require */
+/* global using, MO5, window, module, require */
 
 (function MO5CoreObjectBootstrap () {
     
@@ -2472,9 +2472,8 @@ using("MO5.Exception").define("MO5.assert", function (Exception) {
             event2 = event2 || "*";
             
             if (!obj2 || !(obj2 instanceof CoreObject)) {
-                fail(new Exception("Cannot connect events: Parameter 3 is " +
-                    "expected to be of type CoreObject."));
-                return this;
+                throw new Exception("Cannot connect events: Parameter 3 is " +
+                    "expected to be of type CoreObject.");
             }
             
             function listener (data) {
@@ -2583,39 +2582,39 @@ using("MO5.Exception").define("MO5.assert", function (Exception) {
             var self = this;
             
             if (!(typeof bus.subscribe === "function" && typeof bus.unsubscribe === "function")) {
-                fail(new Exception("Cannot subscribe: Parameter 1 is " +
-                    "expected to be of type CoreObject or EventBus."));
-                return this;
+                throw new Exception("Cannot subscribe: Parameter 1 is " +
+                    "expected to be of type CoreObject or EventBus.");
             }
+            
             if (typeof event !== "string") {
-                fail(new Exception("Cannot subscribe: Parameter 2 is " +
-                    "expected to be of type String."));
-                return this;
+                throw new Exception("Cannot subscribe: Parameter 2 is " +
+                    "expected to be of type String.");
             }
+            
             if (typeof listener !== "function") {
-                fail(new Exception("Cannot subscribe: Parameter 3 is " +
-                    "expected to be of type Function."));
-                return this;
+                throw new Exception("Cannot subscribe: Parameter 3 is " +
+                    "expected to be of type Function.");
             }
             
             listener = listener.bind(this);
             
             bus.subscribe(event, listener);
             
+            this.subscribe("destroyed", thisDestroyed);
+            bus.subscribe("destroyed", busDestroyed);
+            
+            return this;
+            
             function thisDestroyed () {
                 bus.unsubscribe(event, listener);
                 self.unsubscribe("destroyed", thisDestroyed);
                 bus.unsubscribe("destroyed", busDestroyed);
             }
+            
             function busDestroyed () {
                 bus.unsubscribe("destroyed", busDestroyed);
                 self.unsubscribe("destroyed", thisDestroyed);
             }
-            
-            this.subscribe("destroyed", thisDestroyed);
-            bus.subscribe("destroyed", busDestroyed);
-            
-            return this;
         };
         
         return CoreObject;
@@ -2674,24 +2673,23 @@ using("MO5.Exception").define("MO5.assert", function (Exception) {
 
 using().define("MO5.dom.effects.typewriter", function () {
     
-    function typewriter (element, args)
-    {
+    function typewriter (element, args) {
+        
         var TYPE_ELEMENT = 1, TYPE_TEXT = 3, speed, cb;
         
         args = args || {};
         speed = args.speed || 50;
         cb = args.onFinish || null;
         
-        function hideChildren(el)
-        {
+        function hideChildren(el) {
+            
             var childNodes = el.childNodes, i, len;
             
-            if (el.nodeType === TYPE_ELEMENT)
-            {
+            if (el.nodeType === TYPE_ELEMENT) {
+                
                 el.style.display = 'none';
                 
-                for (i = 0, len = childNodes.length; i < len; i += 1)
-                {
+                for (i = 0, len = childNodes.length; i < len; i += 1) {
                     hideChildren(childNodes[i]);
                 }
             }
@@ -2699,57 +2697,51 @@ using().define("MO5.dom.effects.typewriter", function () {
         
         hideChildren(element);
         
-        function showChildren(el, cb)
-        {
-            if (el.nodeType === TYPE_ELEMENT)
-            {
-                (function ()
-                {
+        function showChildren(el, cb) {
+            
+            if (el.nodeType === TYPE_ELEMENT) {
+                (function () {
+                    
                     var children = [];
                     
-                    while (el.hasChildNodes())
-                    {
+                    while (el.hasChildNodes()) {
                         children.push(el.removeChild(el.firstChild));
                     }
                     
                     el.style.display = '';
                     
-                    (function loopChildren()
-                    {
-                        if (children.length > 0)
-                        {
+                    (function loopChildren() {
+                        
+                        if (children.length > 0) {
                             showChildren(children[0], loopChildren);
                             el.appendChild(children.shift());
                         }
-                        else if (cb)
-                        {
+                        else if (cb) {
                             setTimeout(cb, 0);
                         }
                     }());
                     
                 }());
             }
-            else if (el.nodeType === TYPE_TEXT)
-            {
-                (function ()
-                {
+            else if (el.nodeType === TYPE_TEXT) {
+                
+                (function () {
+                    
                     var textContent = el.data.replace(/ +/g, ' '), i, len;
                     
                     el.data = '';
                     i = 0;
                     len = textContent.length;
                     
-                    function insertTextContent()
-                    {
+                    function insertTextContent() {
+                        
                         el.data += textContent[i];
                         i += 1;
                         
-                        if (i < len)
-                        {
+                        if (i < len) {
                             setTimeout(insertTextContent, 1000 / speed);
                         }
-                        else if (cb)
-                        {
+                        else if (cb) {
                             setTimeout(cb, 0);
                         }
                     }
@@ -3006,7 +2998,7 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         return new TimerWatcher().addTimer(t0).addTimer(t1);
     };
-
+    
     Element.prototype.move = function (x, y, args) {
         
         args = args || {};
@@ -3017,13 +3009,13 @@ define("MO5.dom.Element", function (CoreObject, transform, TimerWatcher,
         
         return this.moveTo(dx, dy, args);
     };
-
+    
     Element.prototype.display = function () {
         this.element.style.visibility = "";
     };
     
     Element.prototype.show = Element.prototype.display;
-
+    
     Element.prototype.hide = function () {
         this.element.style.visibility = "hidden";
     };
@@ -3411,7 +3403,7 @@ using().define("MO5.easing", function () {
     
 });
 
-/* global using, setTimeout, console, window, module */
+/* global using, MO5, setTimeout, console, window, module */
 
 (function MO5EventBusBootstrap () {
     
@@ -3436,10 +3428,6 @@ using().define("MO5.easing", function () {
             
             args = args || {};
             
-            if (!( this instanceof EventBus)) {
-                return new EventBus( args );
-            }
-            
             this.debug = args.debug || false;
             this.interceptErrors = args.interceptErrors || false;
             this.log = args.log || false;
@@ -3462,7 +3450,8 @@ using().define("MO5.easing", function () {
                 }
                 
                 name = data.error.name || "Error";
-                console.log(name + " in listener; Event: " + data.info.event + "; Message: " + data.error.message);
+                console.log(name + " in listener; Event: " + data.info.event + "; Message: " +
+                    data.error.message);
             }
         }
         
@@ -3470,6 +3459,7 @@ using().define("MO5.easing", function () {
         EventBus.FLOW_TYPE_SYNCHRONOUS = 1;
         
         EventBus.create = function(args) {
+            
             args = args || {};
             
             return new EventBus(args);
@@ -3504,6 +3494,7 @@ using().define("MO5.easing", function () {
             
             this.callbacks[event] = this.callbacks[event] || [];
             this.callbacks[event].push(listener);
+            
             this.trigger(
                 "EventBus.subscribe", 
                 {
@@ -3565,7 +3556,8 @@ using().define("MO5.easing", function () {
         
         EventBus.prototype.once = function (listenerOrEvent1, listenerOrEvent2) {
             
-            var fn, self = this, event, listener, firstParamIsFunction, secondParamIsFunction, called = false;
+            var fn, self = this, event, listener;
+            var firstParamIsFunction, secondParamIsFunction, called = false;
             
             firstParamIsFunction = typeof listenerOrEvent1 === "function";
             secondParamIsFunction = typeof listenerOrEvent2 === "function";
@@ -3605,14 +3597,20 @@ using().define("MO5.easing", function () {
             
             var cbs, len, info, j, f, cur, self, flowType;
             
-            if (typeof event !== "undefined" && typeof event !== "string" && typeof event !== "number") {
+            if (
+                typeof event !== "undefined" &&
+                typeof event !== "string" &&
+                typeof event !== "number"
+            ) {
                 throw new Error("Event names can only be strings or numbers! event: ", event);
             }
             
-            event = arguments.length ? event : "*";
-            flowType = (typeof async !== "undefined" && async === false) ? EventBus.FLOW_TYPE_SYNCHRONOUS : this.defaults.flowType;
-            
             self = this;
+            event = arguments.length ? event : "*";
+            
+            flowType = (typeof async !== "undefined" && async === false) ?
+                EventBus.FLOW_TYPE_SYNCHRONOUS :
+                this.defaults.flowType;
             
             // get subscribers in all relevant namespaces
             cbs = (function() {
@@ -3623,6 +3621,7 @@ using().define("MO5.easing", function () {
                 words = event.split(".");
                 
                 for (n = 0, wc = words.length ; n < wc ; ++n) {
+                    
                     old = old + (n > 0 ? "." : "") + words[n];
                     matches = self.callbacks[old] || [];
                     
@@ -3705,7 +3704,7 @@ using().define("MO5.easing", function () {
                     }
                 }
             };
-
+            
             if (flowType === EventBus.FLOW_TYPE_ASYNCHRONOUS) {
                 setTimeout(f, 0);
             }
@@ -3809,26 +3808,27 @@ using().define("MO5.easing", function () {
     }
     
     function MO5ExceptionModule () {
-
+        
         function Exception (msg) {
+            
             var e = Error.apply(null, arguments), key;
-
+            
             // we need to copy the properties manually since
             // Javascript's Error constructor ignores the first
             // parameter used with .call()...
             for (key in e) {
                 this[key] = e[key];
             }
-
+            
             this.message = msg;
             this.name = "MO5.Exception";
         }
-
+        
         Exception.prototype = new Error();
         Exception.prototype.constructor = Exception;
-
+        
         return Exception;
-
+        
     }
     
 }());
@@ -3882,7 +3882,7 @@ using().define("MO5.easing", function () {
     }
     
     function MO5failModule () {
-
+        
         /**
          * A function to log errors with stack traces to the console.
          * Useful if you encounter some minor errors that are no show-stoppers
@@ -3890,21 +3890,21 @@ using().define("MO5.easing", function () {
          * debug your code by looking at the console output.
          */
         function fail (e) {
-
+            
             if (console.error) {
                 console.error(e.toString());
             }
             else {
                 console.log(e.toString());
             }
-
+            
             if (e.stack) {
                 console.log(e.stack);
             }
         }
-
+        
         return fail;
-
+        
     }
 }());
 
@@ -3960,7 +3960,7 @@ using().define("MO5.globals.window", function () {
 /* global MO5, window, require, module */
 
 (function MO5ListBootstrap () {
-
+    
     if (typeof using === "function") {
         using("MO5.CoreObject", "MO5.Queue", "MO5.types").
         define("MO5.List", MO5ListModule);
@@ -3977,17 +3977,17 @@ using().define("MO5.globals.window", function () {
     }
     
     function MO5ListModule (CoreObject, Queue, types) {
-
+        
         function List (items) {
             
             CoreObject.call(this);
-
+            
             this.unsubscribers = {};
             this.items = types.isArray(items) ? items : [];
         }
-
+        
         List.prototype = new CoreObject();
-
+        
         List.prototype.length = function () {
             return this.items.length;
         };
@@ -4018,23 +4018,23 @@ using().define("MO5.globals.window", function () {
                 value.subscribe(listener, "destroyed");
                 value.subscribe("destroyed", function () {value = null;});
             }
-
+            
             this.items.push(value);
-
+            
             return this;
         };
-
+        
         List.prototype.remove = function (i) {
-
+            
             var val = this.items[i];
-
+            
             if (CoreObject.isCoreObject(val)) {
                 this.unsubscribers[val.id]();
                 delete this.unsubscribers[val.id];
             }
-
+            
             this.items.splice(i, 1);
-
+            
             return this;
         };
         
@@ -4046,7 +4046,7 @@ using().define("MO5.globals.window", function () {
                 list.remove(i);
             });
         };
-
+        
         List.prototype.at = function (i) {
             return this.items[+i];
         };
@@ -4065,15 +4065,15 @@ using().define("MO5.globals.window", function () {
             
             return values;
         };
-
+        
         List.prototype.toQueue = function () {
             
             var q = new Queue();
-
+            
             this.items.forEach(function (item) {
                 q.add(item);
             });
-
+            
             return q;
         };
         
@@ -4199,32 +4199,32 @@ using().define("MO5.globals.window", function () {
     }
     
     function MO5MapModule (CoreObject, Exception) {
-
+        
         var prefix = "MO5Map";
-
+        
         function makeKey (k) {
             return prefix + k;
         }
-
+        
         function revokeKey (k) {
             return k.replace(new RegExp(prefix), "");
         }
-
+        
         function Map (content) {
-
+            
             var key;
-
+            
             CoreObject.call(this);
-
+            
             this.clear();
-
+            
             if (content) {
                 for (key in content) {
                     this.set(key, content[key]);
                 }
             }
         }
-
+        
         Map.prototype = new CoreObject();
         
         Map.prototype.clear = function () {
@@ -4232,81 +4232,81 @@ using().define("MO5.globals.window", function () {
             this.unsubscribers = {};
             this.count = 0;
         };
-
+        
         Map.prototype.length = function () {
             return this.count;
         };
-
+        
         Map.prototype.set = function (k, value) {
-
+            
             var self = this, key = makeKey(k);
-
+            
             function whenDestroyed () {
                 if (self.has(k)) {
                     self.remove(k);
                 }
             }
-
+            
             if (!k) {
                 throw new Error("MO5.Map keys cannot be falsy.");
             }
-
+            
             if (this.has(key)) {
                 this.remove(key);
             }
-
+            
             if (value && value instanceof CoreObject) {
-
+                
                 if (value.destroyed) {
                     throw new Error("Trying to add an MO5.Object that has " +
                         "already been destroyed.");
                 }
-
+                
                 value.subscribe(whenDestroyed, "destroyed");
             }
-
+            
             if (k instanceof CoreObject) {
-
+                
                 if (k.destroyed) {
                     throw new Error("Trying to use an MO5.Object as key that " +
                         "has already been destroyed.");
                 }
-
+                
                 k.subscribe(whenDestroyed, "destroyed");
-
+                
             }
-
+            
             if (value && value instanceof CoreObject || k instanceof CoreObject) {
-
+                
                 this.unsubscribers[key] = function () {
-
+                    
                     if (value instanceof CoreObject) {
                         value.unsubscribe(whenDestroyed, "destroyed");
                     }
-
+                    
                     if (k instanceof CoreObject) {
                         k.unsubscribe(whenDestroyed, "destroyed");
                     }
                 };
             }
-
+            
             this.items[key] = value;
             this.count += 1;
-
+            
             this.trigger("updated", null, false);
             this.trigger("set", key, false);
-
+            
             return this;
         };
-
+        
         Map.prototype.get = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             if (!this.items.hasOwnProperty(key)) {
                 return undefined;
             }
-
+            
             return this.items[key];
         };
         
@@ -4322,56 +4322,56 @@ using().define("MO5.globals.window", function () {
             
             return this.get(key);
         };
-
+        
         Map.prototype.remove = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             if (!this.has(k)) {
                 throw new Error("Trying to remove an unknown key from an MO5.Map.");
             }
-
+            
             if (this.unsubscribers.hasOwnProperty(key)) {
                 this.unsubscribers[key]();
                 delete this.unsubscribers[key];
             }
-
+            
             delete this.items[key];
             this.count -= 1;
-
+            
             this.trigger("updated", null, false);
             this.trigger("removed", key, false);
-
+            
             return this;
         };
-
+        
         Map.prototype.has = function (k) {
-
+            
             var key = makeKey(k);
-
+            
             return this.items.hasOwnProperty(key);
         };
-
+        
         Map.prototype.destroy = function () {
-
+            
             for (var key in this.unsubscribers) {
                 this.unsubscribers[key]();
                 delete this.unsubscribers[key];
             }
-
+            
             CoreObject.prototype.destroy.call(this);
         };
-
+        
         Map.prototype.forEach = function (fn) {
-
+            
             if (!fn || typeof fn !== "function") {
                 throw new Error("Parameter 1 is expected to be of type function.");
             }
-
+            
             for (var key in this.items) {
                 fn(this.items[key], revokeKey(key), this);
             }
-
+            
             return this;
         };
         
@@ -4478,32 +4478,32 @@ using().define("MO5.globals.window", function () {
             
             return jsObject;
         };
-
+        
         Map.prototype.clone = function () {
             var clone = new Map();
-
+            
             this.forEach(function (item, key) {
                 clone.set(key, item);
             });
-
+            
             return clone;
         };
-
+        
         /**
          * Adds the content of another map to this map's content.
          * @param otherMap Another MO5.Map.
          */
         Map.prototype.addMap = function (otherMap) {
-
+            
             var self = this;
-
+            
             otherMap.forEach(function (item, key) {
                 self.set(key, item);
             });
-
+            
             return this;
         };
-
+        
         /**
          * Returns a new map which is the result of joining this map
          * with another map. This map isn't changed in the process.
@@ -4514,11 +4514,11 @@ using().define("MO5.globals.window", function () {
         Map.prototype.join = function (otherMap) {
             return this.clone().addMap(otherMap);
         };
-
+        
         return Map;
-
+        
     }
-
+    
 }());
 
 
@@ -4560,14 +4560,13 @@ using().define("MO5.globals.window", function () {
 
 using().define("MO5.Point", function () {
     
-    function Point (x, y)
-    {
+    function Point (x, y) {
         this.x = x;
         this.y = y;
     }
-
-    Point.prototype.getDistance = function (otherPoint)
-    {
+    
+    Point.prototype.getDistance = function (otherPoint) {
+        
         var dx = this.x - otherPoint.x,
             dy = this.y - otherPoint.y,
             dist = Math.squrt(dx * dx + dy * dy);
@@ -5382,133 +5381,142 @@ requireModule('promise/polyfill').polyfill();
     }
     
     function MO5QueueModule (Exception, CoreObject) {
-
+        
         function Queue (arr) {
             CoreObject.call(this);
-
+            
             if (arr && !(arr instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.");
             }
-
+            
             this.arr = arr || [];
         }
-
+        
         Queue.prototype = new CoreObject();
         Queue.prototype.constructor = Queue;
-
+        
         Queue.prototype.length = function () {
             return this.arr.length;
         };
-
+        
         /**
          * Adds an item to the back of the queue.
          */
         Queue.prototype.add = function (val) {
+            
             var self = this, index = this.arr.length;
-
+            
             if (val instanceof CoreObject) {
-
+                
                 if (val.destroyed) {
-                    throw new Exception("Trying to add an MO5.Object that has already been destroyed.");
+                    throw new Exception("Trying to add an MO5.Object that has " +
+                        "already been destroyed.");
                 }
-
-                val.once(function () { if (!self.destroyed) { self.arr.splice(index, 1); } }, "destroyed");
+                
+                val.once(function () {
+                    if (!self.destroyed) {
+                        self.arr.splice(index, 1);
+                    }
+                }, "destroyed");
             }
-
+            
             this.arr.push(val);
             this.trigger("updated");
             this.trigger("added", val);
-
+            
             return this;
         };
-
+        
         /**
          * Replaces all items of the queue with the items in the first parameter.
          * @param arr An array containing the new items.
          */
         Queue.prototype.replace = function (arr) {
+            
             if (!(arr instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.");
             }
-
+            
             this.arr = arr;
-
+            
             this.trigger("updated");
             this.trigger("replaced", arr);
-
+            
             return this;
         };
-
+        
         /**
          * Removes the front of the queue and returns it.
          */
         Queue.prototype.next = function () {
-
+            
             if (!this.hasNext()) {
                 throw new Exception("Calling next() on empty queue.");
             }
-
+            
             var ret = this.arr.shift();
-
+            
             this.trigger("updated");
             this.trigger("next");
-
+            
             if (this.arr.length < 1) {
                 this.trigger("emptied");
             }
-
+            
             return ret;
         };
-
+        
         /**
          * Returns the front item of the queue without removing it.
          */
         Queue.prototype.peak = function () {
             return this.isEmpty() ? undefined : this.arr[0];
         };
-
+        
         Queue.prototype.isEmpty = function () {
             return !this.hasNext();
         };
-
+        
         Queue.prototype.hasNext = function () {
             return this.arr.length > 0;
         };
-
+        
         /**
          * Removes all items from the queue.
          */
         Queue.prototype.clear = function () {
+            
             this.arr = [];
             this.trigger("updated");
             this.trigger("cleared");
-
+            
             return this;
         };
-
+        
         /**
          * Reverses the queue's order so that the first item becomes the last.
          */
         Queue.prototype.reverse = function () {
+            
             var q = new Queue(), len = this.length(), i = len - 1;
-
+            
             while (i >= 0) {
                 q.add(this.arr[i]);
                 i -= 1;
             }
-
+            
             return q;
         };
-
+        
         /**
          * Returns a shallow copy of the queue.
          */
         Queue.prototype.clone = function () {
             return new Queue(this.arr.slice());
         };
-
+        
         return Queue;
-
+        
     }
     
 }());
@@ -5531,13 +5539,13 @@ requireModule('promise/polyfill').polyfill();
     function MO5rangeModule () {
         
         function range (first, last) {
-
+            
             var bag = [], i;
-
+            
             for (i = first; i <= last; i += 1) {
                 bag.push(i);
             }
-
+            
             return bag;
         }
         
@@ -5585,7 +5593,7 @@ requireModule('promise/polyfill').polyfill();
 (function MO5ResultBootstrap () {
     
     console.warn("MO5.Result is deprecated - use MO5.Promise instead!");
-
+    
     if (typeof using === "function") {
         using("MO5.CoreObject", "MO5.Queue", "MO5.Exception", "MO5.fail").
         define("MO5.Result", MO5ResultModule);
@@ -5608,7 +5616,7 @@ requireModule('promise/polyfill').polyfill();
     }
     
     function MO5ResultModule (CoreObject, Queue, Exception, fail) {
-
+        
         var setImmediate;
         
         if (typeof window !== "undefined" && window.setImmediate) {
@@ -5620,9 +5628,9 @@ requireModule('promise/polyfill').polyfill();
         else {
             setImmediate = function (fn) { setTimeout(fn, 0); };
         }
-
+        
         function resolve (queue, value) {
-
+            
             while (queue.hasNext()) {
                 setImmediate((function (cur) { 
                     return function () { 
@@ -5631,17 +5639,17 @@ requireModule('promise/polyfill').polyfill();
                 }(queue.next())));
             }
         }
-
+        
         function addToQueue (type, queue, cb, action) {
-
+            
             if (typeof cb === "function") {
                 queue.add(function (value) {
-
+                    
                     var nextValue;
-
+                    
                     try {
                         nextValue = cb(value);
-
+                        
                         if (nextValue && nextValue instanceof Promise) {
                             nextValue.then(action.success, action.failure);
                         }
@@ -5652,7 +5660,7 @@ requireModule('promise/polyfill').polyfill();
                     catch (e) {
                         action.failure(e);
                     }
-
+                    
                     return nextValue;
                 });
             }
@@ -5660,78 +5668,78 @@ requireModule('promise/polyfill').polyfill();
                 queue.add(function (value) { action[type](value); });
             }
         }
-
+        
         function Result () {
-
+            
             CoreObject.call(this);
-
+            
             this.successQueue = new Queue();
             this.failureQueue = new Queue();
             this.value = undefined;
             this.status = Result.STATUS_PENDING;
-
+            
             this.promise = new Promise(this);
         }
-
+        
         Result.STATUS_PENDING = 1;
         Result.STATUS_FAILURE = 2;
         Result.STATUS_SUCCESS = 3;
-
+        
         Result.getFulfilledPromise = function () {
             return new Result().success().promise;
         };
-
+        
         Result.getBrokenPromise = function () {
             return new Result().failure().promise;
         };
-
+        
         Result.prototype = new CoreObject();
-
+        
         Result.prototype.isPending = function () {
             return this.status === Result.STATUS_PENDING;
         };
-
+        
         Result.prototype.failure = function (reason) {
             if (this.status !== Result.STATUS_PENDING) {
                 fail(new Exception("The result of the action has already been determined."));
                 return;
             }
-
+            
             this.value = reason;
             this.status = Result.STATUS_FAILURE;
             resolve(this.failureQueue, reason);
             this.successQueue.clear();
             this.failureQueue.clear();
-
+            
             return this;
         };
-
+        
         Result.prototype.success = function (value) {
             if (this.status !== Result.STATUS_PENDING) {
                 fail(new Exception("The result of the action has already been determined."));
                 return;
             }
-
+            
             this.value = value;
             this.status = Result.STATUS_SUCCESS;
             resolve(this.successQueue, value);
             this.successQueue.clear();
             this.failureQueue.clear();
-
+            
             return this;
         };
-
+        
         Result.addToQueue = addToQueue;
         Result.resolve = resolve;
-
+        
         function Promise (result) {
-
+            
             CoreObject.call(this);
-
+            
             this.then = function (success, failure) {
-
+                
                 var newResult = new Result();
-
+                
                 switch (result.status) {
                     case Result.STATUS_PENDING:
                         Result.addToQueue("success", result.successQueue, success, newResult);
@@ -5746,15 +5754,15 @@ requireModule('promise/polyfill').polyfill();
                         Result.resolve(result.failureQueue, result.value);
                         break;
                 }
-
+                
                 return newResult.promise;
             };
         }
-
+        
         Promise.prototype = new CoreObject();
-
+        
         return Result;
-
+        
     }
     
 }());
@@ -5776,7 +5784,7 @@ requireModule('promise/polyfill').polyfill();
     }
     
     function MO5SetModule (CoreObject, types) {
-    
+        
         var KEY_PREFIX = "MO5Set_";
         
         /**
@@ -5862,7 +5870,7 @@ requireModule('promise/polyfill').polyfill();
                 
                 key = toKey(item);
                 this._stringItems[key] = item;
-
+                
                 if (CoreObject.isCoreObject(item)) {
                     this._unsubscribers[key] = this.delete.bind(this, item);
                     item.subscribe("destroyed", this._unsubscribers[key]);
@@ -5895,7 +5903,7 @@ requireModule('promise/polyfill').polyfill();
                 key = toKey(item);
                 
                 delete this._stringItems[key];
-
+                
                 if (CoreObject.isCoreObject(item)) {
                     item.unsubscribe("destroyed", this._unsubscribers[key]);
                     delete this._unsubscribers[key];
@@ -6024,16 +6032,16 @@ requireModule('promise/polyfill').polyfill();
          * @return Can the item be converted to key?
          */
         function canBeConvertedToKey (item) {
-
+            
             if (types.isObject(item)) {
-
+                
                 if (types.isNumber(item.id)) {
                     return true;
                 }
-
+                
                 return false;
             }
-
+            
             return true;
         }
         
@@ -6046,11 +6054,11 @@ requireModule('promise/polyfill').polyfill();
          * @return The key as a string.
          */
         function toKey (item) {
-
+            
             if (types.isObject(item)) {
                 return KEY_PREFIX + "MO5CoreObject_" + item.id;
             }
-
+            
             return KEY_PREFIX + "SimpleValue_" + JSON.stringify(item);
         }
         
@@ -6161,16 +6169,17 @@ using().define("MO5.Size", function () {
     }
     
     function MO5TimerModule (Exception, CoreObject, fail, Promise) {
-
+        
         function TimerError (msg) {
+            
             Exception.call(this);
-
+            
             this.message = msg;
             this.name = "MO5.TimerError";
         }
-
+        
         TimerError.prototype = new Exception();
-
+        
         /**
          * A Timer object is returned by the transform() function.
          * It can be used to control the transformation during its
@@ -6179,8 +6188,9 @@ using().define("MO5.Size", function () {
          * still ongoing.
          */
         function Timer () {
+            
             CoreObject.call(this);
-
+            
             this.running = false;
             this.paused = false;
             this.canceled = false;
@@ -6189,71 +6199,72 @@ using().define("MO5.Size", function () {
             this.pauseTimeElapsed = 0;
             this.pauseStartTime = this.startTime;
         }
-
+        
         Timer.prototype = new CoreObject();
         Timer.prototype.constructor = Timer;
-
+        
         Timer.prototype.start = function () {
             this.startTime = +(new Date());
             this.running = true;
-
+            
             this.trigger("started", null, false);
-
+            
             return this;
         };
-
+        
         Timer.prototype.stop = function () {
             this.running = false;
             this.paused = false;
-
+            
             this.trigger("stopped", null, false);
-
+            
             return this;
         };
-
+        
         Timer.prototype.cancel = function () {
             if (!this.running) {
                 fail(new TimerError("Trying to cancel a Timer that isn't running."));
             }
-
+            
             this.elapsed();
             this.canceled = true;
             this.running = false;
             this.paused = false;
-
+            
             this.trigger("canceled", null, false);
-
+            
             return this;
         };
-
+        
         Timer.prototype.isRunning = function () {
             return this.running;
         };
-
+        
         Timer.prototype.isCanceled = function () {
             return this.canceled;
         };
-
+        
         Timer.prototype.isPaused = function () {
             return this.paused;
         };
-
+        
         Timer.prototype.pause = function () {
             this.paused = true;
             this.pauseStartTime = +(new Date());
             this.trigger("paused", null, false);
         };
-
+        
         Timer.prototype.resume = function () {
+            
             if (!this.paused) {
                 fail(new TimerError("Trying to resume a timer that isn't paused."));
             }
-
+            
             this.paused = false;
             this.pauseTimeElapsed += +(new Date()) - this.pauseStartTime;
             this.trigger("resumed", null, false);
         };
-
+        
         /**
          * Returns the number of milliseconds since the call of start(). If the
          * Timer's already been stopped, then the number of milliseconds between 
@@ -6261,13 +6272,14 @@ using().define("MO5.Size", function () {
          * include the times between pause() and resume()!
          */
         Timer.prototype.elapsed = function () {
+            
             if (this.running && !this.paused) {
                 this.timeElapsed = ((+(new Date()) - this.startTime) - this.pauseTimeElapsed);
             }
-
+            
             return this.timeElapsed;
         };
-
+        
         /**
          * Returns a capability object that can be given to other objects
          * by those owning a reference to the Timer. It is read only so that
@@ -6275,8 +6287,9 @@ using().define("MO5.Size", function () {
          * about the Timer's state, but not modify it.
          */
         Timer.prototype.getReadOnlyCapability = function () {
+            
             var self = this;
-
+            
             return {
                 isRunning: function () { return self.running; },
                 isCanceled: function () { return self.canceled; },
@@ -6284,37 +6297,37 @@ using().define("MO5.Size", function () {
                 elapsed: function () { return self.elapsed(); }
             };
         };
-
+        
         Timer.prototype.promise = function () {
-
+            
             var promise = new Promise(), self = this;
-
+            
             this.once(
                 function () {
                     promise.resolve(self);
                 }, 
                 "stopped"
             );
-
+            
             this.once(
                 function () {
                     promise.reject(self);
                 },
                 "canceled"
             );
-
+            
             this.once(
                 function () {
                     promise.reject(self);
                 },
                 "destroyed"
             );
-
+            
             return promise;
         };
-
+        
         return Timer;
-
+        
     }
 }());
 
@@ -6356,7 +6369,7 @@ using().define("MO5.Size", function () {
 /* global using, window, module, require */
 
 (function MO5TimerWatcherBootstrap () {
-
+    
     if (typeof using === "function") {
         using("MO5.Exception", "MO5.CoreObject", "MO5.fail", "MO5.Timer").
         define("MO5.TimerWatcher", MO5TimerWatcherModule);
@@ -6379,7 +6392,7 @@ using().define("MO5.Size", function () {
     }
     
     function MO5TimerWatcherModule (Exception, CoreObject, fail, Timer) {
-
+        
         /**
          * A TimerWatcher object can be used to bundle MO5.Timer objects
          * together and observe them. The TimerWatcher object emits the
@@ -6399,98 +6412,103 @@ using().define("MO5.Size", function () {
          * @event stopped()
          */
         function TimerWatcher (timers) {
+            
             var self;
-
+            
             CoreObject.call(this);
-
+            
             if (timers && !(timers instanceof Array)) {
                 throw new Exception("Parameter 1 is expected to be of type Array.").log();
             }
-
+            
             timers = timers || [];
-
+            
             self = this;
             this.timers = {};
             this.count = 0;
-
+            
             timers.forEach(function (t) {
                 self.addTimer(t);
             });
         }
-
+        
         TimerWatcher.prototype = new CoreObject();
         TimerWatcher.prototype.constructor = TimerWatcher;
-
+        
         TimerWatcher.prototype.addTimer = function (timer) {
             
             var fn, self = this;
-
+            
             if (this.timers[+timer]) {
-                fail(new Exception(
-                    "A timer with ID '" + timer + "' has already been added to the watcher."));
-                return this;
+                throw new Exception(
+                    "A timer with ID '" + timer + "' has already been added to the watcher.");
             }
-
+            
             this.count += 1;
-
+            
             fn = function () {
+                
                 self.count -= 1;
-
+                
                 if (self.count < 1) {
                     self.trigger("stopped", null, false);
                 }
             };
-
+            
             this.timers[+timer] = {
                 timer: timer,
                 unsubscribe: function () {
                     timer.unsubscribe(fn, "stopped");
                 }
             };
-
+            
             timer.subscribe(fn, "stopped");
             this.trigger("added", timer, false);
-
+            
             return this;
         };
-
+        
         /**
          * Creates and returns a Timer that is already added to
          * the TimerWatcher when it's returned to the caller.
          */
         TimerWatcher.prototype.createTimer = function () {
+            
             var timer = new Timer();
-
+            
             this.trigger("created", timer, false);
             this.addTimer(timer);
-
+            
             return timer;
         };
-
+        
         TimerWatcher.prototype.removeTimer = function (timer) {
+            
             if (!this.timers[+timer]) {
                 fail(new Exception("Trying to remove a timer that is unknown to the watcher."));
                 return this;
             }
-
+            
             this.timers[+timer].unsubscribe();
             delete this.timers[+timer];
-
+            
             this.trigger("removed", timer, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.forAll = function (what) {
+            
             var key, cur;
-
+            
             for (key in this.timers) {
+                
                 if (!(this.timers.hasOwnProperty(key))) {
                     continue;
                 }
-
+                
                 cur = this.timers[key].timer;
-
+                
                 if (cur instanceof TimerWatcher) {
                     this.timers[key].timer.forAll(what);
                 }
@@ -6498,48 +6516,52 @@ using().define("MO5.Size", function () {
                     this.timers[key].timer[what]();
                 }
             }
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.cancel = function () {
+            
             this.forAll("cancel");
             this.trigger("canceled", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.pause = function () {
+            
             this.forAll("pause");
             this.trigger("paused", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.resume = function () {
+            
             this.forAll("resume");
             this.trigger("resumed", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.stop = function () {
             return this.forAll("stop");
         };
-
+        
         TimerWatcher.prototype.start = function () {
+            
             this.forAll("start");
             this.trigger("started", null, false);
-
+            
             return this;
         };
-
+        
         TimerWatcher.prototype.promise = function () {
             return Timer.prototype.promise.call(this);
         };
-
+        
         return TimerWatcher;
-
+        
     }
 }());
 
@@ -6588,26 +6610,24 @@ using().define("MO5.tools", function () {
      * Returns a unique ID for MO5 objects.
      * @return [Number] The unique ID.
      */
-    tools.getUniqueId = (function ()
-    {
+    tools.getUniqueId = (function () {
+        
         var n = 0;
         
         return function () {
             return n++;
         };
     }());
-
+    
     /**
      * Returns the window's width and height.
      * @return Object An object with a width and a height property.
      */
-    tools.getWindowDimensions = function ()
-    {
-        var e = window,
-            a = 'inner';
+    tools.getWindowDimensions = function () {
         
-        if (!('innerWidth' in e))
-        {
+        var e = window, a = 'inner';
+        
+        if (!('innerWidth' in e)) {
             a = 'client';
             e = document.documentElement || document.body;
         }
@@ -6617,33 +6637,34 @@ using().define("MO5.tools", function () {
             height: e[a + 'Height']
         };
     };
-
+    
     /**
      * Scales an element to fit the window using CSS transforms.
      * @param el The DOM element to scale.
      * @param w The normal width of the element.
      * @param h The normal height of the element.
      */
-    tools.fitToWindow = function (el, w, h)
-    {
+    tools.fitToWindow = function (el, w, h) {
+        
         var dim, ratio, sw, sh, ratioW, ratioH;
         
         dim = tools.getWindowDimensions();
         sw = dim.width; // - (dim.width * 0.01);
         sh = dim.height; // - (dim.height * 0.01);
-
+        
         ratioW = sw / w;
         ratioH = sh / h;
-
+        
         ratio = ratioW > ratioH ? ratioH : ratioW;
-
+        
         el.setAttribute('style',
         el.getAttribute('style') + ' -moz-transform: scale(' + ratio + ',' + ratio + ') rotate(0.01deg);' + ' -ms-transform: scale(' + ratio + ',' + ratio + ');' + ' -o-transform: scale(' + ratio + ',' + ratio + ');' + ' -webkit-transform: scale(' + ratio + ',' + ratio + ');' + ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
     tools.timeoutInspector = (function () {
         
-        var oldSetTimeout, oldSetInterval, oldClearTimeout, oldClearInterval, oldRequestAnimationFrame;
+        var oldSetTimeout, oldSetInterval, oldClearTimeout;
+        var oldClearInterval, oldRequestAnimationFrame;
         var activeIntervals = {}, timeoutCalls = 0, intervalCalls = 0, animationFrameRequests = 0;
         
         oldSetTimeout = window.setTimeout;
@@ -6653,12 +6674,15 @@ using().define("MO5.tools", function () {
         oldRequestAnimationFrame = window.requestAnimationFrame;
         
         return {
+            
             logAnimationFrameRequests: false,
             logTimeouts: false,
             logIntervals: false,
             
             enable: function () {
+                
                 window.setTimeout = function (f, t) {
+                    
                     var h = oldSetTimeout(f, t);
                     
                     timeoutCalls += 1;
@@ -6671,6 +6695,7 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.setInterval = function (f, t) {
+                    
                     var h = oldSetInterval(f, t);
                     
                     intervalCalls += 1;
@@ -6684,12 +6709,14 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.clearTimeout = function (h) {
+                    
                     console.log("Clearing timeout: ", h);
                     
                     return oldClearTimeout(h);
                 };
                 
                 window.clearInterval = function (h) {
+                    
                     console.log("Clearing interval: ", h);
                     
                     if (!(h in activeIntervals)) {
@@ -6703,6 +6730,7 @@ using().define("MO5.tools", function () {
                 };
                 
                 window.requestAnimationFrame = function (f) {
+                    
                     animationFrameRequests += 1;
                     
                     if (this.logAnimationFrameRequests) {
@@ -6722,6 +6750,7 @@ using().define("MO5.tools", function () {
             },
             
             getActiveIntervals: function () {
+                
                 var key, handles = [];
                 
                 for (key in this.activeIntervals) {
@@ -6852,15 +6881,14 @@ define("MO5.transform", function (Exception, Timer, easing) {
      *            
      * 
      */
-    function transform (callback, from, to, args)
-    {
+    function transform (callback, from, to, args) {
+        
         args = args || {};
-
-        if (typeof callback === "undefined" || !callback)
-        {
+        
+        if (typeof callback === "undefined" || !callback) {
             throw new Exception("MO5.transform expects parameter callback to be a function.");
         }
-
+        
         var dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500,
             f,
             func,
@@ -6871,9 +6899,9 @@ define("MO5.transform", function (Exception, Timer, easing) {
             c = 0, // number of times func get's executed
             lastExecution = 0,
             fps = args.fps || 60;
-
+        
         f = args.easing || easing.sineEaseOut;
-
+        
         func = function () {
             
             var dt, tElapsed;
@@ -6916,10 +6944,10 @@ define("MO5.transform", function (Exception, Timer, easing) {
                 
                 lastExecution = Date.now();
             }
-
+            
             requestAnimationFrame(func);
         };
-
+        
         timer.start();
         requestAnimationFrame(func);
         
@@ -6945,13 +6973,13 @@ define("MO5.transform", function (Exception, Timer, easing) {
     }
     
     function MO5typesModule () {
-
+        
         var types = {};
-
+        
         types.isObject = function (thing) {
             return (typeof thing === "object" && thing !== null);
         };
-
+        
         types.isString = function (thing) {
             return typeof thing === "string";
         };
@@ -6963,9 +6991,9 @@ define("MO5.transform", function (Exception, Timer, easing) {
         types.isFunction = function (thing) {
             return typeof thing === "function";
         };
-
+        
         types.isArray = function (thing) {
-
+            
             if (Array.isArray) {
                 return Array.isArray(thing);
             }
@@ -6973,16 +7001,16 @@ define("MO5.transform", function (Exception, Timer, easing) {
             if (!types.isObject(thing)) {
                 return false;
             }
-
+            
             return thing instanceof Array;
         };
         
         types.hasForEach = function (thing) {
             return types.isObject(thing) && types.isFunction(thing.forEach);
         };
-
+        
         return types;
-
+        
     }
 }());
 
@@ -7105,18 +7133,15 @@ using().define("WSE.functions", function () {
     
     var functions = {
         
-        savegames: function (interpreter)
-        {
+        savegames: function (interpreter) {
             interpreter.toggleSavegameMenu();
         },
         
-        stageclick_disable: function (interpreter)
-        {
+        stageclick_disable: function (interpreter) {
             interpreter.game.unsubscribeListeners();
         },
         
-        stageclick_enable: function (interpreter)
-        {
+        stageclick_enable: function (interpreter) {
             interpreter.game.subscribeListeners();
         }
         
@@ -7338,9 +7363,9 @@ using().define("WSE.Keys", function () {
         this.keys.BACK_SLASH    = {kc: 220};
         this.keys.CLOSE_BRACKET = {kc: 221};
         this.keys.SINGLE_QUOTE  = {kc: 222};
-    
+        
         this.listeners = [];
-    
+        
         var attach, 
             capture,
             captureUp,
@@ -7350,41 +7375,41 @@ using().define("WSE.Keys", function () {
             logEvents = args.log || false,
             element = args.element || window,
             self = this;
-    
-        attach = function(elem) 
-        {
-            if (elem == null || typeof elem == 'undefined') 
-            {
+        
+        attach = function(elem) {
+            
+            if (elem == null || typeof elem == 'undefined') {
                 return;
             }
-            if (elem.addEventListener) 
-            {
+            
+            if (elem.addEventListener) {
+                
                 elem.addEventListener("keyup", captureUp, false);
                 elem.addEventListener("keydown", captureDown, false);
                 elem.addEventListener("keypress", capturePress, false);
-                if (logEvents === true) 
-                {
+                
+                if (logEvents === true) {
                     elem.addEventListener("keyup", examineEvent, false);
                     elem.addEventListener("keydown", examineEvent, false);
                     elem.addEventListener("keypress", examineEvent, false);
                 }
             } 
-            else if (elem.attachEvent) 
-            {
+            else if (elem.attachEvent) {
+                
                 elem.attachEvent("onkeyup", captureUp);
                 elem.attachEvent("onkeydown", captureDown);
                 elem.attachEvent("onkeypress", capturePress);
-                if (logEvents === true) 
-                {
+                
+                if (logEvents === true) {
                     elem.attachEvent("onkeyup", examineEvent);
                     elem.attachEvent("onkeydown", examineEvent);
                     elem.attachEvent("onkeypress", examineEvent);
                 }
             }
         };
-    
-        capture = function (event, type) 
-        {
+        
+        capture = function (event, type) {
+            
             var len = self.listeners.length, cur, i, kc, which;
             
             for (i = 0; i < len; ++i) {
@@ -7500,9 +7525,10 @@ using().define("WSE.Keys", function () {
     */
     Keys.prototype.removeListener = function (key, callback, type) {
         
-        type = type || null;
         var len = this.listeners.length;
         var cur;
+        
+        type = type || null;
         
         for (var i = 0; i < len; ++i) {
             
@@ -7572,9 +7598,9 @@ using().define("WSE.Keys", function () {
             this.addListener(this.keys[key], callback, type);
         }
     };
-
+    
     return Keys;
-
+    
 });
 
 /* global using */
@@ -8074,7 +8100,8 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
                         "wse.interpreter.warning",
                         {
                             element: trigger,
-                            message: "No 'key' attribute specified on trigger element '" + this.name + "'."
+                            message: "No 'key' attribute specified on trigger element '" +
+                                this.name + "'."
                         }
                     );
                 
@@ -8202,24 +8229,21 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         //console.log("this.interpreter: ", this.interpreter);
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Message: " + data);
             }, 
             "wse.interpreter.message"
         );
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Error: " + data.message);
             }, 
             "wse.interpreter.error"
         );
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Warning: " + data.message, data.element);
             }, 
             "wse.interpreter.warning"
@@ -8352,19 +8376,18 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
      * @param name [string] The name of the setting.
      * @return [mixed] The value of the setting or null.
      */
-    Game.prototype.getSetting = function (name)
-    {
+    Game.prototype.getSetting = function (name) {
+        
         var ret, settings, i, len, cur, curName;
         
         settings = this.ws.getElementsByTagName("setting");
         
-        for (i = 0, len = settings.length; i < len; i += 1)
-        {
+        for (i = 0, len = settings.length; i < len; i += 1) {
+            
             cur = settings[i];
             curName = cur.getAttribute("name") || null;
             
-            if (curName !== null && curName === name)
-            {
+            if (curName !== null && curName === name) {
                 ret = cur.getAttribute("value") || null;
                 return ret;
             }
@@ -8537,7 +8560,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         // Each game must have it's own unique storage key so that multiple
         // games can be run on the same web page.
         key = "wse_globals_" + location.pathname + "_" + this.game.url + "_";
-
+        
         /** @var Stores global variables. That is, variables that will
          *   be remembered independently of the current state of the game.
          *   Can be used for unlocking hidden features after the first
@@ -8567,7 +8590,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             this.game.bus.debug = true;
         }
     };
-
+    
     /**
      * Inserts the loading screen that is shown on startup to give
      * the player a feedback that the game still does something
@@ -8621,13 +8644,13 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 console.log("Element missing.");
             }
         };
-
+        
         this.bus.subscribe(fn, "wse.assets.loading.increase");
         this.bus.subscribe(fn, "wse.assets.loading.decrease");
-
+        
         this.loadScreen = loadScreen;
     };
-
+    
     Interpreter.prototype.start = function () {
         
         var self, fn, makeKeyFn, bus;
@@ -8754,10 +8777,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             bus.subscribe(subscrFn, "wse.assets.loading.finished");
         }());
-
+        
         this.buildAssets();
         this.createTriggers();
-
+        
         makeKeyFn = function (type) {
             
             return function (ev) {
@@ -9149,7 +9172,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 
                 return false;
             }
-
+            
             bus.trigger(
                 "wse.interpreter.runcommand.condition.met",
                 {
@@ -9161,10 +9184,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
-
+        
         return true;
     };
-
+    
     Interpreter.prototype.runCommand = function (command) {
         
         var tagName, assetName, bus = this.bus;
@@ -9295,7 +9318,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             }
         }
     };
-
+    
     Interpreter.prototype.buildAssets = function () {
         
         var assets, len, i, cur, bus = this.bus;
@@ -9424,7 +9447,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 }
             }
         }
-
+        
         return saves;
     };
     
@@ -9468,7 +9491,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             }, 
             false
         );
-
+        
         savegame.saves = this.createSaveGame();
         savegame.startTime = this.startTime;
         savegame.saveTime = Math.round(+new Date() / 1000);
@@ -9773,10 +9796,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             return true;
         }
-
+        
         return false;
     };
-
+    
     Interpreter.prototype.toggleSavegameMenu = function () {
         
         var menu, deleteButton, loadButton, saveButton, self;
@@ -9878,7 +9901,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             },
             false
         );
-
+        
         saveButton = document.createElement("input");
         saveButton.setAttribute("class", "button save");
         saveButton.setAttribute("type", "button");
@@ -10610,11 +10633,11 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         then(function () {
             
             var argsObj;
-        
+            
             function tranformFn (v) {
                 element.style.opacity = v;
             };
-        
+            
             function finishFn () {
                 if (isAnimation) {
                     return;
@@ -10622,12 +10645,12 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 self.interpreter.waitCounter -= 1;
             };
-        
+            
             argsObj = {
                 duration: (duration / 3) * 2,
                 easing: easing.easeOutCubic
             };
-        
+            
             transform(
                 tranformFn,
                 visible ? 0 : maxOpacity,
@@ -10646,7 +10669,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         
         var self, duration, bus, stage, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
-
+        
         args = args || {};
         self = this;
         duration = command.getAttribute("duration") || 500;
@@ -10655,9 +10678,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         element = args.element || document.getElementById(this.cssid);
         step = duration / times;
         iteration = 0;
-
-        if (!element)
-        {
+        
+        if (!element) {
+            
             this.bus.trigger(
                 "wse.interpreter.warning",
                 {
@@ -10668,37 +10691,34 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             
             return;
         }
-
-        if (!(parseInt(element.style.opacity, 10)))
-        {
+        
+        if (!(parseInt(element.style.opacity, 10))) {
             val1 = 0;
             val2 = maxOpacity;
             dur1 = step / 3;
             dur2 = dur1 * 2;
         }
-        else
-        {
+        else {
             val2 = 0;
             val1 = maxOpacity;
             dur2 = step / 3;
             dur1 = dur2 * 2;
         }
-
+        
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
-
-        if (!isAnimation)
-        {
+        
+        if (!isAnimation) {
             self.interpreter.waitCounter += 1;
         }
-
-        fn = function ()
-        {
+        
+        fn = function () {
+            
             iteration += 1;
+            
             transform(
-                function (v)
-                {
+                function (v) {
                     element.style.opacity = v;
                 },
                 val1,
@@ -10711,8 +10731,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             then(function () {
                 
                 transform(
-                    function (v)
-                    {
+                    function (v) {
                         element.style.opacity = v;
                     },
                     val2,
@@ -10724,13 +10743,12 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 ).promise().
                 then(function () {
                     
-                    if (iteration <= times)
-                    {
+                    if (iteration <= times) {
                         setTimeout(fn, 0);
                         return;
                     }
-                    if (!isAnimation)
-                    {
+                    
+                    if (!isAnimation) {
                         self.interpreter.waitCounter -= 1;
                     }
                 });
@@ -10750,7 +10768,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
-
+        
         args = args || {};
         self = this;
         wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
@@ -10819,8 +10837,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 var valFn, from, finishFn, options;
                 
-                valFn = function (v)
-                {
+                valFn = function (v) {
                     element.style[prop] = v + (prop === 'left' ? xUnit : yUnit);
                 };
                 
@@ -11000,7 +11017,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             if (!isAnimation) {
                 self.interpreter.waitCounter += 1;
             }
-
+            
             transform(
                 function (v) {
                     element.style.left = v + xUnit;
@@ -11031,7 +11048,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             if (!isAnimation) {
                 self.interpreter.waitCounter += 1;
             }
-
+            
             transform(
                 function (v) {
                     element.style.top = v + yUnit;
@@ -11095,7 +11112,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         duration = command.getAttribute("duration") || 275;
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
-
+        
         if (dx === null && dy === null) {
             dy = "-10px";
         }
@@ -11109,7 +11126,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             yUnit = tools.extractUnit(dy);
             dy = parseInt(dy, 10);
         }
-
+        
         function easing (d, t) {
             
             var x = t / period;
@@ -11181,9 +11198,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 self.interpreter.waitCounter -= 1;
             });
         }
-
+        
         this.bus.trigger("wse.assets.mixins.shake", this);
-
+        
         return {
             doNext: true
         };
@@ -11272,7 +11289,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             }
             
             element.style.opacity = 1;
-
+            
             if (!isAnimation) {
                 interpreter.waitCounter += 1;
             }
@@ -11315,8 +11332,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             }
             
             transform(
-                function (v)
-                {
+                function (v) {
                     element.style.opacity = v;
                 },
                 0,
@@ -11399,7 +11415,7 @@ define("WSE.assets.Animation", function (
                 as.style[pn] = v + u;
             }, f, t, opt);
         };
-
+        
         function runDoCommandFn (del, watcher) {
             
             var curDur, curDoEl;
@@ -11410,7 +11426,7 @@ define("WSE.assets.Animation", function (
             commands["do"](curDoEl, interpreter, {
                 animation: true
             });
-
+            
             if (curDur !== null) {
                 watcher.addTimer(tools.createTimer(curDur));
             }
@@ -11422,7 +11438,7 @@ define("WSE.assets.Animation", function (
             
             dlen = doEls.length;
             jlen = transformations.length;
-
+            
             self.cbs.push(function () {
                 
                 var from, to, unit, curTr, curAs, curAsName;
@@ -11455,16 +11471,16 @@ define("WSE.assets.Animation", function (
                     propName = curTr.getAttribute("property");
                     opt = {};
                     opt.duration = dur;
-
+                    
                     if (easingType !== null && typeof easing[easingType] !== "undefined" &&
                             easing[easingType] !== null) {
                         
                         opt.easing = easing[easingType];
                     }
-
+                    
                     watcher.addTimer(createTransformFn(curAs, from, to, propName, unit, opt));
                 }
-
+                
                 for (di = 0; di < dlen; di += 1) {
                     runDoCommandFn(doEls[di], watcher);
                 }
@@ -11481,7 +11497,7 @@ define("WSE.assets.Animation", function (
             
             loopFn(transformations, doElements);
         }
-
+        
         this.anim = new MO5Animation();
         
         this.cbs.forEach(function (cb) {
@@ -11502,7 +11518,7 @@ define("WSE.assets.Animation", function (
         }());
         
     };
-
+    
     Animation.prototype.start = function () {
         this.anim.start();
         this.isRunning = true;
@@ -11574,8 +11590,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
      * @trigger wse.interpreter.warning@interpreter
      * @trigger wse.assets.audio.constructor@interpreter
      */
-    function Audio (asset, interpreter)
-    {
+    function Audio (asset, interpreter) {
+        
         var self, sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
@@ -11746,7 +11762,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
                 doNext: true
             };
         };
-
+        
         /**
          * Stops playing the current track.
          * 
@@ -11827,7 +11843,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             }
         }.bind(this));
     };
-
+    
     /**
      * Changes the currently active track.
      * 
@@ -11835,8 +11851,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
      * @trigger wse.interpreter.warning@interpreter
      * @trigger wse.assets.audio.set@interpreter
      */
-    Audio.prototype.set = function (command)
-    {
+    Audio.prototype.set = function (command) {
+        
         var wasPlaying = false;
         
         if (this._playing) {
@@ -11936,7 +11952,7 @@ define("WSE.assets.Character", function (DisplayObject, tools) {
         
         return obj;
     };
-
+    
     Character.prototype.restore = function (obj) {
         
         this.asset.setAttribute("textbox", obj.textboxName);
@@ -12071,7 +12087,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         element = document.createElement("div");
         width = asset.getAttribute('width');
         height = asset.getAttribute('height');
-
+        
         element.style.opacity = 0;
         element.draggable = false;
         
@@ -12104,7 +12120,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 );
                 continue;
             }
-
+            
             if (src === null) {
                 
                 this.bus.trigger(
@@ -12175,7 +12191,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         element.style.left = "" + x + xUnit;
         element.style.top = "" + y + yUnit;
-
+        
         this.images = images;
         this.current = null;
         
@@ -12260,7 +12276,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 }
             }
         }
-
+        
         if (!isAnimation) {
             self.interpreter.waitCounter += 1;
         }
@@ -12332,14 +12348,14 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 timeoutFn();
             }());
         }
-
+        
         this.current = name;
-
+        
         return {
             doNext: true
         };
     };
-
+    
     Imagepack.prototype.save = function () {
         
         var cur, key, images, name, obj;
@@ -12785,7 +12801,7 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
         styleElement(this);
         resize(this);
         window.addEventListener('resize', function () { resize(self); });
-
+        
         this.stage.appendChild(this.element);
     }
     
@@ -13138,7 +13154,7 @@ using().define("WSE.commands.do", function () {
                 doNext: true
             };
         }
-
+        
         return assets[assetName][action](command, args);
     };
     
@@ -13188,14 +13204,14 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
                 doNext: true
             };
         }
-
+        
         ret = functions[name](interpreter);
-
+        
         if (varName !== null)
         {
             interpreter.runVars[varName] = "" + ret;
         }
-
+        
         return {
             doNext: true
         };
@@ -13548,7 +13564,7 @@ using().define("WSE.commands.restart", function () {
             }, 
             false
         );
-
+        
         interpreter.bus.trigger("wse.interpreter.message", "Restarting game...", false);
         interpreter.bus.trigger("wse.interpreter.restart", interpreter, false);
         
@@ -13731,7 +13747,8 @@ using().define("WSE.commands.trigger", function () {
                 "wse.interpreter.warning",
                 {
                     element: command,
-                    message: "Unknown action '" + action + "' on trigger command referencing trigger '" + triggerName + "'."
+                    message: "Unknown action '" + action +
+                        "' on trigger command referencing trigger '" + triggerName + "'."
                 }
             );
             
@@ -13802,18 +13819,19 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
         }
         
         val  = tools.replaceVariables(val,  interpreter);
-
-        if (action === "set")
-        {
+        
+        if (action === "set") {
+            
             container[key] = "" + val;
+            
             return {
                 doNext: true
             };
         }
-
+        
         lval = command.getAttribute("lvalue") || container[key];
         lval = tools.replaceVariables(lval, interpreter);
-
+        
         switch (action) {
             case "delete":
                 delete container[key];
@@ -13844,7 +13862,7 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
             case "not":
                 container[key] = parseFloat(lval) ? "0" : "1";
                 break;
-    
+            
             case "is_greater":
                 container[key] = parseFloat(lval) > parseFloat(val) ? "1" : "0";
                 break;
@@ -13962,7 +13980,7 @@ using().define("WSE.commands.wait", function () {
                 wait: false
             };
         }
-
+        
         return {
             doNext: true,
             wait: true

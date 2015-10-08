@@ -173,9 +173,9 @@ using().define("WSE.Keys", function () {
         this.keys.BACK_SLASH    = {kc: 220};
         this.keys.CLOSE_BRACKET = {kc: 221};
         this.keys.SINGLE_QUOTE  = {kc: 222};
-    
+        
         this.listeners = [];
-    
+        
         var attach, 
             capture,
             captureUp,
@@ -185,41 +185,41 @@ using().define("WSE.Keys", function () {
             logEvents = args.log || false,
             element = args.element || window,
             self = this;
-    
-        attach = function(elem) 
-        {
-            if (elem == null || typeof elem == 'undefined') 
-            {
+        
+        attach = function(elem) {
+            
+            if (elem == null || typeof elem == 'undefined') {
                 return;
             }
-            if (elem.addEventListener) 
-            {
+            
+            if (elem.addEventListener) {
+                
                 elem.addEventListener("keyup", captureUp, false);
                 elem.addEventListener("keydown", captureDown, false);
                 elem.addEventListener("keypress", capturePress, false);
-                if (logEvents === true) 
-                {
+                
+                if (logEvents === true) {
                     elem.addEventListener("keyup", examineEvent, false);
                     elem.addEventListener("keydown", examineEvent, false);
                     elem.addEventListener("keypress", examineEvent, false);
                 }
             } 
-            else if (elem.attachEvent) 
-            {
+            else if (elem.attachEvent) {
+                
                 elem.attachEvent("onkeyup", captureUp);
                 elem.attachEvent("onkeydown", captureDown);
                 elem.attachEvent("onkeypress", capturePress);
-                if (logEvents === true) 
-                {
+                
+                if (logEvents === true) {
                     elem.attachEvent("onkeyup", examineEvent);
                     elem.attachEvent("onkeydown", examineEvent);
                     elem.attachEvent("onkeypress", examineEvent);
                 }
             }
         };
-    
-        capture = function (event, type) 
-        {
+        
+        capture = function (event, type) {
+            
             var len = self.listeners.length, cur, i, kc, which;
             
             for (i = 0; i < len; ++i) {
@@ -335,9 +335,10 @@ using().define("WSE.Keys", function () {
     */
     Keys.prototype.removeListener = function (key, callback, type) {
         
-        type = type || null;
         var len = this.listeners.length;
         var cur;
+        
+        type = type || null;
         
         for (var i = 0; i < len; ++i) {
             
@@ -407,7 +408,7 @@ using().define("WSE.Keys", function () {
             this.addListener(this.keys[key], callback, type);
         }
     };
-
+    
     return Keys;
-
+    
 });

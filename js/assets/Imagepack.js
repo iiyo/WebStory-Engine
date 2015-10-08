@@ -35,7 +35,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         element = document.createElement("div");
         width = asset.getAttribute('width');
         height = asset.getAttribute('height');
-
+        
         element.style.opacity = 0;
         element.draggable = false;
         
@@ -68,7 +68,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 );
                 continue;
             }
-
+            
             if (src === null) {
                 
                 this.bus.trigger(
@@ -139,7 +139,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         element.style.left = "" + x + xUnit;
         element.style.top = "" + y + yUnit;
-
+        
         this.images = images;
         this.current = null;
         
@@ -224,7 +224,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 }
             }
         }
-
+        
         if (!isAnimation) {
             self.interpreter.waitCounter += 1;
         }
@@ -296,14 +296,14 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 timeoutFn();
             }());
         }
-
+        
         this.current = name;
-
+        
         return {
             doNext: true
         };
     };
-
+    
     Imagepack.prototype.save = function () {
         
         var cur, key, images, name, obj;

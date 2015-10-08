@@ -6,18 +6,15 @@ using().define("WSE.functions", function () {
     
     var functions = {
         
-        savegames: function (interpreter)
-        {
+        savegames: function (interpreter) {
             interpreter.toggleSavegameMenu();
         },
         
-        stageclick_disable: function (interpreter)
-        {
+        stageclick_disable: function (interpreter) {
             interpreter.game.unsubscribeListeners();
         },
         
-        stageclick_enable: function (interpreter)
-        {
+        stageclick_enable: function (interpreter) {
             interpreter.game.subscribeListeners();
         }
         

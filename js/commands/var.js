@@ -49,18 +49,19 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
         }
         
         val  = tools.replaceVariables(val,  interpreter);
-
-        if (action === "set")
-        {
+        
+        if (action === "set") {
+            
             container[key] = "" + val;
+            
             return {
                 doNext: true
             };
         }
-
+        
         lval = command.getAttribute("lvalue") || container[key];
         lval = tools.replaceVariables(lval, interpreter);
-
+        
         switch (action) {
             case "delete":
                 delete container[key];
@@ -91,7 +92,7 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
             case "not":
                 container[key] = parseFloat(lval) ? "0" : "1";
                 break;
-    
+            
             case "is_greater":
                 container[key] = parseFloat(lval) > parseFloat(val) ? "1" : "0";
                 break;

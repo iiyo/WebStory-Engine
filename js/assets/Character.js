@@ -37,7 +37,7 @@ define("WSE.assets.Character", function (DisplayObject, tools) {
         
         return obj;
     };
-
+    
     Character.prototype.restore = function (obj) {
         
         this.asset.setAttribute("textbox", obj.textboxName);

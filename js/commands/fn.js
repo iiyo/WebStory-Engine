@@ -40,14 +40,14 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
                 doNext: true
             };
         }
-
+        
         ret = functions[name](interpreter);
-
+        
         if (varName !== null)
         {
             interpreter.runVars[varName] = "" + ret;
         }
-
+        
         return {
             doNext: true
         };

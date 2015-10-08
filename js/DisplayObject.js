@@ -57,11 +57,11 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         then(function () {
             
             var argsObj;
-        
+            
             function tranformFn (v) {
                 element.style.opacity = v;
             };
-        
+            
             function finishFn () {
                 if (isAnimation) {
                     return;
@@ -69,12 +69,12 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 self.interpreter.waitCounter -= 1;
             };
-        
+            
             argsObj = {
                 duration: (duration / 3) * 2,
                 easing: easing.easeOutCubic
             };
-        
+            
             transform(
                 tranformFn,
                 visible ? 0 : maxOpacity,
@@ -93,7 +93,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         
         var self, duration, bus, stage, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
-
+        
         args = args || {};
         self = this;
         duration = command.getAttribute("duration") || 500;
@@ -102,9 +102,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         element = args.element || document.getElementById(this.cssid);
         step = duration / times;
         iteration = 0;
-
-        if (!element)
-        {
+        
+        if (!element) {
+            
             this.bus.trigger(
                 "wse.interpreter.warning",
                 {
@@ -115,37 +115,34 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             
             return;
         }
-
-        if (!(parseInt(element.style.opacity, 10)))
-        {
+        
+        if (!(parseInt(element.style.opacity, 10))) {
             val1 = 0;
             val2 = maxOpacity;
             dur1 = step / 3;
             dur2 = dur1 * 2;
         }
-        else
-        {
+        else {
             val2 = 0;
             val1 = maxOpacity;
             dur2 = step / 3;
             dur1 = dur2 * 2;
         }
-
+        
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
-
-        if (!isAnimation)
-        {
+        
+        if (!isAnimation) {
             self.interpreter.waitCounter += 1;
         }
-
-        fn = function ()
-        {
+        
+        fn = function () {
+            
             iteration += 1;
+            
             transform(
-                function (v)
-                {
+                function (v) {
                     element.style.opacity = v;
                 },
                 val1,
@@ -158,8 +155,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             then(function () {
                 
                 transform(
-                    function (v)
-                    {
+                    function (v) {
                         element.style.opacity = v;
                     },
                     val2,
@@ -171,13 +167,12 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 ).promise().
                 then(function () {
                     
-                    if (iteration <= times)
-                    {
+                    if (iteration <= times) {
                         setTimeout(fn, 0);
                         return;
                     }
-                    if (!isAnimation)
-                    {
+                    
+                    if (!isAnimation) {
                         self.interpreter.waitCounter -= 1;
                     }
                 });
@@ -197,7 +192,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
-
+        
         args = args || {};
         self = this;
         wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
@@ -266,8 +261,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 
                 var valFn, from, finishFn, options;
                 
-                valFn = function (v)
-                {
+                valFn = function (v) {
                     element.style[prop] = v + (prop === 'left' ? xUnit : yUnit);
                 };
                 
@@ -447,7 +441,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             if (!isAnimation) {
                 self.interpreter.waitCounter += 1;
             }
-
+            
             transform(
                 function (v) {
                     element.style.left = v + xUnit;
@@ -478,7 +472,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             if (!isAnimation) {
                 self.interpreter.waitCounter += 1;
             }
-
+            
             transform(
                 function (v) {
                     element.style.top = v + yUnit;
@@ -542,7 +536,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         duration = command.getAttribute("duration") || 275;
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
-
+        
         if (dx === null && dy === null) {
             dy = "-10px";
         }
@@ -556,7 +550,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             yUnit = tools.extractUnit(dy);
             dy = parseInt(dy, 10);
         }
-
+        
         function easing (d, t) {
             
             var x = t / period;
@@ -628,9 +622,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
                 self.interpreter.waitCounter -= 1;
             });
         }
-
+        
         this.bus.trigger("wse.assets.mixins.shake", this);
-
+        
         return {
             doNext: true
         };
@@ -719,7 +713,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             }
             
             element.style.opacity = 1;
-
+            
             if (!isAnimation) {
                 interpreter.waitCounter += 1;
             }
@@ -762,8 +756,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
             }
             
             transform(
-                function (v)
-                {
+                function (v) {
                     element.style.opacity = v;
                 },
                 0,

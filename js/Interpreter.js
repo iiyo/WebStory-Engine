@@ -81,7 +81,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         // Each game must have it's own unique storage key so that multiple
         // games can be run on the same web page.
         key = "wse_globals_" + location.pathname + "_" + this.game.url + "_";
-
+        
         /** @var Stores global variables. That is, variables that will
          *   be remembered independently of the current state of the game.
          *   Can be used for unlocking hidden features after the first
@@ -111,7 +111,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             this.game.bus.debug = true;
         }
     };
-
+    
     /**
      * Inserts the loading screen that is shown on startup to give
      * the player a feedback that the game still does something
@@ -165,13 +165,13 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 console.log("Element missing.");
             }
         };
-
+        
         this.bus.subscribe(fn, "wse.assets.loading.increase");
         this.bus.subscribe(fn, "wse.assets.loading.decrease");
-
+        
         this.loadScreen = loadScreen;
     };
-
+    
     Interpreter.prototype.start = function () {
         
         var self, fn, makeKeyFn, bus;
@@ -298,10 +298,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             bus.subscribe(subscrFn, "wse.assets.loading.finished");
         }());
-
+        
         this.buildAssets();
         this.createTriggers();
-
+        
         makeKeyFn = function (type) {
             
             return function (ev) {
@@ -693,7 +693,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 
                 return false;
             }
-
+            
             bus.trigger(
                 "wse.interpreter.runcommand.condition.met",
                 {
@@ -705,10 +705,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             bus.trigger("wse.interpreter.message", "Conidition met.");
         }
-
+        
         return true;
     };
-
+    
     Interpreter.prototype.runCommand = function (command) {
         
         var tagName, assetName, bus = this.bus;
@@ -839,7 +839,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             }
         }
     };
-
+    
     Interpreter.prototype.buildAssets = function () {
         
         var assets, len, i, cur, bus = this.bus;
@@ -968,7 +968,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 }
             }
         }
-
+        
         return saves;
     };
     
@@ -1012,7 +1012,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             }, 
             false
         );
-
+        
         savegame.saves = this.createSaveGame();
         savegame.startTime = this.startTime;
         savegame.saveTime = Math.round(+new Date() / 1000);
@@ -1317,10 +1317,10 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             return true;
         }
-
+        
         return false;
     };
-
+    
     Interpreter.prototype.toggleSavegameMenu = function () {
         
         var menu, deleteButton, loadButton, saveButton, self;
@@ -1422,7 +1422,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             },
             false
         );
-
+        
         saveButton = document.createElement("input");
         saveButton.setAttribute("class", "button save");
         saveButton.setAttribute("type", "button");

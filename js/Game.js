@@ -59,24 +59,21 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         //console.log("this.interpreter: ", this.interpreter);
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Message: " + data);
             }, 
             "wse.interpreter.message"
         );
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Error: " + data.message);
             }, 
             "wse.interpreter.error"
         );
         
         this.bus.subscribe(
-            function (data)
-            {
+            function (data) {
                 console.log("Warning: " + data.message, data.element);
             }, 
             "wse.interpreter.warning"
@@ -209,19 +206,18 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
      * @param name [string] The name of the setting.
      * @return [mixed] The value of the setting or null.
      */
-    Game.prototype.getSetting = function (name)
-    {
+    Game.prototype.getSetting = function (name) {
+        
         var ret, settings, i, len, cur, curName;
         
         settings = this.ws.getElementsByTagName("setting");
         
-        for (i = 0, len = settings.length; i < len; i += 1)
-        {
+        for (i = 0, len = settings.length; i < len; i += 1) {
+            
             cur = settings[i];
             curName = cur.getAttribute("name") || null;
             
-            if (curName !== null && curName === name)
-            {
+            if (curName !== null && curName === name) {
                 ret = cur.getAttribute("value") || null;
                 return ret;
             }

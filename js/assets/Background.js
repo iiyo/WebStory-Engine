@@ -58,7 +58,7 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
         styleElement(this);
         resize(this);
         window.addEventListener('resize', function () { resize(self); });
-
+        
         this.stage.appendChild(this.element);
     }
     

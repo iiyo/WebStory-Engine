@@ -37,7 +37,7 @@ using().define("WSE.commands.wait", function () {
                 wait: false
             };
         }
-
+        
         return {
             doNext: true,
             wait: true

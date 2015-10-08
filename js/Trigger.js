@@ -128,7 +128,8 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
                         "wse.interpreter.warning",
                         {
                             element: trigger,
-                            message: "No 'key' attribute specified on trigger element '" + this.name + "'."
+                            message: "No 'key' attribute specified on trigger element '" +
+                                this.name + "'."
                         }
                     );
                 

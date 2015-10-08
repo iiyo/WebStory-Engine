@@ -78,7 +78,7 @@ using().define("WSE.commands.do", function () {
                 doNext: true
             };
         }
-
+        
         return assets[assetName][action](command, args);
     };
     

@@ -54,7 +54,7 @@ define("WSE.assets.Animation", function (
                 as.style[pn] = v + u;
             }, f, t, opt);
         };
-
+        
         function runDoCommandFn (del, watcher) {
             
             var curDur, curDoEl;
@@ -65,7 +65,7 @@ define("WSE.assets.Animation", function (
             commands["do"](curDoEl, interpreter, {
                 animation: true
             });
-
+            
             if (curDur !== null) {
                 watcher.addTimer(tools.createTimer(curDur));
             }
@@ -77,7 +77,7 @@ define("WSE.assets.Animation", function (
             
             dlen = doEls.length;
             jlen = transformations.length;
-
+            
             self.cbs.push(function () {
                 
                 var from, to, unit, curTr, curAs, curAsName;
@@ -110,16 +110,16 @@ define("WSE.assets.Animation", function (
                     propName = curTr.getAttribute("property");
                     opt = {};
                     opt.duration = dur;
-
+                    
                     if (easingType !== null && typeof easing[easingType] !== "undefined" &&
                             easing[easingType] !== null) {
                         
                         opt.easing = easing[easingType];
                     }
-
+                    
                     watcher.addTimer(createTransformFn(curAs, from, to, propName, unit, opt));
                 }
-
+                
                 for (di = 0; di < dlen; di += 1) {
                     runDoCommandFn(doEls[di], watcher);
                 }
@@ -136,7 +136,7 @@ define("WSE.assets.Animation", function (
             
             loopFn(transformations, doElements);
         }
-
+        
         this.anim = new MO5Animation();
         
         this.cbs.forEach(function (cb) {
@@ -157,7 +157,7 @@ define("WSE.assets.Animation", function (
         }());
         
     };
-
+    
     Animation.prototype.start = function () {
         this.anim.start();
         this.isRunning = true;

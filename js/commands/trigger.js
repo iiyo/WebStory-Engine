@@ -74,7 +74,8 @@ using().define("WSE.commands.trigger", function () {
                 "wse.interpreter.warning",
                 {
                     element: command,
-                    message: "Unknown action '" + action + "' on trigger command referencing trigger '" + triggerName + "'."
+                    message: "Unknown action '" + action +
+                        "' on trigger command referencing trigger '" + triggerName + "'."
                 }
             );
             
