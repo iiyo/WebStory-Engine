@@ -29,28 +29,41 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         args = args || {};
         this.bus = new EventBus();
         this.url = args.url || "game.xml";
+        this.gameId = args.gameId || null;
         this.ws = null;
         this.debug = args.debug === true ? true : false;
         
         host = args.host || false;
         this.host = host;
         
-        if (host) {
+        if (this.gameId) {
             
-            this.ws = (function (url) {
-                
-                var xml, parser;
-                
-                parser = new DOMParser();
-                xml = host.get(url);
-                       
-                return parser.parseFromString(xml, "application/xml");
-            }(this.url));
+            this.ws = new DOMParser().parseFromString(
+                document.getElementById(this.gameId).innerHTML, "application/xml"
+            );
+            
+            console.log("this.ws:", this.ws);
             
             this.init();
         }
         else {
-            this.load(this.url);
+            if (host) {
+                
+                this.ws = (function (url) {
+                    
+                    var xml, parser;
+                    
+                    parser = new DOMParser();
+                    xml = host.get(url);
+                        
+                    return parser.parseFromString(xml, "application/xml");
+                }(this.url));
+                
+                this.init();
+            }
+            else {
+                this.load();
+            }
         }
         
         this.interpreter = new Interpreter(this);
@@ -98,6 +111,25 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         };
         
         ajax("GET", this.url, null, fn);
+    };
+    
+    Game.prototype.loadFromUrl = function (url) {
+        
+        //console.log("Loading game file...");
+        var fn, self;
+        
+        this.url = url || this.url;
+        
+        self = this;
+        
+        fn = function (obj) {
+            self.ws = obj.responseXML;
+            //console.log("Response XML: " + obj.responseXML);
+            self.init();
+        };
+        
+        ajax("GET", this.url, null, fn);
+        
     };
     
     /**

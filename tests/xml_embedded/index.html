@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebStory Engine</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="../../styles/default.css" type="text/css" />
+    </head>
+    <body>
+        <script src="../../libs/MO5/libs/using.js/using.js"></script>
+        <script src="../../libs/MO5/js/MO5.js"></script>
+        <script src="../../js/paths.js"></script>
+        <script type="text/xml" id="myGame">
+            <ws>
+                <settings>
+                    <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+                    <triggers>
+                    </triggers>
+                </settings>
+                <assets>
+                    <textbox name="tb" cssid="tb" x="0" y="0" width="50%" height="30%" />
+                    <character name="n" textbox="tb"></character>
+                </assets>
+                <scenes>
+                    
+                    <scene id="start">
+                        <show asset="tb" />
+                        <line s="n" stop="false">
+                            This game's XML is embedded in the HTML file!
+                        </line>
+                        <move
+                            asset="tb"
+                            x="50%" y="50%"
+                            xAnchor="50%" yAnchor="50%"
+                            duration="1000" />
+                        <break />
+                        <restart />
+                    </scene>
+                    
+                </scenes>
+            </ws>
+        </script>
+        <script>
+            using("WSE.Game").run(function (Game) {
+                
+                var game = new Game({gameId: "myGame"});
+                
+                game.start();
+            });
+        </script>
+    </body>
+</html>
