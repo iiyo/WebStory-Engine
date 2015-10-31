@@ -1,12 +1,14 @@
 /* global using */
 
-using().define("WSE.commands.trigger", function () {
+using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
     
     "use strict";
     
     function trigger (command, interpreter) {
         
-        var triggerName, action;
+        var triggerName, action, next;
+        
+        next = {doNext: true};
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.trigger",
@@ -21,74 +23,33 @@ using().define("WSE.commands.trigger", function () {
         action = command.getAttribute("action") || null;
         
         if (triggerName === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name specified on trigger command."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No name specified on trigger command.", command);
+            return next;
         }
         
         if (action === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No action specified on trigger command " +
-                        "referencing trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No action specified on trigger command " +
+                "referencing trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         if (
             typeof interpreter.triggers[triggerName] === "undefined" ||
             interpreter.triggers[triggerName] === null
         ) {
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Reference to unknown trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Reference to unknown trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         if (typeof interpreter.triggers[triggerName][action] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown action '" + action +
-                        "' on trigger command referencing trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Unknown action '" + action +
+                "' on trigger command referencing trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         interpreter.triggers[triggerName][action](command);
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return trigger;

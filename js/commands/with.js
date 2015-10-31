@@ -1,6 +1,7 @@
 /* global using */
 
-using("WSE.tools").define("WSE.commands.with", function (tools) {
+using("WSE.tools::getParsedAttribute", "WSE.tools::warn").
+define("WSE.commands.with", function (getParsedAttribute, warn) {
     
     "use strict";
     
@@ -8,33 +9,28 @@ using("WSE.tools").define("WSE.commands.with", function (tools) {
         
         var container = interpreter.runVars;
         var children = command.childNodes;
-        var variableName = tools.getParsedAttribute(command, "var", interpreter);
+        var variableName = getParsedAttribute(command, "var", interpreter);
         var i, numberOfChildren = children.length, current;
         
         for (i = 0; i < numberOfChildren; i += 1) {
             
             current = children[i];
             
-            if (!current.tagName || !interpreter.checkIfvar(current) ||
-                    (current.tagName !== "when" && current.tagName !== "else")) {
+            if (shouldBeSkipped(current, interpreter)) {
                 continue;
             }
             
-            if (current.tagName === "when" && ! current.hasAttribute("is")) {
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    message: "Element 'when' without a condition. Ignored.", command: command
-                });
+            if (isWhen(current) && !hasCondition(current)) {
+                warn(interpreter.bus, "Element 'when' without a condition. Ignored.", command);
             }
             
-            if (current.tagName === "else" && current.hasAttribute("is")) {
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    message: "Element 'else' with a condition. Ignored.", command: command
-                });
+            if (isElse(current) && hasCondition(current)) {
+                warn(interpreter.bus, "Element 'else' with a condition. Ignored.", command);
             }
             
-            if (current.tagName === "else" ||
-                    current.tagName === "when" && current.hasAttribute("is") &&
-                    tools.getParsedAttribute(current, "is") === container[variableName]) {
+            if (isElse(current) ||
+                    isWhen(current) && hasCondition(current) &&
+                    getParsedAttribute(current, "is") === container[variableName]) {
                 
                 interpreter.pushToCallStack();
                 interpreter.currentCommands = current.childNodes;
@@ -53,5 +49,27 @@ using("WSE.tools").define("WSE.commands.with", function (tools) {
     }
     
     return withCommand;
+    
+    
+    function shouldBeSkipped (element, interpreter) {
+        return !element.tagName || !interpreter.checkIfvar(element) ||
+               (element.tagName !== "when" && element.tagName !== "else");
+    }
+    
+    function isWhen (element) {
+        return tagNameIs("when");
+    }
+    
+    function isElse (element) {
+        return tagNameIs("else");
+    }
+    
+    function tagNameIs (element, name) {
+        return element.tagName === name;
+    }
+    
+    function hasCondition (element) {
+        return element.hasAttribute("is");
+    }
     
 });

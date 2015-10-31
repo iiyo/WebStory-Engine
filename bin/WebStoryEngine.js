@@ -7987,6 +7987,10 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
             ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
+    tools.log = function (bus, message) {
+        tools.trigger(bus, "wse.interpreter.message", message);
+    };
+    
     tools.warn = function (bus, message, element) {
         tools.trigger(bus, "wse.interpreter.warning", message, element);
     };
@@ -13360,51 +13364,30 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
 
 /* global using */
 
-using().define("WSE.commands.localize", function () {
+using("WSE.tools::warn").define("WSE.commands.localize", function (warn) {
     
     "use strict";
     
     function localize (command, interpreter) {
         
-        var key;
+        var key, next;
         
+        next = {doNext: true};
         key = command.getAttribute("name") || null;
         
         if (key === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No variable name defined on localize element."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No variable name defined on localize element.", command);
+            return next;
         }
         
         if (!interpreter.globalVars.has(key)) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Undefined global variable."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Undefined global variable.", command);
+            return next;
         }
         
         interpreter.runVars[key] = interpreter.globalVars.get(key);
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return localize;
@@ -13465,14 +13448,20 @@ using().define("WSE.commands.restart", function () {
 
 /* global using */
 
-using("WSE.tools", "WSE.commands.set_vars").
-define("WSE.commands.sub", function (tools, setVars) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.commands.set_vars",
+    "WSE.tools::warn",
+    "WSE.tools::logError",
+    "WSE.tools::log"
+).
+define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) {
     
     "use strict";
     
     function sub (command, interpreter) {
         
-        var sceneId, scene, doNext;
+        var sceneId, scene, doNext, next;
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.sub",
@@ -13483,42 +13472,24 @@ define("WSE.commands.sub", function (tools, setVars) {
             false
         );
         
+        next = {doNext: true};
         sceneId = command.getAttribute("scene") || null;
         doNext = command.getAttribute("next") === false ? false : true;
         
         if (sceneId === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing 'scene' attribute on 'sub' command!"
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Missing 'scene' attribute on 'sub' command!", command);
+            return next;
         }
         
-        sceneId = tools.replaceVariables(sceneId, interpreter);
+        sceneId = replaceVars(sceneId, interpreter);
         scene = interpreter.getSceneById(sceneId);
         
         if (!scene) {
-            
-            interpreter.bus.trigger("wse.interpreter.error", {
-                message: "No such scene '" + sceneId + "'!",
-                command: command
-            });
-            
-            return {doNext: true};
+            logError(interpreter.bus, "No such scene '" + sceneId + "'!", command);
+            return next;
         }
         
-        interpreter.bus.trigger(
-            "wse.interpreter.message", 
-            "Entering sub scene '" + sceneId + "'...",
-            false
-        );
+        log(interpreter.bus, "Entering sub scene '" + sceneId + "'...");
         
         interpreter.pushToCallStack();
         
@@ -13543,13 +13514,15 @@ define("WSE.commands.sub", function (tools, setVars) {
 
 /* global using */
 
-using().define("WSE.commands.trigger", function () {
+using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
     
     "use strict";
     
     function trigger (command, interpreter) {
         
-        var triggerName, action;
+        var triggerName, action, next;
+        
+        next = {doNext: true};
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.trigger",
@@ -13564,74 +13537,33 @@ using().define("WSE.commands.trigger", function () {
         action = command.getAttribute("action") || null;
         
         if (triggerName === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name specified on trigger command."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No name specified on trigger command.", command);
+            return next;
         }
         
         if (action === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No action specified on trigger command " +
-                        "referencing trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No action specified on trigger command " +
+                "referencing trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         if (
             typeof interpreter.triggers[triggerName] === "undefined" ||
             interpreter.triggers[triggerName] === null
         ) {
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Reference to unknown trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Reference to unknown trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         if (typeof interpreter.triggers[triggerName][action] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown action '" + action +
-                        "' on trigger command referencing trigger '" + triggerName + "'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Unknown action '" + action +
+                "' on trigger command referencing trigger '" + triggerName + "'.", command);
+            return next;
         }
         
         interpreter.triggers[triggerName][action](command);
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return trigger;
@@ -13640,13 +13572,16 @@ using().define("WSE.commands.trigger", function () {
 
 /* global using */
 
-using("WSE.tools").define("WSE.commands.var", function (tools) {
+using("WSE.tools::replaceVariables", "WSE.tools::warn", "WSE.tools::log").
+define("WSE.commands.var", function (replaceVars, warn, log) {
     
     "use strict";
     
     function varCommand (command, interpreter) {
         
-        var key, val, lval, action, container;
+        var key, val, lval, action, container, next;
+        
+        next = {doNext: true};
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.var",
@@ -13662,47 +13597,29 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
         action = command.getAttribute("action") || "set";
         
         if (key === null) {
-            
-            interpreter.bus.trigger("wse.interpreter.warning",
-            {
-                element: command,
-                message: "Command 'var' must have a 'name' attribute."
-            });
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Command 'var' must have a 'name' attribute.", command);
+            return next;
         }
         
         container = interpreter.runVars;
         
         if (action !== "set" && !(key in container || command.getAttribute("lvalue"))) {
-            
-            interpreter.bus.trigger("wse.interpreter.warning", {
-                element: command,
-                message: "Undefined variable."
-            });
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Undefined variable.", command);
+            return next;
         }
         
-        val  = tools.replaceVariables(val,  interpreter);
+        val  = replaceVars(val,  interpreter);
         
         if (action === "set") {
-            
             container[key] = "" + val;
-            
-            return {
-                doNext: true
-            };
+            return next;
         }
         
         lval = command.getAttribute("lvalue") || container[key];
-        lval = tools.replaceVariables(lval, interpreter);
+        lval = replaceVars(lval, interpreter);
         
         switch (action) {
+            
             case "delete":
                 delete container[key];
                 break;
@@ -13753,21 +13670,15 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
                 break;
             
             case "print":
-                interpreter.bus.trigger(
-                    "wse.interpreter.message",
-                    "Variable '" + key + "' is: " + container[key]
-                );
+                log(interpreter.bus, "Variable '" + key + "' is: " + container[key]);
                 break;
+            
             default:
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    element: command,
-                    message: "Unknown action '" + action + "' defined on 'var' command."
-                });
+                warn(interpreter.bus, "Unknown action '" + action +
+                    "' defined on 'var' command.", command);
         }
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return varCommand;
@@ -13776,35 +13687,29 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
 
 /* global using */
 
-using().define("WSE.commands.set_vars", function () {
+using("WSE.tools::logError").define("WSE.commands.set_vars", function (logError) {
     
     "use strict";
     
     function setVars (command, interpreter) {
         
-        var container = interpreter.runVars, keys, values;
+        var container = interpreter.runVars, keys, values, next;
         
+        next = {doNext: true};
         keys = (command.getAttribute("names") || "").split(",");
         values = (command.getAttribute("values") || "").split(",");
         
         if (keys.length !== values.length) {
-            
-            interpreter.bus.trigger("wse.interpreter.error", {
-                message: "Number of names does not match number of values in <set_vars> command."
-            });
-            
-            return {
-                doNext: true
-            };
+            logError(interpreter.bus, "Number of names does not match number of values " +
+                "in <set_vars> command.");
+            return next;
         }
         
         keys.forEach(function (key, i) {
             container[key.trim()] = "" + values[i].trim();
         });
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return setVars;
@@ -13864,7 +13769,8 @@ using().define("WSE.commands.wait", function () {
 
 /* global using */
 
-using("WSE.tools").define("WSE.commands.with", function (tools) {
+using("WSE.tools::getParsedAttribute", "WSE.tools::warn").
+define("WSE.commands.with", function (getParsedAttribute, warn) {
     
     "use strict";
     
@@ -13872,33 +13778,28 @@ using("WSE.tools").define("WSE.commands.with", function (tools) {
         
         var container = interpreter.runVars;
         var children = command.childNodes;
-        var variableName = tools.getParsedAttribute(command, "var", interpreter);
+        var variableName = getParsedAttribute(command, "var", interpreter);
         var i, numberOfChildren = children.length, current;
         
         for (i = 0; i < numberOfChildren; i += 1) {
             
             current = children[i];
             
-            if (!current.tagName || !interpreter.checkIfvar(current) ||
-                    (current.tagName !== "when" && current.tagName !== "else")) {
+            if (shouldBeSkipped(current, interpreter)) {
                 continue;
             }
             
-            if (current.tagName === "when" && ! current.hasAttribute("is")) {
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    message: "Element 'when' without a condition. Ignored.", command: command
-                });
+            if (isWhen(current) && !hasCondition(current)) {
+                warn(interpreter.bus, "Element 'when' without a condition. Ignored.", command);
             }
             
-            if (current.tagName === "else" && current.hasAttribute("is")) {
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    message: "Element 'else' with a condition. Ignored.", command: command
-                });
+            if (isElse(current) && hasCondition(current)) {
+                warn(interpreter.bus, "Element 'else' with a condition. Ignored.", command);
             }
             
-            if (current.tagName === "else" ||
-                    current.tagName === "when" && current.hasAttribute("is") &&
-                    tools.getParsedAttribute(current, "is") === container[variableName]) {
+            if (isElse(current) ||
+                    isWhen(current) && hasCondition(current) &&
+                    getParsedAttribute(current, "is") === container[variableName]) {
                 
                 interpreter.pushToCallStack();
                 interpreter.currentCommands = current.childNodes;
@@ -13917,6 +13818,28 @@ using("WSE.tools").define("WSE.commands.with", function (tools) {
     }
     
     return withCommand;
+    
+    
+    function shouldBeSkipped (element, interpreter) {
+        return !element.tagName || !interpreter.checkIfvar(element) ||
+               (element.tagName !== "when" && element.tagName !== "else");
+    }
+    
+    function isWhen (element) {
+        return tagNameIs("when");
+    }
+    
+    function isElse (element) {
+        return tagNameIs("else");
+    }
+    
+    function tagNameIs (element, name) {
+        return element.tagName === name;
+    }
+    
+    function hasCondition (element) {
+        return element.hasAttribute("is");
+    }
     
 });
 

@@ -1,13 +1,19 @@
 /* global using */
 
-using("WSE.tools", "WSE.commands.set_vars").
-define("WSE.commands.sub", function (tools, setVars) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.commands.set_vars",
+    "WSE.tools::warn",
+    "WSE.tools::logError",
+    "WSE.tools::log"
+).
+define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) {
     
     "use strict";
     
     function sub (command, interpreter) {
         
-        var sceneId, scene, doNext;
+        var sceneId, scene, doNext, next;
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.sub",
@@ -18,42 +24,24 @@ define("WSE.commands.sub", function (tools, setVars) {
             false
         );
         
+        next = {doNext: true};
         sceneId = command.getAttribute("scene") || null;
         doNext = command.getAttribute("next") === false ? false : true;
         
         if (sceneId === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing 'scene' attribute on 'sub' command!"
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Missing 'scene' attribute on 'sub' command!", command);
+            return next;
         }
         
-        sceneId = tools.replaceVariables(sceneId, interpreter);
+        sceneId = replaceVars(sceneId, interpreter);
         scene = interpreter.getSceneById(sceneId);
         
         if (!scene) {
-            
-            interpreter.bus.trigger("wse.interpreter.error", {
-                message: "No such scene '" + sceneId + "'!",
-                command: command
-            });
-            
-            return {doNext: true};
+            logError(interpreter.bus, "No such scene '" + sceneId + "'!", command);
+            return next;
         }
         
-        interpreter.bus.trigger(
-            "wse.interpreter.message", 
-            "Entering sub scene '" + sceneId + "'...",
-            false
-        );
+        log(interpreter.bus, "Entering sub scene '" + sceneId + "'...");
         
         interpreter.pushToCallStack();
         

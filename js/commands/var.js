@@ -1,12 +1,15 @@
 /* global using */
 
-using("WSE.tools").define("WSE.commands.var", function (tools) {
+using("WSE.tools::replaceVariables", "WSE.tools::warn", "WSE.tools::log").
+define("WSE.commands.var", function (replaceVars, warn, log) {
     
     "use strict";
     
     function varCommand (command, interpreter) {
         
-        var key, val, lval, action, container;
+        var key, val, lval, action, container, next;
+        
+        next = {doNext: true};
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.var",
@@ -22,47 +25,29 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
         action = command.getAttribute("action") || "set";
         
         if (key === null) {
-            
-            interpreter.bus.trigger("wse.interpreter.warning",
-            {
-                element: command,
-                message: "Command 'var' must have a 'name' attribute."
-            });
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Command 'var' must have a 'name' attribute.", command);
+            return next;
         }
         
         container = interpreter.runVars;
         
         if (action !== "set" && !(key in container || command.getAttribute("lvalue"))) {
-            
-            interpreter.bus.trigger("wse.interpreter.warning", {
-                element: command,
-                message: "Undefined variable."
-            });
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Undefined variable.", command);
+            return next;
         }
         
-        val  = tools.replaceVariables(val,  interpreter);
+        val  = replaceVars(val,  interpreter);
         
         if (action === "set") {
-            
             container[key] = "" + val;
-            
-            return {
-                doNext: true
-            };
+            return next;
         }
         
         lval = command.getAttribute("lvalue") || container[key];
-        lval = tools.replaceVariables(lval, interpreter);
+        lval = replaceVars(lval, interpreter);
         
         switch (action) {
+            
             case "delete":
                 delete container[key];
                 break;
@@ -113,21 +98,15 @@ using("WSE.tools").define("WSE.commands.var", function (tools) {
                 break;
             
             case "print":
-                interpreter.bus.trigger(
-                    "wse.interpreter.message",
-                    "Variable '" + key + "' is: " + container[key]
-                );
+                log(interpreter.bus, "Variable '" + key + "' is: " + container[key]);
                 break;
+            
             default:
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    element: command,
-                    message: "Unknown action '" + action + "' defined on 'var' command."
-                });
+                warn(interpreter.bus, "Unknown action '" + action +
+                    "' defined on 'var' command.", command);
         }
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return varCommand;
