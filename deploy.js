@@ -1,7 +1,7 @@
 /* global require, console */
 
 var fs, mkdirSync, processScriptsFileFn, concatJsFiles, scriptsFilePath;
-var minifier = require("minify");
+var minify = require("minify");
 
 fs = require('fs');
 scriptsFilePath = 'scripts.json';
@@ -94,9 +94,10 @@ function writeFileFn (concatFile)
     }
     
     mkdirSync('./bin');
-    fs.writeFile('./bin/WebStoryEngine.js', concatFile, makeErrorFn('WebStory Engine file created.'));
+    fs.writeFileSync('./bin/WebStoryEngine.js', concatFile);
+    makeErrorFn('WebStory Engine file created.')();
     
-    minifier.optimizeData({ext: '.js', data: concatFile}, function(error, data) {
+    minify('./bin/WebStoryEngine.js', function(error, data) {
         if (error) {
             console.log(error);
         }
