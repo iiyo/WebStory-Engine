@@ -1,13 +1,16 @@
 /* global using */
 
-using("WSE.tools").define("WSE.commands.line", function (tools) {
+using("WSE.tools::getSerializedNodes", "WSE.tools::warn").
+define("WSE.commands.line", function (getSerializedNodes, warn) {
     
     "use strict";
     
     function line (command, interpreter) {
         
         var speakerId, speakerName, textboxName, i, len, current;
-        var assetElements, text, doNext, bus = interpreter.bus;
+        var assetElements, text, doNext, bus = interpreter.bus, next;
+        
+        next = {doNext: true};
         
         bus.trigger(
             "wse.interpreter.commands.line",
@@ -22,18 +25,8 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
         doNext = command.getAttribute("stop") === "false" ? true : false;
         
         if (speakerId === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element 'line' requires attribute 's'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(bus, "Element 'line' requires attribute 's'.", command);
+            return next;
         }
         
         assetElements = interpreter.story.getElementsByTagName("character");
@@ -48,24 +41,13 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
                 textboxName = current.getAttribute("textbox");
                 
                 if (typeof textboxName === "undefined" || textboxName === null) {
-                    
-                    bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: command,
-                            message: "No textbox defined for character '" + speakerId + "'."
-                        }
-                    );
-                    
-                    return {
-                        doNext: true
-                    };
+                    warn(bus, "No textbox defined for character '" + speakerId + "'.", command);
+                    return next;
                 }
                 
                 try {
-                    
                     speakerName =
-                        tools.getSerializedNodes(current.getElementsByTagName("displayname")[0]);
+                        getSerializedNodes(current.getElementsByTagName("displayname")[0]);
                 }
                 catch (e) {}
                 
@@ -74,21 +56,11 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
         }
         
         if (typeof interpreter.assets[textboxName] === "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Trying to use an unknown textbox or character."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(bus, "Trying to use an unknown textbox or character.", command);
+            return next;
         }
         
-        text = tools.getSerializedNodes(command);
+        text = getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName, speakerId);

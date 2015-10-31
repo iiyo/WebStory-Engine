@@ -1,6 +1,10 @@
 /* global using */
 
-using("WSE.tools").define("WSE.commands.goto", function (tools) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.tools::logError"
+).
+define("WSE.commands.goto", function (replaceVars, logError) {
     
     "use strict";
     
@@ -20,27 +24,15 @@ using("WSE.tools").define("WSE.commands.goto", function (tools) {
         sceneName = command.getAttribute("scene");
         
         if (sceneName === null) {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Element 'goto' misses attribute 'scene'."
-                }
-            );
+            logError(bus, "Element 'goto' misses attribute 'scene'.");
         }
         
-        sceneName = tools.replaceVariables(sceneName, interpreter);
+        sceneName = replaceVars(sceneName, interpreter);
         
         scene = interpreter.getSceneById(sceneName);
         
         if (scene === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Unknown scene '" + sceneName + "'."
-                }
-            );
-            
+            logError(bus, "Unknown scene '" + sceneName + "'.");
             return;
         }
         

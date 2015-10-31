@@ -13204,51 +13204,30 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
 
 /* global using */
 
-using().define("WSE.commands.globalize", function () {
+using("WSE.tools::warn").define("WSE.commands.globalize", function (warn) {
     
     "use strict";
     
     function globalize (command, interpreter) {
         
-        var key;
+        var key, next;
         
         key = command.getAttribute("name") || null;
+        next = {doNext: true};
         
         if (key === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No variable name defined on globalize element."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No variable name defined on globalize element.", command);
+            return next;
         }
         
         if (typeof interpreter.runVars[key] === "undefined" || interpreter.runVars[key] === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Undefined local variable."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "Undefined local variable.", command);
+            return next;
         }
         
         interpreter.globalVars.set(key, interpreter.runVars[key]);
         
-        return {
-            doNext: true
-        };
+        return next;
     }
     
     return globalize;
@@ -13257,7 +13236,11 @@ using().define("WSE.commands.globalize", function () {
 
 /* global using */
 
-using("WSE.tools").define("WSE.commands.goto", function (tools) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.tools::logError"
+).
+define("WSE.commands.goto", function (replaceVars, logError) {
     
     "use strict";
     
@@ -13277,27 +13260,15 @@ using("WSE.tools").define("WSE.commands.goto", function (tools) {
         sceneName = command.getAttribute("scene");
         
         if (sceneName === null) {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Element 'goto' misses attribute 'scene'."
-                }
-            );
+            logError(bus, "Element 'goto' misses attribute 'scene'.");
         }
         
-        sceneName = tools.replaceVariables(sceneName, interpreter);
+        sceneName = replaceVars(sceneName, interpreter);
         
         scene = interpreter.getSceneById(sceneName);
         
         if (scene === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Unknown scene '" + sceneName + "'."
-                }
-            );
-            
+            logError(bus, "Unknown scene '" + sceneName + "'.");
             return;
         }
         
@@ -13312,14 +13283,17 @@ using("WSE.tools").define("WSE.commands.goto", function (tools) {
 
 /* global using */
 
-using("WSE.tools").define("WSE.commands.line", function (tools) {
+using("WSE.tools::getSerializedNodes", "WSE.tools::warn").
+define("WSE.commands.line", function (getSerializedNodes, warn) {
     
     "use strict";
     
     function line (command, interpreter) {
         
         var speakerId, speakerName, textboxName, i, len, current;
-        var assetElements, text, doNext, bus = interpreter.bus;
+        var assetElements, text, doNext, bus = interpreter.bus, next;
+        
+        next = {doNext: true};
         
         bus.trigger(
             "wse.interpreter.commands.line",
@@ -13334,18 +13308,8 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
         doNext = command.getAttribute("stop") === "false" ? true : false;
         
         if (speakerId === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element 'line' requires attribute 's'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(bus, "Element 'line' requires attribute 's'.", command);
+            return next;
         }
         
         assetElements = interpreter.story.getElementsByTagName("character");
@@ -13360,24 +13324,13 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
                 textboxName = current.getAttribute("textbox");
                 
                 if (typeof textboxName === "undefined" || textboxName === null) {
-                    
-                    bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: command,
-                            message: "No textbox defined for character '" + speakerId + "'."
-                        }
-                    );
-                    
-                    return {
-                        doNext: true
-                    };
+                    warn(bus, "No textbox defined for character '" + speakerId + "'.", command);
+                    return next;
                 }
                 
                 try {
-                    
                     speakerName =
-                        tools.getSerializedNodes(current.getElementsByTagName("displayname")[0]);
+                        getSerializedNodes(current.getElementsByTagName("displayname")[0]);
                 }
                 catch (e) {}
                 
@@ -13386,21 +13339,11 @@ using("WSE.tools").define("WSE.commands.line", function (tools) {
         }
         
         if (typeof interpreter.assets[textboxName] === "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Trying to use an unknown textbox or character."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(bus, "Trying to use an unknown textbox or character.", command);
+            return next;
         }
         
-        text = tools.getSerializedNodes(command);
+        text = getSerializedNodes(command);
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName, speakerId);
