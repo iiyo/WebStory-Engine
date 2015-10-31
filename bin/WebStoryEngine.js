@@ -7262,7 +7262,7 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2015.10.2-final.1510051136";
+    var WSE = {}, version = "2015.11.1-alpha.1510311801";
     
     EventBus.inject(WSE);
     
@@ -10194,7 +10194,7 @@ define("WSE.Interpreter", function (
 
 /* global using */
 
-using().define("WSE.tools.ui", function () {
+using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
     
     "use strict";
     
@@ -10563,12 +10563,8 @@ using().define("WSE.tools.ui", function () {
             interpreter.bus.trigger("wse.interpreter.commands." + type, command);
             
             if (key === null) {
-                
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    element: command,
-                    message: "No 'var' attribute defined on " + type + " command. Command ignored."
-                });
-                
+                warn(interpreter.bus, "No 'var' attribute defined on " + type +
+                    " command. Command ignored.", command);
                 return {
                     doNext: true
                 };
@@ -13074,7 +13070,7 @@ using("WSE.tools.ui").define("WSE.commands.confirm", function (ui) {
 
 /* global using */
 
-using().define("WSE.commands.do", function () {
+using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     
     "use strict";
     
@@ -13098,56 +13094,27 @@ using().define("WSE.commands.do", function () {
         isAnimation = args.animation || false;
         
         if (assetName === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element of type 'do' must have an attribute 'asset'. Element ignored."
-                }
-            );
-            
+            warn(bus, "Element of type 'do' must have an attribute 'asset'. " +
+                "Element ignored.", command);
             return;
         }
         
         if (action === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element of type 'do' must have an attribute 'action'." +
-                        " Element ignored."
-                }
-            );
-            
+            warn(bus, "Element of type 'do' must have an attribute 'action'." +
+                " Element ignored.", command);
             return;
         }
-
+        
         if (typeof assets[assetName] === "undefined" || assets[assetName] === null) {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Reference to unknown asset '" + assetName + "'."
-                }
-            );
-            
+            warn(bus, "Reference to unknown asset '" + assetName + "'.", command);
             return {
                 doNext: true
             };
         }
         
         if (typeof assets[assetName][action] === "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Action '" + action + "' is not defined for asset '" + assetName + "'."
-                }
-            );
-            
+            warn(bus, "Action '" + action + "' is not defined for asset '" +
+                assetName + "'.", command);
             return {
                 doNext: true
             };
@@ -13162,7 +13129,7 @@ using().define("WSE.commands.do", function () {
 
 /* global using */
 
-using("WSE.functions").define("WSE.commands.fn", function (functions) {
+using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (functions, warn) {
     
     "use strict";
     
@@ -13174,30 +13141,14 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
         varName = command.getAttribute("tovar") || null;
         
         if (typeof functions[name] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name supplied on fn element."
-                }
-            );
-            
+            warn(interpreter.bus, "No name supplied on fn element.", command);
             return {
                 doNext: true
             };
         }
         
         if (typeof functions[name] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown function '" + name + "'."
-                }
-            );
-            
+            warn(interpreter.bus, "Unknown function '" + name + "'.", command);
             return {
                 doNext: true
             };
@@ -13205,8 +13156,7 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
         
         ret = functions[name](interpreter);
         
-        if (varName !== null)
-        {
+        if (varName !== null){
             interpreter.runVars[varName] = "" + ret;
         }
         
@@ -13221,52 +13171,31 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
 
 /* global using */
 
-using().define("WSE.commands.global", function () {
+using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
     
     "use strict";
     
     function global (command, interpreter) {
         
-        var name, value;
+        var name, value, next;
         
         name = command.getAttribute("name") || null;
         value = command.getAttribute("value") || null;
+        next = {doNext: true};
         
         if (name === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name defined on element 'global'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No name defined on element 'global'.", command);
+            return next
         }
         
         if (value === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No value defined on element 'global'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No value defined on element 'global'.", command);
+            return next;
         }
         
         interpreter.globalVars.set(name, value);
         
-        return {
-            doNext: true
-        };
+        return next;
     };
     
     return global;

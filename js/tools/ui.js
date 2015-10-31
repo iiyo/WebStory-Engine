@@ -1,6 +1,6 @@
 /* global using */
 
-using().define("WSE.tools.ui", function () {
+using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
     
     "use strict";
     
@@ -369,12 +369,8 @@ using().define("WSE.tools.ui", function () {
             interpreter.bus.trigger("wse.interpreter.commands." + type, command);
             
             if (key === null) {
-                
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    element: command,
-                    message: "No 'var' attribute defined on " + type + " command. Command ignored."
-                });
-                
+                warn(interpreter.bus, "No 'var' attribute defined on " + type +
+                    " command. Command ignored.", command);
                 return {
                     doNext: true
                 };

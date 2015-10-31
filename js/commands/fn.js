@@ -1,6 +1,6 @@
 /* global using */
 
-using("WSE.functions").define("WSE.commands.fn", function (functions) {
+using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (functions, warn) {
     
     "use strict";
     
@@ -12,30 +12,14 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
         varName = command.getAttribute("tovar") || null;
         
         if (typeof functions[name] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name supplied on fn element."
-                }
-            );
-            
+            warn(interpreter.bus, "No name supplied on fn element.", command);
             return {
                 doNext: true
             };
         }
         
         if (typeof functions[name] !== "function") {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown function '" + name + "'."
-                }
-            );
-            
+            warn(interpreter.bus, "Unknown function '" + name + "'.", command);
             return {
                 doNext: true
             };
@@ -43,8 +27,7 @@ using("WSE.functions").define("WSE.commands.fn", function (functions) {
         
         ret = functions[name](interpreter);
         
-        if (varName !== null)
-        {
+        if (varName !== null){
             interpreter.runVars[varName] = "" + ret;
         }
         

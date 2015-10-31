@@ -1,51 +1,30 @@
 /* global using */
 
-using().define("WSE.commands.global", function () {
+using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
     
     "use strict";
     
     function global (command, interpreter) {
         
-        var name, value;
+        var name, value, next;
         
         name = command.getAttribute("name") || null;
         value = command.getAttribute("value") || null;
+        next = {doNext: true};
         
         if (name === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No name defined on element 'global'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No name defined on element 'global'.", command);
+            return next
         }
         
         if (value === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "No value defined on element 'global'."
-                }
-            );
-            
-            return {
-                doNext: true
-            };
+            warn(interpreter.bus, "No value defined on element 'global'.", command);
+            return next;
         }
         
         interpreter.globalVars.set(name, value);
         
-        return {
-            doNext: true
-        };
+        return next;
     };
     
     return global;

@@ -1,6 +1,6 @@
 /* global using */
 
-using().define("WSE.commands.do", function () {
+using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     
     "use strict";
     
@@ -24,56 +24,27 @@ using().define("WSE.commands.do", function () {
         isAnimation = args.animation || false;
         
         if (assetName === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element of type 'do' must have an attribute 'asset'. Element ignored."
-                }
-            );
-            
+            warn(bus, "Element of type 'do' must have an attribute 'asset'. " +
+                "Element ignored.", command);
             return;
         }
         
         if (action === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element of type 'do' must have an attribute 'action'." +
-                        " Element ignored."
-                }
-            );
-            
+            warn(bus, "Element of type 'do' must have an attribute 'action'." +
+                " Element ignored.", command);
             return;
         }
-
+        
         if (typeof assets[assetName] === "undefined" || assets[assetName] === null) {
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Reference to unknown asset '" + assetName + "'."
-                }
-            );
-            
+            warn(bus, "Reference to unknown asset '" + assetName + "'.", command);
             return {
                 doNext: true
             };
         }
         
         if (typeof assets[assetName][action] === "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Action '" + action + "' is not defined for asset '" + assetName + "'."
-                }
-            );
-            
+            warn(bus, "Action '" + action + "' is not defined for asset '" +
+                assetName + "'.", command);
             return {
                 doNext: true
             };
