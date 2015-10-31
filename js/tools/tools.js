@@ -291,6 +291,21 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
             ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
+    tools.warn = function (bus, message, element) {
+        tools.trigger(bus, "wse.interpreter.warning", message, element);
+    };
+    
+    tools.logError = function (bus, message, element) {
+        tools.trigger(bus, "wse.interpreter.error", message, element);
+    };
+    
+    tools.trigger = function (bus, channel, message, element) {
+        bus.trigger(channel, {
+            element: element || null,
+            message: message
+        });
+    };
+    
     return tools;
     
 });

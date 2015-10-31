@@ -300,7 +300,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
                 return;
             }
             
-            console.log("Next triggered by user...");
+            //console.log("Next triggered by user...");
             self.interpreter.next(true);
         };
         

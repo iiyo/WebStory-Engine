@@ -41,11 +41,16 @@ var using = (function () {
     "use strict";
     
     var modules = {}, loadedScripts = {}, dependencies = {}, definitions = {}, dependingOn = {};
-    var runners = [];
+    var runners = [], selectors = {}, runnersCheckInProgress = false;
     
     function updateModule (moduleName) {
         
         var deps = [], depNames = dependencies[moduleName], moduleResult;
+        var currentSelectors = selectors[moduleName];
+        
+        if (modules[moduleName]) {
+            return;
+        }
         
         if (depNames.length === 0) {
             
@@ -61,8 +66,10 @@ var using = (function () {
         }
         else if (allModulesLoaded(depNames)) {
             
-            depNames.forEach(function (name) {
-                deps.push(modules[name]);
+            //console.log("currentSelectors, depNames:", currentSelectors, depNames);
+            
+            depNames.forEach(function (name, i) {
+                deps.push(select(name, currentSelectors[i]));
             });
             
             moduleResult = definitions[moduleName].apply(undefined, deps);
@@ -76,9 +83,32 @@ var using = (function () {
             dependingOn[moduleName].forEach(updateModule);
         }
         
+        startRunnersCheck();
+    }
+    
+    function startRunnersCheck () {
+        
+        if (runnersCheckInProgress) {
+            return;
+        }
+        
+        runnersCheckInProgress = true;
+        
+        checkRunners();
+    }
+    
+    function checkRunners () {
+        
         runners.forEach(function (runner) {
             runner();
         });
+        
+        if (runners.length) {
+            setTimeout(checkRunners, 20);
+        }
+        else {
+            runnersCheckInProgress = false;
+        }
     }
     
     function allModulesLoaded (moduleNames) {
@@ -94,36 +124,92 @@ var using = (function () {
         return loaded;
     }
     
+    function select (moduleName, selectors) {
+        
+        var argSelectors, mod;
+        
+        mod = modules[moduleName];
+        
+        if (!selectors) {
+            console.log("Module has no selectors:", moduleName);
+            return mod;
+        }
+        
+        argSelectors = selectors.slice();
+        
+        while (argSelectors.length) {
+            
+            if (typeof mod !== "object" || mod === null) {
+                throw new TypeError("Module '" + moduleName + "' has no property '" +
+                    argSelectors.join("::") + "'.");
+            }
+            
+            mod = mod[argSelectors.shift()];
+        }
+        
+        return mod;
+    }
+    
     function using (/* module names */) {
         
-        var moduleNames, capabilityObject;
+        var args, moduleNames, moduleSelectors, capabilityObject;
         
-        moduleNames = [].slice.call(arguments);
+        moduleNames = [];
+        moduleSelectors = [];
+        args = [].slice.call(arguments);
         
-        moduleNames.forEach(function (moduleName) {
+        args.forEach(function (arg, index) {
+            
+            var selector, moduleName;
+            var parts = arg.split("::");
+            var protocolParts = parts[0].split(":");
+            var protocol = protocolParts.length > 1 ? protocolParts[0] : "";
+            
+            parts[0] = protocolParts.length > 1 ? protocolParts[1] : protocolParts[0];
+            
+            selector = parts.slice(1);
+            moduleName = parts[0];
+            
+            if (protocol === "ajax") {
+                moduleNames.push(arg);
+            }
+            else {
+                moduleNames.push(moduleName);
+            }
+            
+            moduleSelectors.push(selector);
             
             if (!(moduleName in dependencies) && !(moduleName in modules)) {
                 
-                dependencies[moduleName] = [];
-                
-                if (!dependingOn[moduleName]) {
-                    dependingOn[moduleName] = [];
-                }
-                
-                if (moduleName.match(/^ajax:/)) {
-                    using.ajax(using.ajax.HTTP_METHOD_GET, moduleName.replace(/^ajax:/, ""),
+                if (protocol === "ajax") {
+                    
+                    dependencies[arg] = [];
+                    
+                    if (!dependingOn[arg]) {
+                        dependingOn[arg] = [];
+                    }
+                    
+                    using.ajax(using.ajax.HTTP_METHOD_GET, arg.replace(/^ajax:/, ""),
                         null, ajaxResourceSuccessFn, ajaxResourceSuccessFn);
                 }
                 else {
+                    
+                    dependencies[moduleName] = [];
+                    
+                    if (!dependingOn[moduleName]) {
+                        dependingOn[moduleName] = [];
+                    }
+                    
                     loadModule(moduleName);
                 }
             }
             
             function ajaxResourceSuccessFn (request) {
-                modules[moduleName] = request;
-                dependingOn[moduleName].forEach(updateModule);
+                modules[arg] = request;
+                dependingOn[arg].forEach(updateModule);
             }
         });
+        
         
         capabilityObject = {
             run: run,
@@ -139,6 +225,8 @@ var using = (function () {
                 runners.push(runner);
             }
             
+            startRunnersCheck();
+            
             return capabilityObject;
             
             function runner (doNotRemove) {
@@ -147,8 +235,10 @@ var using = (function () {
                 
                 if (allModulesLoaded(moduleNames)) {
                     
-                    moduleNames.forEach(function (name) {
-                        deps.push(modules[name]);
+                    //console.log("moduleSelectors, moduleNames:", moduleSelectors, moduleNames);
+                    
+                    moduleNames.forEach(function (name, i) {
+                        deps.push(select(name, moduleSelectors[i]));
                     });
                     
                     callback.apply(undefined, deps);
@@ -172,6 +262,7 @@ var using = (function () {
             
             definitions[moduleName] = callback;
             dependencies[moduleName] = moduleNames;
+            selectors[moduleName] = moduleSelectors;
             
             if (!dependingOn[moduleName]) {
                 dependingOn[moduleName] = [];
@@ -7896,6 +7987,21 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
             ' transform: scale(' + ratio + ',' + ratio + ');');
     };
     
+    tools.warn = function (bus, message, element) {
+        tools.trigger(bus, "wse.interpreter.warning", message, element);
+    };
+    
+    tools.logError = function (bus, message, element) {
+        tools.trigger(bus, "wse.interpreter.error", message, element);
+    };
+    
+    tools.trigger = function (bus, channel, message, element) {
+        bus.trigger(channel, {
+            element: element || null,
+            message: message
+        });
+    };
+    
     return tools;
     
 });
@@ -8199,28 +8305,41 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         args = args || {};
         this.bus = new EventBus();
         this.url = args.url || "game.xml";
+        this.gameId = args.gameId || null;
         this.ws = null;
         this.debug = args.debug === true ? true : false;
         
         host = args.host || false;
         this.host = host;
         
-        if (host) {
+        if (this.gameId) {
             
-            this.ws = (function (url) {
-                
-                var xml, parser;
-                
-                parser = new DOMParser();
-                xml = host.get(url);
-                       
-                return parser.parseFromString(xml, "application/xml");
-            }(this.url));
+            this.ws = new DOMParser().parseFromString(
+                document.getElementById(this.gameId).innerHTML, "application/xml"
+            );
+            
+            console.log("this.ws:", this.ws);
             
             this.init();
         }
         else {
-            this.load(this.url);
+            if (host) {
+                
+                this.ws = (function (url) {
+                    
+                    var xml, parser;
+                    
+                    parser = new DOMParser();
+                    xml = host.get(url);
+                        
+                    return parser.parseFromString(xml, "application/xml");
+                }(this.url));
+                
+                this.init();
+            }
+            else {
+                this.load();
+            }
         }
         
         this.interpreter = new Interpreter(this);
@@ -8268,6 +8387,25 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         };
         
         ajax("GET", this.url, null, fn);
+    };
+    
+    Game.prototype.loadFromUrl = function (url) {
+        
+        //console.log("Loading game file...");
+        var fn, self;
+        
+        this.url = url || this.url;
+        
+        self = this;
+        
+        fn = function (obj) {
+            self.ws = obj.responseXML;
+            //console.log("Response XML: " + obj.responseXML);
+            self.init();
+        };
+        
+        ajax("GET", this.url, null, fn);
+        
     };
     
     /**
@@ -8438,7 +8576,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
                 return;
             }
             
-            console.log("Next triggered by user...");
+            //console.log("Next triggered by user...");
             self.interpreter.next(true);
         };
         
@@ -8485,9 +8623,20 @@ using(
     "WSE.Trigger",
     "WSE.tools",
     "WSE.tools.ui",
-    "WSE"
+    "WSE",
+    "WSE.tools::logError",
+    "WSE.tools::warn"
 ).
-define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tools, ui, WSE) {
+define("WSE.Interpreter", function (
+    transform,
+    LocalStorageSource,
+    Trigger,
+    tools,
+    ui,
+    WSE,
+    logError,
+    warn
+) {
     
     "use strict";
     
@@ -8845,14 +8994,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         
         if (len < 1) {
-            
-            this.bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "No scenes found!"
-                }
-            );
-            
+            logError(this.bus, "No scenes found!");
             return null;
         }
         
@@ -8878,13 +9020,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         );
         
         if (typeof scene === "undefined" || scene === null) {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Scene does not exist."
-                }
-            );
-            
+            logError(bus, "Scene does not exist.");
             return;
         }
         
@@ -8892,14 +9028,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         this.visitedScenes.push(id);
         
         if (id === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Encountered scene without id attribute."
-                }
-            );
-            
+            logError(bus, "Encountered scene without id attribute.");
             return;
         }
         
@@ -8917,15 +9046,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         this.currentElement = 0;
         
         if (len < 1) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: scene,
-                    message: "Scene '" + id + "' is empty."
-                }
-            );
-            
+            warn(bus, "Scene '" + id + "' is empty.", scene);
             return;
         }
         
@@ -8993,13 +9114,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         
         if (scene === null) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Scene '" + sceneName + "' not found!"
-                }
-            );
+            warn(this.bus, "Scene '" + sceneName + "' not found!");
         }
         
         return scene;
@@ -9122,14 +9237,8 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             if (!(ifvar in varContainer)) {
                 
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: command,
-                        message: "Unknown variable '" + ifvar +
-                            "' used in condition. Ignoring command."
-                    }
-                );
+                warn(bus, "Unknown variable '" + ifvar +
+                    "' used in condition. Ignoring command.", command);
                 
                 bus.trigger(
                     "wse.interpreter.runcommand.after.condition.error.key",
@@ -9238,13 +9347,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         else {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown element '" + tagName + "'."
-                }
-            );
+            warn(bus, "Unknown element '" + tagName + "'.", command);
             
             bus.trigger(
                 "wse.interpreter.runcommand.after.error",
@@ -9286,28 +9389,13 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             curName = cur.getAttribute("name") || null;
             
             if (curName === null) {
-                
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: cur,
-                        message: "No name specified for trigger."
-                    }
-                );
-                
+                warn(bus, "No name specified for trigger.", cur);
                 continue;
             }
             
             if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null) {
-                
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: cur,
-                        message: "A trigger with the name '" + curName + "' already exists."
-                    }
-                );
-                
+                warn(bus, "A trigger with the name '" + curName +
+                    "' already exists.", cur);
                 continue;
             }
             
@@ -9329,13 +9417,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             assets = this.story.getElementsByTagName("assets")[0].childNodes;
         }
         catch (e) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Error while creating assets: " + e.getMessage()
-                }
-            );
+            logError(bus, "Error while creating assets: " + e.getMessage());
         }
         
         len = assets.length;
@@ -9370,40 +9452,17 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         self = this;
         
         if (name === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    element: asset,
-                    message: "Expected attribute 'name'."
-                }
-            );
-            
+            logError(bus, "Expected attribute 'name'.", asset);
             return;
         }
         
         if (assetType === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Expected attribute 'type' on asset '" + name + "'."
-                }
-            );
-            
+            warn(bus, "Expected attribute 'type' on asset '" + name + "'.", asset);
             return;
         }
         
         if (typeof this.assets[name] !== "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Trying to override existing asset '" + name + "'."
-                }
-            );
+            warn(bus, "Trying to override existing asset '" + name + "'.", asset);
         }
         
         assetType = tools.firstLetterUppercase(assetType);
@@ -9413,16 +9472,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             return;
         }
         else {
-            
-            console.log(WSE.assets);
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Unknown asset type '" + assetType + "'."
-                }
-            );
-            
+            warn(bus, "Unknown asset type '" + assetType + "'.", asset);
             return;
         }
     };
@@ -9465,11 +9515,8 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                     assets[key].restore(saves[key]);
                 }
                 catch (e) {
-                    
                     console.log(e);
-                    this.bus.trigger("wse.interpreter.warning", {
-                        message: "Could not restore asset state for asset '" + key + "'!"
-                    });
+                    warn(this.bus, "Could not restore asset state for asset '" + key + "'!");
                 }
             }
         }
@@ -9534,12 +9581,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         catch (e) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Savegame could not be created!"
-                }
-            );
+            warn(bus, "Savegame could not be created!");
             
             bus.trigger(
                 "wse.interpreter.save.after.error",
@@ -9640,14 +9682,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         );
         
         if (!savegame) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Could not load savegame '" + savegameId + "'!"
-                }
-            );
-            
+            warn(bus, "Could not load savegame '" + savegameId + "'!");
             return false;
         }
         
@@ -9733,14 +9768,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
                 
                 if (index === null) {
-                    
-                    interpreter.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            message: "No data-wse-index found on element."
-                        }
-                    );
-                    
+                    warn(interpreter.bus, "No data-wse-index found on element.");
                     continue;
                 }
                 
@@ -10576,8 +10604,8 @@ using().define("WSE.tools.ui", function () {
 
 /* global using */
 
-using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
-define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
+using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
+define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn) {
     
     function DisplayObject () {
         CoreObject.call(this);
@@ -10598,15 +10626,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         element = args.element || document.getElementById(this.cssid);
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
     
@@ -10680,15 +10700,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         iteration = 0;
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
         
@@ -10994,15 +11006,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         waitZ = false;
         
         if (x === null && y === null && z === null) {
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Can't apply command 'move' to asset '" + 
-                        this.name + "' because no x, y or z position " +
-                        "has been supplied."
-                }
-            );
+            warn(this.bus, "Can't apply command 'move' to asset '" + 
+                this.name + "' because no x, y or z position " +
+                "has been supplied.", command);
         }
         
         if (x !== null) {
@@ -11224,15 +11230,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         yUnit = this.yUnit || 'px';
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
         

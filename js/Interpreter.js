@@ -6,9 +6,20 @@ using(
     "WSE.Trigger",
     "WSE.tools",
     "WSE.tools.ui",
-    "WSE"
+    "WSE",
+    "WSE.tools::logError",
+    "WSE.tools::warn"
 ).
-define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tools, ui, WSE) {
+define("WSE.Interpreter", function (
+    transform,
+    LocalStorageSource,
+    Trigger,
+    tools,
+    ui,
+    WSE,
+    logError,
+    warn
+) {
     
     "use strict";
     
@@ -366,14 +377,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         
         if (len < 1) {
-            
-            this.bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "No scenes found!"
-                }
-            );
-            
+            logError(this.bus, "No scenes found!");
             return null;
         }
         
@@ -399,13 +403,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         );
         
         if (typeof scene === "undefined" || scene === null) {
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Scene does not exist."
-                }
-            );
-            
+            logError(bus, "Scene does not exist.");
             return;
         }
         
@@ -413,14 +411,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         this.visitedScenes.push(id);
         
         if (id === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Encountered scene without id attribute."
-                }
-            );
-            
+            logError(bus, "Encountered scene without id attribute.");
             return;
         }
         
@@ -438,15 +429,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         this.currentElement = 0;
         
         if (len < 1) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: scene,
-                    message: "Scene '" + id + "' is empty."
-                }
-            );
-            
+            warn(bus, "Scene '" + id + "' is empty.", scene);
             return;
         }
         
@@ -514,13 +497,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         
         if (scene === null) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Scene '" + sceneName + "' not found!"
-                }
-            );
+            warn(this.bus, "Scene '" + sceneName + "' not found!");
         }
         
         return scene;
@@ -643,14 +620,8 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             
             if (!(ifvar in varContainer)) {
                 
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: command,
-                        message: "Unknown variable '" + ifvar +
-                            "' used in condition. Ignoring command."
-                    }
-                );
+                warn(bus, "Unknown variable '" + ifvar +
+                    "' used in condition. Ignoring command.", command);
                 
                 bus.trigger(
                     "wse.interpreter.runcommand.after.condition.error.key",
@@ -759,13 +730,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         else {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown element '" + tagName + "'."
-                }
-            );
+            warn(bus, "Unknown element '" + tagName + "'.", command);
             
             bus.trigger(
                 "wse.interpreter.runcommand.after.error",
@@ -807,28 +772,13 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             curName = cur.getAttribute("name") || null;
             
             if (curName === null) {
-                
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: cur,
-                        message: "No name specified for trigger."
-                    }
-                );
-                
+                warn(bus, "No name specified for trigger.", cur);
                 continue;
             }
             
             if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null) {
-                
-                bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: cur,
-                        message: "A trigger with the name '" + curName + "' already exists."
-                    }
-                );
-                
+                warn(bus, "A trigger with the name '" + curName +
+                    "' already exists.", cur);
                 continue;
             }
             
@@ -850,13 +800,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             assets = this.story.getElementsByTagName("assets")[0].childNodes;
         }
         catch (e) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Error while creating assets: " + e.getMessage()
-                }
-            );
+            logError(bus, "Error while creating assets: " + e.getMessage());
         }
         
         len = assets.length;
@@ -891,40 +835,17 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         self = this;
         
         if (name === null) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    element: asset,
-                    message: "Expected attribute 'name'."
-                }
-            );
-            
+            logError(bus, "Expected attribute 'name'.", asset);
             return;
         }
         
         if (assetType === null) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Expected attribute 'type' on asset '" + name + "'."
-                }
-            );
-            
+            warn(bus, "Expected attribute 'type' on asset '" + name + "'.", asset);
             return;
         }
         
         if (typeof this.assets[name] !== "undefined") {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Trying to override existing asset '" + name + "'."
-                }
-            );
+            warn(bus, "Trying to override existing asset '" + name + "'.", asset);
         }
         
         assetType = tools.firstLetterUppercase(assetType);
@@ -934,16 +855,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
             return;
         }
         else {
-            
-            console.log(WSE.assets);
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "Unknown asset type '" + assetType + "'."
-                }
-            );
-            
+            warn(bus, "Unknown asset type '" + assetType + "'.", asset);
             return;
         }
     };
@@ -986,11 +898,8 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                     assets[key].restore(saves[key]);
                 }
                 catch (e) {
-                    
                     console.log(e);
-                    this.bus.trigger("wse.interpreter.warning", {
-                        message: "Could not restore asset state for asset '" + key + "'!"
-                    });
+                    warn(this.bus, "Could not restore asset state for asset '" + key + "'!");
                 }
             }
         }
@@ -1055,12 +964,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         }
         catch (e) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Savegame could not be created!"
-                }
-            );
+            warn(bus, "Savegame could not be created!");
             
             bus.trigger(
                 "wse.interpreter.save.after.error",
@@ -1161,14 +1065,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
         );
         
         if (!savegame) {
-            
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Could not load savegame '" + savegameId + "'!"
-                }
-            );
-            
+            warn(bus, "Could not load savegame '" + savegameId + "'!");
             return false;
         }
         
@@ -1254,14 +1151,7 @@ define("WSE.Interpreter", function (transform, LocalStorageSource, Trigger, tool
                 index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
                 
                 if (index === null) {
-                    
-                    interpreter.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            message: "No data-wse-index found on element."
-                        }
-                    );
-                    
+                    warn(interpreter.bus, "No data-wse-index found on element.");
                     continue;
                 }
                 

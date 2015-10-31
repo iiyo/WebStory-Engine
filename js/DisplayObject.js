@@ -1,7 +1,7 @@
 /* global using */
 
-using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools").
-define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
+using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
+define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn) {
     
     function DisplayObject () {
         CoreObject.call(this);
@@ -22,15 +22,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         element = args.element || document.getElementById(this.cssid);
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
     
@@ -104,15 +96,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         iteration = 0;
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
         
@@ -418,15 +402,9 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         waitZ = false;
         
         if (x === null && y === null && z === null) {
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Can't apply command 'move' to asset '" + 
-                        this.name + "' because no x, y or z position " +
-                        "has been supplied."
-                }
-            );
+            warn(this.bus, "Can't apply command 'move' to asset '" + 
+                this.name + "' because no x, y or z position " +
+                "has been supplied.", command);
         }
         
         if (x !== null) {
@@ -648,15 +626,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools) {
         yUnit = this.yUnit || 'px';
         
         if (!element) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "DOM Element for asset is missing!"
-                }
-            );
-            
+            warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
         
