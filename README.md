@@ -1,5 +1,3 @@
-# WebStory Engine #
-
 ![WebStory Engine Logo](https://iiyo.org/res/webstory-engine-logo.png)
 
 WebStory Engine is an engine for interactive web stories (e.g. visual
