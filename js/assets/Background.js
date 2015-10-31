@@ -1,7 +1,7 @@
 /* global using */
 
-using("WSE.tools", "WSE.DisplayObject").
-define("WSE.assets.Background", function (tools, DisplayObject) {
+using("WSE.tools::applyAssetUnits", "WSE.DisplayObject", "WSE.tools::warn").
+define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
     
     "use strict";
     
@@ -41,19 +41,11 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
         this.name = asset.getAttribute('name');
         
         if (!this.src) {
-            
-            this.bus.trigger(
-                'wse.interpreter.warning',
-                {
-                    element: asset,
-                    message: 'No source defined on background asset.'
-                }
-            );
-            
+            warn(this.bus, 'No source defined on background asset.', asset);
             return;
         }
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         this.element.setAttribute('src', this.src);
         styleElement(this);
         resize(this);
@@ -80,15 +72,7 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
             this.element = document.getElementById(this.cssid);
         }
         catch (e) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Element with CSS ID '" + this.cssid + 
-                        "' could not be found."
-                }
-            );
-            
+            warn(this.bus, "Element with CSS ID '" + this.cssid + "' could not be found.");
             return;
         }
     };

@@ -11363,17 +11363,21 @@ using(
     "MO5.transform",
     "MO5.easing",
     "MO5.Animation",
-    "WSE.tools",
+    "MO5.CoreObject",
+    "MO5.TimerWatcher",
     "WSE.commands",
-    "MO5.TimerWatcher"
+    "WSE.tools::createTimer",
+    "WSE.tools::warn"
 ).
 define("WSE.assets.Animation", function (
     transform,
     easing,
     MO5Animation,
-    tools,
+    CoreObject,
+    TimerWatcher,
     commands,
-    TimerWatcher
+    createTimer,
+    warn
 ) {
     
     "use strict";
@@ -11383,13 +11387,14 @@ define("WSE.assets.Animation", function (
         var groups, i, len, current, transformations, jlen;
         var self, doElements;
         
+        CoreObject.call(this);
+        
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.asset = asset;
         this.name = asset.getAttribute("name");
         this.cbs = [];
         this.assets = interpreter.assets;
-        this.id = tools.getUniqueId();
         this.isRunning = false;
         
         self = this;
@@ -11398,10 +11403,7 @@ define("WSE.assets.Animation", function (
         
         if (len < 1) {
             
-            this.bus.trigger("wse.interpreter.warning", {
-                element: asset,
-                message: "Animation asset '" + this.name + "' is empty."
-            });
+            warn(this.bus, "Animation asset '" + this.name + "' is empty.", asset);
             
             return {
                 doNext: true
@@ -11426,7 +11428,7 @@ define("WSE.assets.Animation", function (
             });
             
             if (curDur !== null) {
-                watcher.addTimer(tools.createTimer(curDur));
+                watcher.addTimer(createTimer(curDur));
             }
         };
         
@@ -11517,6 +11519,8 @@ define("WSE.assets.Animation", function (
         
     };
     
+    Animation.prototype = new CoreObject();
+    
     Animation.prototype.start = function () {
         this.anim.start();
         this.isRunning = true;
@@ -11576,7 +11580,8 @@ define("WSE.assets.Animation", function (
 
 /* global using, Howl */
 
-using("WSE.tools").define("WSE.assets.Audio", function (tools) {
+using("MO5.CoreObject", "WSE.tools::warn").
+define("WSE.assets.Audio", function (CoreObject, warn) {
     
     "use strict";
     
@@ -11593,6 +11598,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         var self, sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
+        CoreObject.call(this);
+        
         bus = interpreter.bus;
         self = this;
         
@@ -11605,7 +11612,6 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         this.fade = asset.getAttribute("fade") === "true" ? true : false;
         this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
         this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
-        this.id = tools.getUniqueId();
         this._playing = false;
         
         tracks = asset.getElementsByTagName("track");
@@ -11613,13 +11619,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         
         if (len < 1) {
             
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No tracks defined for audio element '" + this.name + "'."
-                }
-            );
+            warn(this.bus, "No tracks defined for audio element '" + this.name + "'.", asset);
             
             return {
                 doNext: true
@@ -11635,14 +11635,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             
             if (trackName === null) {
                 
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No title defined for track '" + trackName + 
-                            "' in audio element '" + this.name + "'."
-                    }
-                );
+                warn(this.bus, "No title defined for track '" + trackName + 
+                    "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
@@ -11652,14 +11646,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             
             if (jlen < 1) {
                 
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No sources defined for track '" + trackName +
-                            "' in audio element '" + this.name + "'."
-                    }
-                );
+                warn(this.bus, "No sources defined for track '" + trackName +
+                    "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
@@ -11681,30 +11669,16 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
                 
                 if (href === null) {
                     
-                    this.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: asset,
-                            message: "No href defined for source in track '" +
-                                trackName + "' in audio element '" + 
-                                this.name + "'."
-                        }
-                    );
+                    warn(this.bus, "No href defined for source in track '" +
+                        trackName + "' in audio element '" + this.name + "'.", asset);
                     
                     continue;
                 }
                 
                 if (type === null) {
                     
-                    this.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: asset,
-                            message: "No type defined for source in track '" + 
-                                trackName + "' in audio element '" + 
-                                this.name + "'."
-                        }
-                    );
+                    warn(this.bus, "No type defined for source in track '" + 
+                        trackName + "' in audio element '" + this.name + "'.", asset);
                     
                     continue;
                 }
@@ -11842,6 +11816,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         }.bind(this));
     };
     
+    Audio.prototype = new CoreObject();
+    
     /**
      * Changes the currently active track.
      * 
@@ -11913,20 +11889,23 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
 
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools").
-define("WSE.assets.Character", function (DisplayObject, tools) {
+using("MO5.CoreObject").
+define("WSE.assets.Character", function (CoreObject) {
     
     "use strict";
     
     function Character (asset, interpreter) {
         
+        CoreObject.call(this);
+        
         this.asset = asset;
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
-        this.id = tools.getUniqueId();
         this.name = asset.getAttribute('name');
         this.bus.trigger("wse.assets.character.constructor", this);
     }
+    
+    Character.prototype = new CoreObject();
     
     Character.prototype.setTextbox = function (command) {
         this.asset.setAttribute("textbox", command.getAttribute("textbox"));
@@ -11970,8 +11949,8 @@ define("WSE.assets.Character", function (DisplayObject, tools) {
 
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools").
-define("WSE.assets.Curtain", function (DisplayObject, tools) {
+using("WSE.DisplayObject", "WSE.tools::applyAssetUnits", "WSE.tools::warn").
+define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
     
     "use strict";
     
@@ -12000,7 +11979,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
         this.element.style.backgroundColor = this.color;
         this.element.style.zIndex = this.z;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         this.stage.appendChild(this.element);
     };
@@ -12021,6 +12000,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
     };
 
     Curtain.prototype.restore = function (obj) {
+        
         this.color = obj.color;
         this.cssid = obj.cssid;
         this.z = obj.z;
@@ -12029,14 +12009,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
             this.element = document.getElementById(this.cssid);
         }
         catch (e) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Element with CSS ID '" + this.cssid + "' could not be found."
-                }
-            );
-            
+            warn(this.bus, "Element with CSS ID '" + this.cssid + "' could not be found.");
             return;
         }
         
@@ -12050,8 +12023,26 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
 
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
-define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing) {
+using(
+    "MO5.transform",
+    "MO5.easing",
+    "WSE.DisplayObject",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::attachEventListener",
+    "WSE.tools::extractUnit",
+    "WSE.tools::calculateValueWithAnchor",
+    "WSE.tools::warn"
+).
+define("WSE.assets.Imagepack", function (
+    transform,
+    easing,
+    DisplayObject,
+    applyUnits,
+    attachListener,
+    extractUnit,
+    anchoredValue,
+    warn
+) {
     
     "use strict";
     
@@ -12078,7 +12069,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         this.width = parseInt(asset.getAttribute("width"), 10) || 100;
         this.height = parseInt(asset.getAttribute("height"), 10) || 100;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         self = this;
         images = {};
@@ -12095,10 +12086,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         element.setAttribute("data-wse-asset-name", this.name);
         
         children = asset.getElementsByTagName("image");
-        
-        triggerDecreaseFn = function () {
-            self.bus.trigger("wse.assets.loading.decrease");
-        };
+        triggerDecreaseFn = self.bus.trigger.bind(self.bus, "wse.assets.loading.decrease");
         
         for (i = 0, len = children.length; i < len; i += 1) {
             
@@ -12107,35 +12095,19 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
             src = current.getAttribute("src");
             
             if (name === null) {
-                
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "Image without name in imagepack '" + 
-                            this.name + "'."
-                    }
-                );
+                warn(this.bus, "Image without name in imagepack '" + this.name + "'.", asset);
                 continue;
             }
             
             if (src === null) {
-                
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "Image without src in imagepack '" + 
-                            this.name + "'."
-                    }
-                );
+                warn(this.bus, "Image without src in imagepack '" + this.name + "'.", asset);
                 continue;
             }
             
             image = new Image();
             
             this.bus.trigger("wse.assets.loading.increase");
-            tools.attachEventListener(image, 'load', triggerDecreaseFn);
+            attachListener(image, 'load', triggerDecreaseFn);
             
             image.src = src;
             image.style.opacity = 0;
@@ -12165,8 +12137,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         x = parseInt(asset.getAttribute("x") || 0, 10);
         y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = tools.extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = tools.extractUnit(asset.getAttribute("y")) || "px";
+        xUnit = extractUnit(asset.getAttribute("x")) || "px";
+        yUnit = extractUnit(asset.getAttribute("y")) || "px";
         
         if (xUnit === "%") {
             x = (this.stage.offsetWidth / 100) * x;
@@ -12176,8 +12148,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
             y = (this.stage.offsetHeight / 100) * y;
         }
         
-        x = tools.calculateValueWithAnchor(x, this.xAnchor, this.width);
-        y = tools.calculateValueWithAnchor(y, this.yAnchor, this.height);
+        x = anchoredValue(x, this.xAnchor, this.width);
+        y = anchoredValue(y, this.yAnchor, this.height);
         
         if (xUnit === "%") {
             x = x / (this.stage.offsetWidth / 100);
@@ -12209,14 +12181,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         if (name === null) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing attribute 'image' on 'do' element " +
-                        "referencing imagepack '" + this.name + "'."
-                }
-            );
+            warn(bus, "Missing attribute 'image' on 'do' element " +
+                "referencing imagepack '" + this.name + "'.", command);
             
             return {
                 doNext: true
@@ -12233,14 +12199,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         if (typeof image === "undefined" || image === null) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown image name on 'do' element referencing " +
-                        "imagepack '" + this.name + "'."
-                }
-            );
+            warn(bus, "Unknown image name on 'do' element referencing " +
+                "imagepack '" + this.name + "'.", command);
             
             return {
                 doNext: true
@@ -12259,14 +12219,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 
                 if (key === old) {
                     
-                    bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: command,
-                            message: "Trying to set the image that is " +
-                                "already set on imagepack '" + this.name + "'."
-                        }
-                    );
+                    warn(bus, "Trying to set the image that is already set on imagepack '" +
+                        this.name + "'.", command);
                     
                     return {
                         doNext: true
@@ -12422,13 +12376,21 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
 /* global using */
 
 using(
-    "WSE.DisplayObject",
-    "WSE.tools",
     "MO5.transform",
     "MO5.dom.effects.typewriter",
-    "MO5.dom.Element"
+    "MO5.dom.Element",
+    "WSE.DisplayObject",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::replaceVariables"
 ).
-define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewriter, Element) {
+define("WSE.assets.Textbox", function (
+    transform,
+    typewriter,
+    Element,
+    DisplayObject,
+    applyUnits,
+    replaceVars
+) {
     
     "use strict";
     
@@ -12452,7 +12414,7 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         this.speed = parseInt(this.speed, 10);
         this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         (function (ctx) {
             
@@ -12554,7 +12516,7 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         nameElement = document.getElementById(this.nameElement);
         element = Element.fromDomElement(document.getElementById(this.cssid));
         
-        text = tools.replaceVariables(text, this.interpreter);
+        text = replaceVars(text, this.interpreter);
         
         self.interpreter.waitCounter += 1;
         
@@ -12741,8 +12703,8 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
 
 /* global using */
 
-using("WSE.tools", "WSE.DisplayObject").
-define("WSE.assets.Background", function (tools, DisplayObject) {
+using("WSE.tools::applyAssetUnits", "WSE.DisplayObject", "WSE.tools::warn").
+define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
     
     "use strict";
     
@@ -12782,19 +12744,11 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
         this.name = asset.getAttribute('name');
         
         if (!this.src) {
-            
-            this.bus.trigger(
-                'wse.interpreter.warning',
-                {
-                    element: asset,
-                    message: 'No source defined on background asset.'
-                }
-            );
-            
+            warn(this.bus, 'No source defined on background asset.', asset);
             return;
         }
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         this.element.setAttribute('src', this.src);
         styleElement(this);
         resize(this);
@@ -12821,15 +12775,7 @@ define("WSE.assets.Background", function (tools, DisplayObject) {
             this.element = document.getElementById(this.cssid);
         }
         catch (e) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Element with CSS ID '" + this.cssid + 
-                        "' could not be found."
-                }
-            );
-            
+            warn(this.bus, "Element with CSS ID '" + this.cssid + "' could not be found.");
             return;
         }
     };

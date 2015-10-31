@@ -1,6 +1,7 @@
 /* global using, Howl */
 
-using("WSE.tools").define("WSE.assets.Audio", function (tools) {
+using("MO5.CoreObject", "WSE.tools::warn").
+define("WSE.assets.Audio", function (CoreObject, warn) {
     
     "use strict";
     
@@ -17,6 +18,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         var self, sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
+        CoreObject.call(this);
+        
         bus = interpreter.bus;
         self = this;
         
@@ -29,7 +32,6 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         this.fade = asset.getAttribute("fade") === "true" ? true : false;
         this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
         this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
-        this.id = tools.getUniqueId();
         this._playing = false;
         
         tracks = asset.getElementsByTagName("track");
@@ -37,13 +39,7 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
         
         if (len < 1) {
             
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: asset,
-                    message: "No tracks defined for audio element '" + this.name + "'."
-                }
-            );
+            warn(this.bus, "No tracks defined for audio element '" + this.name + "'.", asset);
             
             return {
                 doNext: true
@@ -59,14 +55,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             
             if (trackName === null) {
                 
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No title defined for track '" + trackName + 
-                            "' in audio element '" + this.name + "'."
-                    }
-                );
+                warn(this.bus, "No title defined for track '" + trackName + 
+                    "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
@@ -76,14 +66,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             
             if (jlen < 1) {
                 
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "No sources defined for track '" + trackName +
-                            "' in audio element '" + this.name + "'."
-                    }
-                );
+                warn(this.bus, "No sources defined for track '" + trackName +
+                    "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
@@ -105,30 +89,16 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
                 
                 if (href === null) {
                     
-                    this.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: asset,
-                            message: "No href defined for source in track '" +
-                                trackName + "' in audio element '" + 
-                                this.name + "'."
-                        }
-                    );
+                    warn(this.bus, "No href defined for source in track '" +
+                        trackName + "' in audio element '" + this.name + "'.", asset);
                     
                     continue;
                 }
                 
                 if (type === null) {
                     
-                    this.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: asset,
-                            message: "No type defined for source in track '" + 
-                                trackName + "' in audio element '" + 
-                                this.name + "'."
-                        }
-                    );
+                    warn(this.bus, "No type defined for source in track '" + 
+                        trackName + "' in audio element '" + this.name + "'.", asset);
                     
                     continue;
                 }
@@ -265,6 +235,8 @@ using("WSE.tools").define("WSE.assets.Audio", function (tools) {
             }
         }.bind(this));
     };
+    
+    Audio.prototype = new CoreObject();
     
     /**
      * Changes the currently active track.

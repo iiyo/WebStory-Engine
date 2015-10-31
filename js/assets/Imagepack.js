@@ -1,7 +1,25 @@
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools", "MO5.transform", "MO5.easing").
-define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing) {
+using(
+    "MO5.transform",
+    "MO5.easing",
+    "WSE.DisplayObject",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::attachEventListener",
+    "WSE.tools::extractUnit",
+    "WSE.tools::calculateValueWithAnchor",
+    "WSE.tools::warn"
+).
+define("WSE.assets.Imagepack", function (
+    transform,
+    easing,
+    DisplayObject,
+    applyUnits,
+    attachListener,
+    extractUnit,
+    anchoredValue,
+    warn
+) {
     
     "use strict";
     
@@ -28,7 +46,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         this.width = parseInt(asset.getAttribute("width"), 10) || 100;
         this.height = parseInt(asset.getAttribute("height"), 10) || 100;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         self = this;
         images = {};
@@ -45,10 +63,7 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         element.setAttribute("data-wse-asset-name", this.name);
         
         children = asset.getElementsByTagName("image");
-        
-        triggerDecreaseFn = function () {
-            self.bus.trigger("wse.assets.loading.decrease");
-        };
+        triggerDecreaseFn = self.bus.trigger.bind(self.bus, "wse.assets.loading.decrease");
         
         for (i = 0, len = children.length; i < len; i += 1) {
             
@@ -57,35 +72,19 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
             src = current.getAttribute("src");
             
             if (name === null) {
-                
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "Image without name in imagepack '" + 
-                            this.name + "'."
-                    }
-                );
+                warn(this.bus, "Image without name in imagepack '" + this.name + "'.", asset);
                 continue;
             }
             
             if (src === null) {
-                
-                this.bus.trigger(
-                    "wse.interpreter.warning",
-                    {
-                        element: asset,
-                        message: "Image without src in imagepack '" + 
-                            this.name + "'."
-                    }
-                );
+                warn(this.bus, "Image without src in imagepack '" + this.name + "'.", asset);
                 continue;
             }
             
             image = new Image();
             
             this.bus.trigger("wse.assets.loading.increase");
-            tools.attachEventListener(image, 'load', triggerDecreaseFn);
+            attachListener(image, 'load', triggerDecreaseFn);
             
             image.src = src;
             image.style.opacity = 0;
@@ -115,8 +114,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         x = parseInt(asset.getAttribute("x") || 0, 10);
         y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = tools.extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = tools.extractUnit(asset.getAttribute("y")) || "px";
+        xUnit = extractUnit(asset.getAttribute("x")) || "px";
+        yUnit = extractUnit(asset.getAttribute("y")) || "px";
         
         if (xUnit === "%") {
             x = (this.stage.offsetWidth / 100) * x;
@@ -126,8 +125,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
             y = (this.stage.offsetHeight / 100) * y;
         }
         
-        x = tools.calculateValueWithAnchor(x, this.xAnchor, this.width);
-        y = tools.calculateValueWithAnchor(y, this.yAnchor, this.height);
+        x = anchoredValue(x, this.xAnchor, this.width);
+        y = anchoredValue(y, this.yAnchor, this.height);
         
         if (xUnit === "%") {
             x = x / (this.stage.offsetWidth / 100);
@@ -159,14 +158,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         if (name === null) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Missing attribute 'image' on 'do' element " +
-                        "referencing imagepack '" + this.name + "'."
-                }
-            );
+            warn(bus, "Missing attribute 'image' on 'do' element " +
+                "referencing imagepack '" + this.name + "'.", command);
             
             return {
                 doNext: true
@@ -183,14 +176,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
         
         if (typeof image === "undefined" || image === null) {
             
-            bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Unknown image name on 'do' element referencing " +
-                        "imagepack '" + this.name + "'."
-                }
-            );
+            warn(bus, "Unknown image name on 'do' element referencing " +
+                "imagepack '" + this.name + "'.", command);
             
             return {
                 doNext: true
@@ -209,14 +196,8 @@ define("WSE.assets.Imagepack", function (DisplayObject, tools, transform, easing
                 
                 if (key === old) {
                     
-                    bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: command,
-                            message: "Trying to set the image that is " +
-                                "already set on imagepack '" + this.name + "'."
-                        }
-                    );
+                    warn(bus, "Trying to set the image that is already set on imagepack '" +
+                        this.name + "'.", command);
                     
                     return {
                         doNext: true

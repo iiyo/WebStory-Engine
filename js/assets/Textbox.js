@@ -1,13 +1,21 @@
 /* global using */
 
 using(
-    "WSE.DisplayObject",
-    "WSE.tools",
     "MO5.transform",
     "MO5.dom.effects.typewriter",
-    "MO5.dom.Element"
+    "MO5.dom.Element",
+    "WSE.DisplayObject",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::replaceVariables"
 ).
-define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewriter, Element) {
+define("WSE.assets.Textbox", function (
+    transform,
+    typewriter,
+    Element,
+    DisplayObject,
+    applyUnits,
+    replaceVars
+) {
     
     "use strict";
     
@@ -31,7 +39,7 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         this.speed = parseInt(this.speed, 10);
         this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         (function (ctx) {
             
@@ -133,7 +141,7 @@ define("WSE.assets.Textbox", function (DisplayObject, tools, transform, typewrit
         nameElement = document.getElementById(this.nameElement);
         element = Element.fromDomElement(document.getElementById(this.cssid));
         
-        text = tools.replaceVariables(text, this.interpreter);
+        text = replaceVars(text, this.interpreter);
         
         self.interpreter.waitCounter += 1;
         

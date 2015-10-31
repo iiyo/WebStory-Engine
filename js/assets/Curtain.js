@@ -1,7 +1,7 @@
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools").
-define("WSE.assets.Curtain", function (DisplayObject, tools) {
+using("WSE.DisplayObject", "WSE.tools::applyAssetUnits", "WSE.tools::warn").
+define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
     
     "use strict";
     
@@ -30,7 +30,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
         this.element.style.backgroundColor = this.color;
         this.element.style.zIndex = this.z;
         
-        tools.applyAssetUnits(this, asset);
+        applyUnits(this, asset);
         
         this.stage.appendChild(this.element);
     };
@@ -51,6 +51,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
     };
 
     Curtain.prototype.restore = function (obj) {
+        
         this.color = obj.color;
         this.cssid = obj.cssid;
         this.z = obj.z;
@@ -59,14 +60,7 @@ define("WSE.assets.Curtain", function (DisplayObject, tools) {
             this.element = document.getElementById(this.cssid);
         }
         catch (e) {
-            
-            this.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    message: "Element with CSS ID '" + this.cssid + "' could not be found."
-                }
-            );
-            
+            warn(this.bus, "Element with CSS ID '" + this.cssid + "' could not be found.");
             return;
         }
         

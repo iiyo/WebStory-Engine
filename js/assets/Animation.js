@@ -4,17 +4,21 @@ using(
     "MO5.transform",
     "MO5.easing",
     "MO5.Animation",
-    "WSE.tools",
+    "MO5.CoreObject",
+    "MO5.TimerWatcher",
     "WSE.commands",
-    "MO5.TimerWatcher"
+    "WSE.tools::createTimer",
+    "WSE.tools::warn"
 ).
 define("WSE.assets.Animation", function (
     transform,
     easing,
     MO5Animation,
-    tools,
+    CoreObject,
+    TimerWatcher,
     commands,
-    TimerWatcher
+    createTimer,
+    warn
 ) {
     
     "use strict";
@@ -24,13 +28,14 @@ define("WSE.assets.Animation", function (
         var groups, i, len, current, transformations, jlen;
         var self, doElements;
         
+        CoreObject.call(this);
+        
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
         this.asset = asset;
         this.name = asset.getAttribute("name");
         this.cbs = [];
         this.assets = interpreter.assets;
-        this.id = tools.getUniqueId();
         this.isRunning = false;
         
         self = this;
@@ -39,10 +44,7 @@ define("WSE.assets.Animation", function (
         
         if (len < 1) {
             
-            this.bus.trigger("wse.interpreter.warning", {
-                element: asset,
-                message: "Animation asset '" + this.name + "' is empty."
-            });
+            warn(this.bus, "Animation asset '" + this.name + "' is empty.", asset);
             
             return {
                 doNext: true
@@ -67,7 +69,7 @@ define("WSE.assets.Animation", function (
             });
             
             if (curDur !== null) {
-                watcher.addTimer(tools.createTimer(curDur));
+                watcher.addTimer(createTimer(curDur));
             }
         };
         
@@ -157,6 +159,8 @@ define("WSE.assets.Animation", function (
         }());
         
     };
+    
+    Animation.prototype = new CoreObject();
     
     Animation.prototype.start = function () {
         this.anim.start();
