@@ -8082,7 +8082,8 @@ using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
 
 /* global using */
 
-using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands, functions) {
+using("WSE.commands", "WSE.functions", "WSE.tools::warn").
+define("WSE.Trigger", function (commands, functions, warn) {
     
     "use strict";
     
@@ -8099,42 +8100,22 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
         this.isSubscribed = false;
         
         if (this.name === null) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: trigger,
-                    message: "No 'name' attribute specified on 'trigger' element."
-                }
-            );
-            
+            warn(interpreter.bus, "No 'name' attribute specified on 'trigger' element.", trigger);
             return;
         }
         
         if (this.event === null) {
             
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: trigger,
-                    message: "No 'event' attribute specified on 'trigger' element '" +
-                        this.name + "'."
-                }
-            );
+            warn(interpreter.bus, "No 'event' attribute specified on 'trigger' element '" +
+                this.name + "'.", trigger);
             
             return;
         }
         
         if (this.special === null && this.fnName === null && this.scene === null) {
             
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: trigger,
-                    message: "No suitable action or function found for trigger element '" +
-                        this.name + "'."
-                }
-            );
+            warn(interpreter.bus, "No suitable action or function found for trigger element '" +
+                this.name + "'.", trigger);
             
             return;
         }
@@ -8155,13 +8136,8 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
         
         if (this.special !== null && this.special !== "next") {
             
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: trigger,
-                    message: "Unknown special specified on trigger element '" + this.name + "'."
-                }
-            );
+            warn(interpreter.bus, "Unknown special specified on trigger element '" +
+                this.name + "'.", trigger);
             
             return;
         }
@@ -8182,10 +8158,8 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
             
             if (typeof functions[this.fnName] !== "function") {
                 
-                interpreter.bus.trigger("wse.interpreter.warning", {
-                    element: trigger,
-                    message: "Unknown function specified on trigger element '" + this.name + "'."
-                });
+                warn(interpreter.bus, "Unknown function specified on trigger element '" +
+                    this.name + "'.", trigger);
                 
                 return;
             }
@@ -8206,15 +8180,9 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
                 
                 if (this.key === null) {
                     
-                    interpreter.bus.trigger(
-                        "wse.interpreter.warning",
-                        {
-                            element: trigger,
-                            message: "No 'key' attribute specified on trigger element '" +
-                                this.name + "'."
-                        }
-                    );
-                
+                    warn(interpreter.bus, "No 'key' attribute specified on trigger element '" +
+                        this.name + "'.", trigger);
+                    
                     return;
                 }
                 
@@ -8223,13 +8191,8 @@ using("WSE.commands", "WSE.functions").define("WSE.Trigger", function (commands,
                     interpreter.game.keys.keys[this.key] === null
                 ) {
                     
-                    interpreter.bus.trigger(
-                        "wse.interpreter.warning", {
-                            element: trigger,
-                            message: "Unknown key '" + this.key + "' specified on trigger " +
-                                "element '" + this.name + "'."
-                        }
-                    );
+                    warn(interpreter.bus, "Unknown key '" + this.key + "' specified on trigger " +
+                        "element '" + this.name + "'.", trigger);
                     
                     return;
                 }
