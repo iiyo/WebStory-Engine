@@ -8,7 +8,8 @@ using(
     "WSE.tools.ui",
     "WSE",
     "WSE.tools::logError",
-    "WSE.tools::warn"
+    "WSE.tools::warn",
+    "WSE.LoadingScreen"
 ).
 define("WSE.Interpreter", function (
     transform,
@@ -18,7 +19,8 @@ define("WSE.Interpreter", function (
     ui,
     WSE,
     logError,
-    warn
+    warn,
+    LoadingScreen
 ) {
     
     "use strict";
@@ -118,73 +120,11 @@ define("WSE.Interpreter", function (
             }
         };
         
+        this._loadingScreen = new LoadingScreen();
+        
         if (this.debug === true) {
             this.game.bus.debug = true;
         }
-    };
-    
-    /**
-     * Inserts the loading screen that is shown on startup to give
-     * the player a feedback that the game still does something
-     * and that they have to be patient.
-     */
-    Interpreter.prototype.buildLoadingScreen = function () {
-        
-        var loadScreen, self, fn;
-        
-        self = this;
-        
-        loadScreen = document.createElement("div");
-        loadScreen.setAttribute("id", "WSELoadingScreen");
-        loadScreen.style.zIndex = 10000;
-        loadScreen.style.width = "100%";
-        loadScreen.style.height = "100%";
-        
-        loadScreen.innerHTML = '' + 
-            '<div class="container">' + 
-                '<div class="heading">' + 
-                    '<span id="WSELoadingScreenPercentage"></span>' + 
-                    'Loading assets...' + 
-                '</div>' + 
-                '<div class="progressBar">' + 
-                    '<div class="progress" id="WSELoadingScreenProgress" style="width: 100%;">' + 
-                    '</div>' + 
-                '</div>' + 
-            '</div>';
-        
-        this.game.stage.appendChild(loadScreen);
-        
-        fn = function () {
-            
-            var el, el2, perc;
-            
-            try {
-                
-                if (self.assetsLoaded > self.assetsLoadingMax) {
-                    self.assetsLoaded = self.assetsLoadingMax;
-                }
-                
-                el = document.getElementById("WSELoadingScreenProgress");
-                el2 = document.getElementById("WSELoadingScreenPercentage");
-                perc = parseInt((self.assetsLoaded / self.assetsLoadingMax) * 100, 10);
-                
-                if (self.assetsLoadingMax < 1) {
-                    perc = 0;
-                }
-                
-                el.style.width = perc + "%";
-                el2.innerHTML =
-                    "" + self.assetsLoaded + "/" + self.assetsLoadingMax + " (" + perc + "%)";
-            }
-            catch (e) {
-                console.log("Element missing.");
-            }
-        };
-        
-        this.bus.subscribe(fn, "wse.assets.loading.increase");
-        this.bus.subscribe(fn, "wse.assets.loading.decrease");
-        
-        this.loadScreen = loadScreen;
     };
     
     Interpreter.prototype.start = function () {
@@ -206,7 +146,7 @@ define("WSE.Interpreter", function (
         self = this;
         bus = this.bus;
         
-        this.buildLoadingScreen();
+        this._loadingScreen.show(this.stage);
         
         // Adds location info to warnings and errors.
         fn = function (data) {
@@ -269,50 +209,14 @@ define("WSE.Interpreter", function (
         );
         
         bus.subscribe(
-            function () {
-                self.assetsLoading += 1;
-                self.assetsLoadingMax += 1;
-            }, 
+            this._loadingScreen.addItem.bind(this._loadingScreen), 
             "wse.assets.loading.increase"
         );
         
         bus.subscribe(
-            function () {
-                self.assetsLoading -= 1;
-                self.assetsLoaded += 1;
-            }, 
+            this._loadingScreen.itemLoaded.bind(this._loadingScreen), 
             "wse.assets.loading.decrease"
         );
-        
-        (function () {
-            
-            var subscrFn;
-            
-            subscrFn = function () {
-                
-                var valFn, finishFn, options;
-                
-                valFn = function (v) {
-                    self.loadScreen.style.opacity = v;
-                };
-                
-                finishFn = function () {
-                    self.loadScreen.style.display = "none";
-                };
-                
-                options = {
-                    duration: 500,
-                    onFinish: finishFn
-                };
-                
-                document.getElementById("WSELoadingScreenProgress").style.width = "100%";
-                
-                transform(valFn, 1, 0, options);
-                //console.log("Hiding loading screen...");
-            };
-            
-            bus.subscribe(subscrFn, "wse.assets.loading.finished");
-        }());
         
         this.buildAssets();
         this.createTriggers();
@@ -362,6 +266,7 @@ define("WSE.Interpreter", function (
         }
         
         this.bus.trigger("wse.assets.loading.finished");
+        this._loadingScreen.hide();
         this.startTime = Math.round(+new Date() / 1000);
         this.changeScene(this.getFirstScene());
     };
