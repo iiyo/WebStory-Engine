@@ -12,18 +12,6 @@
     using.modules["WSE.assets.Curtain"] = base + "js/assets/Curtain.js";
     using.modules["WSE.assets.Imagepack"] = base + "js/assets/Imagepack.js";
     using.modules["WSE.assets.Textbox"] = base + "js/assets/Textbox.js";
-    using.modules["WSE.assets.mixins.displayable.flash"] =
-        base + "js/assets/mixins/displayable/flash.js";
-    using.modules["WSE.assets.mixins.displayable.flicker"] =
-        base + "js/assets/mixins/displayable/flicker.js";
-    using.modules["WSE.assets.mixins.displayable.hide"] =
-        base + "js/assets/mixins/displayable/hide.js";
-    using.modules["WSE.assets.mixins.displayable.move"] = 
-        base + "js/assets/mixins/displayable/move.js";
-    using.modules["WSE.assets.mixins.displayable.shake"] =
-        base + "js/assets/mixins/displayable/shake.js";
-    using.modules["WSE.assets.mixins.displayable.show"] =
-        base + "js/assets/mixins/displayable/show.js";
     
     using.modules["WSE.commands"] = base + "js/commands.js";
     using.modules["WSE.commands.alert"] = base + "js/commands/alert.js";
@@ -60,6 +48,7 @@
     using.modules["WSE.DisplayObject"] = base + "js/DisplayObject.js";
     using.modules["WSE.Game"] = base + "js/Game.js";
     using.modules["WSE.Interpreter"] = base + "js/Interpreter.js";
+    using.modules["WSE.LoadingScreen"] = base + "js/LoadingScreen.js";
     using.modules["WSE.Trigger"] = base + "js/Trigger.js";
     using.modules["WSE"] = base + "js/WSE.js";
     
