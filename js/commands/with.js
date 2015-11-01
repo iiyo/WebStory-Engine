@@ -53,15 +53,15 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
     
     function shouldBeSkipped (element, interpreter) {
         return !element.tagName || !interpreter.checkIfvar(element) ||
-               (element.tagName !== "when" && element.tagName !== "else");
+            (element.tagName !== "when" && element.tagName !== "else");
     }
     
     function isWhen (element) {
-        return tagNameIs("when");
+        return tagNameIs(element, "when");
     }
     
     function isElse (element) {
-        return tagNameIs("else");
+        return tagNameIs(element, "else");
     }
     
     function tagNameIs (element, name) {
