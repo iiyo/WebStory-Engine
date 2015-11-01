@@ -160,6 +160,10 @@ define("WSE.Interpreter", function (
             
             try {
                 
+                if (self.assetsLoaded > self.assetsLoadingMax) {
+                    self.assetsLoaded = self.assetsLoadingMax;
+                }
+                
                 el = document.getElementById("WSELoadingScreenProgress");
                 el2 = document.getElementById("WSELoadingScreenPercentage");
                 perc = parseInt((self.assetsLoaded / self.assetsLoadingMax) * 100, 10);
