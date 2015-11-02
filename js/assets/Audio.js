@@ -123,7 +123,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
          */
         this.play = function (command) {
             
-            var fadeDuration;
+            var fadeDuration, props = command.properties;
             
             if (this._playing) {
                 return {
@@ -134,10 +134,10 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
             this._playing = true;
             this._paused = false;
             
-            if (command.getAttribute("fadein")) {
+            if (props.fadein) {
                 
                 this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadein");
+                fadeDuration = +props.fadein;
                 
                 this.tracks[this._currentTrack].volume(0);
                 this.tracks[this._currentTrack].play();
@@ -174,10 +174,10 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
             this._playing = false;
             this._paused = false;
             
-            if (command && command.getAttribute("fadeout")) {
+            if (command && command.properties.fadeout) {
                 
                 this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadeout");
+                fadeDuration = +command.properties.fadeout;
                 
                 this.tracks[this._currentTrack].fade(1, 0, fadeDuration, function () {
                     this.tracks[this._currentTrack].stop();
@@ -255,7 +255,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
         
         this.stop();
         
-        this._currentTrack = command.getAttribute("track");
+        this._currentTrack = command.properties.track;
         
         if (wasPlaying) {
             this.play();

@@ -120,7 +120,7 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
     
     tools.getSerializedNodes = function (element) {
         
-        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;        
+        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;
         var text = '';
         
         for (i = 0, len = nodes.length; i < len; i += 1) {
@@ -141,6 +141,10 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
         value = element.getAttribute(attributeName) || ("" + defaultValue);
         
         return tools.replaceVariables(value, interpreter);
+    };
+    
+    tools.init = function (obj, key, defaultValue) {
+        return (key in obj ? obj[key] : defaultValue);
     };
     
     /**
@@ -308,6 +312,27 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
             element: element || null,
             message: message
         });
+    };
+    
+    tools.xmlElementToAst = function (element, interpreter) {
+        
+        var ast = {
+            type: element.tagName,
+            properties: {},
+            children: [],
+            content: tools.getSerializedNodes(element)
+        };
+        
+        [].forEach.call(element.attributes, function (attribute) {
+            ast.properties[attribute.nodeName] =
+                tools.replaceVariables(attribute.value, interpreter);
+        });
+        
+        [].forEach.call(element.children, function (child) {
+            ast.children.push(tools.xmlElementToAst(child, interpreter));
+        });
+        
+        return ast;
     };
     
     return tools;

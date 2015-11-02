@@ -38,7 +38,7 @@ define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
     Curtain.prototype = new DisplayObject();
     
     Curtain.prototype.set = function (asset) {
-        this.color = asset.getAttribute("color") || "black";
+        this.color = asset.properties.color || "black";
         this.element.style.backgroundColor = this.color;
     };
     

@@ -9,8 +9,8 @@ using().define("WSE.commands.while", function () {
         interpreter.index -= 1;
         interpreter.currentElement -= 1;
         interpreter.pushToCallStack();
-        interpreter.currentCommands = command.childNodes;
-        interpreter.scenePath.push(interpreter.index+1);
+        interpreter.currentCommands = command.children;
+        interpreter.scenePath.push(interpreter.index + 1);
         interpreter.index = -1;
         interpreter.currentElement = -1;
         

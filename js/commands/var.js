@@ -7,7 +7,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
     
     function varCommand (command, interpreter) {
         
-        var key, val, lval, action, container, next;
+        var key, val, lval, action, container, next, props = command.properties;
         
         next = {doNext: true};
         
@@ -20,9 +20,9 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
             false
         );
         
-        key = command.getAttribute("name") || null;
-        val = command.getAttribute("value") || "1";
-        action = command.getAttribute("action") || "set";
+        key = props.name || null;
+        val = props.value || "1";
+        action = props.action || "set";
         
         if (key === null) {
             warn(interpreter.bus, "Command 'var' must have a 'name' attribute.", command);
@@ -31,7 +31,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
         
         container = interpreter.runVars;
         
-        if (action !== "set" && !(key in container || command.getAttribute("lvalue"))) {
+        if (action !== "set" && !(key in container || props.lvalue)) {
             warn(interpreter.bus, "Undefined variable.", command);
             return next;
         }
@@ -43,7 +43,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
             return next;
         }
         
-        lval = command.getAttribute("lvalue") || container[key];
+        lval = props.lvalue || container[key];
         lval = replaceVars(lval, interpreter);
         
         switch (action) {

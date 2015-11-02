@@ -149,11 +149,12 @@ define("WSE.assets.Imagepack", function (
     Imagepack.prototype.set = function (command, args) {
         
         var image, name, self, old, duration, isAnimation, bus = this.bus, element;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        name = command.getAttribute("image");
-        duration = command.getAttribute("duration") || 400;
+        name = props.image;
+        duration = props.duration || 400;
         isAnimation = args.animation === true ? true : false;
         
         if (name === null) {

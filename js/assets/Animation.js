@@ -8,7 +8,8 @@ using(
     "MO5.TimerWatcher",
     "WSE.commands",
     "WSE.tools::createTimer",
-    "WSE.tools::warn"
+    "WSE.tools::warn",
+    "WSE.tools::xmlElementToAst"
 ).
 define("WSE.assets.Animation", function (
     transform,
@@ -18,7 +19,8 @@ define("WSE.assets.Animation", function (
     TimerWatcher,
     commands,
     createTimer,
-    warn
+    warn,
+    toAst
 ) {
     
     "use strict";
@@ -51,9 +53,9 @@ define("WSE.assets.Animation", function (
             };
         }
         
-        function createTransformFn (as, f, t, pn, u, opt) {
+        function createTransformFn (a, f, t, pn, u, opt) {
             return transform(function (v) {
-                as.style[pn] = v + u;
+                a.style[pn] = v + u;
             }, f, t, opt);
         };
         
@@ -64,7 +66,7 @@ define("WSE.assets.Animation", function (
             curDoEl = del;
             curDur = curDoEl.getAttribute("duration");
             
-            commands["do"](curDoEl, interpreter, {
+            commands["do"](toAst(curDoEl, interpreter), interpreter, {
                 animation: true
             });
             

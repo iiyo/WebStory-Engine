@@ -22,7 +22,7 @@ using().define("WSE.extensions.sideImages", function () {
             var tb, speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
             
             assets = game.interpreter.assets;
-            speakerName = data.command.getAttribute('s');
+            speakerName = data.command.properties.s;
             speaker = assets[speakerName];
             ipName = speaker.asset.getAttribute('imagepack');
             

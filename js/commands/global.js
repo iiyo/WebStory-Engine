@@ -6,10 +6,10 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
     
     function global (command, interpreter) {
         
-        var name, value, next;
+        var name, value, next, props = command.properties;
         
-        name = command.getAttribute("name") || null;
-        value = command.getAttribute("value") || null;
+        name = props.name || null;
+        value = props.value || null;
         next = {doNext: true};
         
         if (name === null) {

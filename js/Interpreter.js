@@ -9,7 +9,8 @@ using(
     "WSE",
     "WSE.tools::logError",
     "WSE.tools::warn",
-    "WSE.LoadingScreen"
+    "WSE.LoadingScreen",
+    "WSE.tools::xmlElementToAst"
 ).
 define("WSE.Interpreter", function (
     transform,
@@ -20,7 +21,8 @@ define("WSE.Interpreter", function (
     WSE,
     logError,
     warn,
-    LoadingScreen
+    LoadingScreen,
+    toAst
 ) {
     
     "use strict";
@@ -330,7 +332,7 @@ define("WSE.Interpreter", function (
             this.popFromCallStack();
         }
         
-        this.currentCommands = scene.childNodes;
+        this.currentCommands = toAst(scene, this).children;
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
@@ -370,6 +372,8 @@ define("WSE.Interpreter", function (
         
         var top = this.callStack.pop(), scenePath = top.scenePath.slice();
         
+        console.log(top.sceneId, top.scenePath);
+        
         this.bus.trigger(
             "wse.interpreter.message", 
             "Returning from sub scene '" + this.sceneId + "' to scene '" + top.sceneId + "'...",
@@ -382,10 +386,10 @@ define("WSE.Interpreter", function (
         this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
         
-        this.currentCommands = this.currentScene.childNodes;
+        this.currentCommands = toAst(this.currentScene, this).children;
         
         while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+            this.currentCommands = this.currentCommands[scenePath.shift()].children;
         }
     };
     
@@ -517,11 +521,11 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.checkIfvar = function (command) {
         
-        var ifvar, ifval, ifnot, varContainer, bus = this.bus;
+        var ifvar, ifval, ifnot, varContainer, bus = this.bus, props = command.properties;
         
-        ifvar = command.getAttribute("ifvar") || null;
-        ifval = command.getAttribute("ifvalue");
-        ifnot = command.getAttribute("ifnot");
+        ifvar = props.ifvar || null;
+        ifval = "ifvalue" in props ? props.ifvalue : null;
+        ifnot = "ifnot" in props ? props.ifnot : null;
         
         if (ifvar !== null || ifval !== null || ifnot !== null) {
             
@@ -602,8 +606,8 @@ define("WSE.Interpreter", function (
             false
         );
         
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        tagName = command.type;
+        assetName = command.properties.asset || null;
         
         if (!this.checkIfvar(command)) {
             return {
@@ -1024,10 +1028,10 @@ define("WSE.Interpreter", function (
         scenePath = savegame.scenePath;
         this.scenePath = scenePath.slice();
         
-        this.currentCommands = scene.childNodes;
+        this.currentCommands = toAst(scene, this).children;
         
         while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+            this.currentCommands = this.currentCommands[scenePath.shift()].children;
         }
         
         // Re-insert choice menu to get back the DOM events associated with it:

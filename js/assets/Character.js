@@ -19,7 +19,7 @@ define("WSE.assets.Character", function (CoreObject) {
     Character.prototype = new CoreObject();
     
     Character.prototype.setTextbox = function (command) {
-        this.asset.setAttribute("textbox", command.getAttribute("textbox"));
+        this.asset.setAttribute("textbox", command.properties.textbox);
         this.bus.trigger("wse.assets.character.settextbox", this);
     };
     

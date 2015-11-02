@@ -9,7 +9,7 @@ using("WSE.tools::warn").define("WSE.commands.localize", function (warn) {
         var key, next;
         
         next = {doNext: true};
-        key = command.getAttribute("name") || null;
+        key = command.properties.name || null;
         
         if (key === null) {
             warn(interpreter.bus, "No variable name defined on localize element.", command);

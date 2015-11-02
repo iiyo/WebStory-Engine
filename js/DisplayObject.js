@@ -1,7 +1,14 @@
 /* global using */
 
-using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
-define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn) {
+using(
+    "MO5.CoreObject",
+    "MO5.transform",
+    "MO5.easing",
+    "WSE.tools",
+    "WSE.tools::warn",
+    "WSE.tools::init"
+).
+define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn, init) {
     
     function DisplayObject () {
         CoreObject.call(this);
@@ -12,13 +19,13 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
     DisplayObject.prototype.flash = function flash (command, args) {
         
         var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
-        var visible, parse = tools.getParsedAttribute;
+        var visible, props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = +parse(command, "duration", this.interpreter, 500);
-        maxOpacity = +parse(command, "opacity", this.interpreter, 1);
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        maxOpacity = +init(props, "opacity", 1);
         element = args.element || document.getElementById(this.cssid);
         
         if (!element) {
@@ -85,12 +92,13 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         var self, duration, bus, stage, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        duration = command.getAttribute("duration") || 500;
-        times = command.getAttribute("times") || 10;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        duration = +init(props, "duration", 500);
+        times = +init(props, "times", 10);
+        maxOpacity = +init(props, "opacity", 1);
         element = args.element || document.getElementById(this.cssid);
         step = duration / times;
         iteration = 0;
@@ -174,18 +182,17 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
-        var xUnit, yUnit;
-        var parse = tools.getParsedAttribute;
+        var xUnit, yUnit, props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = parse(command, "duration", this.interpreter, 500);
-        effect = parse(command, "effect", this.interpreter, "fade");
-        direction = parse(command, "direction", this.interpreter, "left");
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        effect = init(props, "effect", "fade");
+        direction = init(props, "direction", "left");
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
-        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
+        easingType = init(props, "easing", "sineEaseOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
             easing.sineEaseOut;
@@ -328,18 +335,18 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
         var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
-        var offsetLeft, offsetTop, oldElementDisplayStyle;
+        var offsetLeft, offsetTop, oldElementDisplayStyle, props = command.properties;
         
         args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
         
-        x = command.getAttribute("x");
-        y = command.getAttribute("y");
-        z = command.getAttribute("z");
+        x = props.x;
+        y = props.y;
+        z = props.z;
         
-        xAnchor = command.getAttribute("xAnchor") || "0";
-        yAnchor = command.getAttribute("yAnchor") || "0";
+        xAnchor = init(props, "xAnchor", "0");
+        yAnchor = init(props, "yAnchor", "0");
         
         if (xAnchor === null && this.xAnchor !== null) {
             xAnchor = this.xAnchor;
@@ -349,14 +356,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             yAnchor = this.yAnchor;
         }
         
-        x = tools.replaceVariables(x, this.interpreter);
-        y = tools.replaceVariables(y, this.interpreter);
-        z = tools.replaceVariables(z, this.interpreter);
+        x = tools.replaceVariables(x || "", this.interpreter);
+        y = tools.replaceVariables(y || "", this.interpreter);
+        z = tools.replaceVariables(z || "", this.interpreter);
         xAnchor = tools.replaceVariables(xAnchor, this.interpreter);
         yAnchor = tools.replaceVariables(yAnchor, this.interpreter);
         
-        duration = tools.getParsedAttribute(command, "duration", interpreter, 500);
-        easingType = tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
+        duration = +init(props, "duration", 500);
+        easingType = init(props, "easing", "sineEaseOut");
         
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
@@ -396,7 +403,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         element.style.display = oldElementDisplayStyle;
         
-        wait = tools.getParsedAttribute(command, "wait", interpreter) === "yes" ? true : false;
+        wait = props.wait === "yes" ? true : false;
         waitX = false;
         waitY = false;
         waitZ = false;
@@ -503,15 +510,15 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
     DisplayObject.prototype.shake = function (command, args) {
         
         var dx, dy, element, self, xUnit, yUnit, duration, period;
-        var isAnimation, ox, oy, stage;
-
+        var isAnimation, ox, oy, stage, props = command.properties;
+        
         args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
-        dx = command.getAttribute("dx");
-        dy = command.getAttribute("dy");
-        period = command.getAttribute("period") || 50;
-        duration = command.getAttribute("duration") || 275;
+        dx = props.dx;
+        dy = props.dy;
+        period = +init(props, "period", 50);
+        duration = +init(props, "duration", 275);
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
         
@@ -566,7 +573,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
                     duration: duration,
                     easing:   easing
                 }
-            ).
+            ).promise().
             then(function () {
                 element.style.left = ox + xUnit;
                 self.interpreter.waitCounter -= 1;
@@ -613,14 +620,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
         var bus, stage, element, isAnimation, easingFn, easingType, interpreter;
         var offsetWidth, offsetHeight, startX, startY;
-        var parse = tools.getParsedAttribute;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = parse(command, "duration", this.interpreter, 500);
-        effect = parse(command, "effect", this.interpreter, "fade");
-        direction = parse(command, "direction", this.interpreter, "right");
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        effect = init(props, "effect", "fade");
+        direction = init(props, "direction", "right");
         element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
@@ -633,7 +640,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
-        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
+        easingType = init(props, "easing", "sineEaseOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
             easing.sineEaseOut;

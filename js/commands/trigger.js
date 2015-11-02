@@ -6,7 +6,7 @@ using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
     
     function trigger (command, interpreter) {
         
-        var triggerName, action, next;
+        var triggerName, action, next, props = command.properties;
         
         next = {doNext: true};
         
@@ -19,8 +19,8 @@ using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
             false
         );
         
-        triggerName = command.getAttribute("name") || null;
-        action = command.getAttribute("action") || null;
+        triggerName = props.name || null;
+        action = props.action || null;
         
         if (triggerName === null) {
             warn(interpreter.bus, "No name specified on trigger command.", command);

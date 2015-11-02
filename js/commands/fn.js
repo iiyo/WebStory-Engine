@@ -1,15 +1,16 @@
 /* global using */
 
-using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (functions, warn) {
+using("WSE.functions", "WSE.tools::warn").
+define("WSE.commands.fn", function (functions, warn) {
     
     "use strict";
     
     function fn (command, interpreter) {
         
-        var name, varName, ret;
+        var name, varName, ret, props = command.properties;
         
-        name = command.getAttribute("name") || null;
-        varName = command.getAttribute("tovar") || null;
+        name = props.name || null;
+        varName = props.tovar || null;
         
         if (typeof functions[name] !== "function") {
             warn(interpreter.bus, "No name supplied on fn element.", command);

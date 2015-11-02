@@ -355,16 +355,16 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
         return function (command, interpreter) {
             
             var title, message, container, key, doNext, hideCancelButton, allowEmptyInput;
-            var submitText, cancelText;
+            var submitText, cancelText, props = command.properties;
             
-            title = command.getAttribute("title") || "Input required...";
-            message = command.getAttribute("message") || "Your input is required:";
-            key = command.getAttribute("var") || null;
-            doNext = command.getAttribute("next") === "false" ? false : true;
-            hideCancelButton = command.getAttribute("hideCancelButton") === "yes" ? true : false;
-            allowEmptyInput = command.getAttribute("allowEmptyInput") === "no" ? false : true;
-            submitText = command.getAttribute("submitText") || "";
-            cancelText = command.getAttribute("cancelText") || "";
+            title = props.title || "Input required...";
+            message = props.message || "Your input is required:";
+            key = props["var"] || null;
+            doNext = props.next === "false" ? false : true;
+            hideCancelButton = props.hideCancelButton === "yes" ? true : false;
+            allowEmptyInput = props.allowEmptyInput === "no" ? false : true;
+            submitText = props.submitText || "";
+            cancelText = props.cancelText || "";
             
             interpreter.bus.trigger("wse.interpreter.commands." + type, command);
             

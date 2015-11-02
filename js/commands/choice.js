@@ -1,7 +1,21 @@
 /* global using */
 
-using("WSE.tools", "WSE.DisplayObject").
-define("WSE.commands.choice", function (tools, DisplayObject) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.DisplayObject",
+    "WSE.tools::attachEventListener",
+    "WSE.tools::init",
+    "WSE.tools::warn",
+    "WSE.tools::xmlElementToAst"
+).
+define("WSE.commands.choice", function (
+    replaceVars,
+    DisplayObject,
+    attachListener,
+    init,
+    warn,
+    toAst
+) {
     
     "use strict";
     
@@ -9,7 +23,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, sceneName;
-        var makeButtonClickFn, oldState, cssid;
+        var makeButtonClickFn, oldState, cssid, props = command.properties;
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.choice",
@@ -26,11 +40,11 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         buttons = [];
         scenes = [];
         self = interpreter;
-        children = command.childNodes;
+        children = command.children;
         len = children.length;
-        duration = command.getAttribute("duration") || 500;
+        duration = +init(props, "duration", 500);
         duration = parseInt(duration, 10);
-        cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
+        cssid = init(props, "cssid", "WSEChoiceMenu");
         
         makeButtonClickFn = function (cur, me, sc, idx) {
             
@@ -44,7 +58,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
                 setTimeout(
                     function () {
                         
-                        var childrenLen = cur.childNodes ? cur.childNodes.length : 0;
+                        var childrenLen = cur.children ? cur.children.length : 0;
                         
                         var oldIndex = interpreter.index;
                         var oldSceneId = interpreter.sceneId;
@@ -58,10 +72,10 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
                         if (childrenLen > 0) {
                             
                             interpreter.pushToCallStack();
-                            interpreter.currentCommands = cur.childNodes;
+                            interpreter.currentCommands = cur.children;
                             interpreter.sceneId = oldSceneId;
                             interpreter.scenePath = oldScenePath;
-                            interpreter.scenePath.push(oldIndex-1);
+                            interpreter.scenePath.push(oldIndex - 1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
                             interpreter.currentScene = oldCurrentScene;
@@ -80,15 +94,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         };
         
         if (len < 1) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element 'choice' is empty. Expected at " +
-                        "least one 'option' element."
-                }
-            );
+            warn(interpreter.bus, "Empty choice. Expected at least one option.", command);
         }
         
         menuElement = document.createElement("div");
@@ -105,8 +111,8 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             
             current = children[i];
             
-            if (!current.tagName ||
-                    current.tagName !== "option" ||
+            if (!current.type ||
+                    current.type !== "option" ||
                     !interpreter.checkIfvar(current)) {
                 
                 continue;
@@ -116,18 +122,15 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
-            currentButton.setAttribute("value", current.getAttribute("label"));
+            currentButton.setAttribute("value", current.properties.label);
             
-            currentButton.value = tools.replaceVariables(
-                current.getAttribute("label"),
-                interpreter
-            );
+            currentButton.value = current.properties.label;
             
-            sceneName = current.getAttribute("scene") || null;
+            sceneName = current.properties.scene || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
             
-            tools.attachEventListener(
+            attachListener(
                 currentButton, 
                 'click',
                 makeButtonClickFn(current, menuElement, scenes[i], i)

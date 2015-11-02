@@ -18,7 +18,7 @@ using().define("WSE.commands.wait", function () {
         );
         
         self = interpreter;
-        duration = command.getAttribute("duration");
+        duration = command.properties.duration;
         
         if (duration !== null) {
             

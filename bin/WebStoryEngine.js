@@ -7817,7 +7817,7 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
     
     tools.getSerializedNodes = function (element) {
         
-        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;        
+        var ser = new XMLSerializer(), nodes = element.childNodes, i, len;
         var text = '';
         
         for (i = 0, len = nodes.length; i < len; i += 1) {
@@ -7838,6 +7838,10 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
         value = element.getAttribute(attributeName) || ("" + defaultValue);
         
         return tools.replaceVariables(value, interpreter);
+    };
+    
+    tools.init = function (obj, key, defaultValue) {
+        return (key in obj ? obj[key] : defaultValue);
     };
     
     /**
@@ -8005,6 +8009,27 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
             element: element || null,
             message: message
         });
+    };
+    
+    tools.xmlElementToAst = function (element, interpreter) {
+        
+        var ast = {
+            type: element.tagName,
+            properties: {},
+            children: [],
+            content: tools.getSerializedNodes(element)
+        };
+        
+        [].forEach.call(element.attributes, function (attribute) {
+            ast.properties[attribute.nodeName] =
+                tools.replaceVariables(attribute.value, interpreter);
+        });
+        
+        [].forEach.call(element.children, function (child) {
+            ast.children.push(tools.xmlElementToAst(child, interpreter));
+        });
+        
+        return ast;
     };
     
     return tools;
@@ -8594,7 +8619,8 @@ using(
     "WSE",
     "WSE.tools::logError",
     "WSE.tools::warn",
-    "WSE.LoadingScreen"
+    "WSE.LoadingScreen",
+    "WSE.tools::xmlElementToAst"
 ).
 define("WSE.Interpreter", function (
     transform,
@@ -8605,7 +8631,8 @@ define("WSE.Interpreter", function (
     WSE,
     logError,
     warn,
-    LoadingScreen
+    LoadingScreen,
+    toAst
 ) {
     
     "use strict";
@@ -8915,7 +8942,7 @@ define("WSE.Interpreter", function (
             this.popFromCallStack();
         }
         
-        this.currentCommands = scene.childNodes;
+        this.currentCommands = toAst(scene, this).children;
         len = this.currentCommands.length;
         this.index = 0;
         this.sceneId = id;
@@ -8955,6 +8982,8 @@ define("WSE.Interpreter", function (
         
         var top = this.callStack.pop(), scenePath = top.scenePath.slice();
         
+        console.log(top.sceneId, top.scenePath);
+        
         this.bus.trigger(
             "wse.interpreter.message", 
             "Returning from sub scene '" + this.sceneId + "' to scene '" + top.sceneId + "'...",
@@ -8967,10 +8996,10 @@ define("WSE.Interpreter", function (
         this.currentScene = this.getSceneById(top.sceneId);
         this.currentElement = top.currentElement;
         
-        this.currentCommands = this.currentScene.childNodes;
+        this.currentCommands = toAst(this.currentScene, this).children;
         
         while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+            this.currentCommands = this.currentCommands[scenePath.shift()].children;
         }
     };
     
@@ -9102,11 +9131,11 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.checkIfvar = function (command) {
         
-        var ifvar, ifval, ifnot, varContainer, bus = this.bus;
+        var ifvar, ifval, ifnot, varContainer, bus = this.bus, props = command.properties;
         
-        ifvar = command.getAttribute("ifvar") || null;
-        ifval = command.getAttribute("ifvalue");
-        ifnot = command.getAttribute("ifnot");
+        ifvar = props.ifvar || null;
+        ifval = "ifvalue" in props ? props.ifvalue : null;
+        ifnot = "ifnot" in props ? props.ifnot : null;
         
         if (ifvar !== null || ifval !== null || ifnot !== null) {
             
@@ -9187,8 +9216,8 @@ define("WSE.Interpreter", function (
             false
         );
         
-        tagName = command.tagName;
-        assetName = command.getAttribute("asset") || null;
+        tagName = command.type;
+        assetName = command.properties.asset || null;
         
         if (!this.checkIfvar(command)) {
             return {
@@ -9609,10 +9638,10 @@ define("WSE.Interpreter", function (
         scenePath = savegame.scenePath;
         this.scenePath = scenePath.slice();
         
-        this.currentCommands = scene.childNodes;
+        this.currentCommands = toAst(scene, this).children;
         
         while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
+            this.currentCommands = this.currentCommands[scenePath.shift()].children;
         }
         
         // Re-insert choice menu to get back the DOM events associated with it:
@@ -10540,16 +10569,16 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
         return function (command, interpreter) {
             
             var title, message, container, key, doNext, hideCancelButton, allowEmptyInput;
-            var submitText, cancelText;
+            var submitText, cancelText, props = command.properties;
             
-            title = command.getAttribute("title") || "Input required...";
-            message = command.getAttribute("message") || "Your input is required:";
-            key = command.getAttribute("var") || null;
-            doNext = command.getAttribute("next") === "false" ? false : true;
-            hideCancelButton = command.getAttribute("hideCancelButton") === "yes" ? true : false;
-            allowEmptyInput = command.getAttribute("allowEmptyInput") === "no" ? false : true;
-            submitText = command.getAttribute("submitText") || "";
-            cancelText = command.getAttribute("cancelText") || "";
+            title = props.title || "Input required...";
+            message = props.message || "Your input is required:";
+            key = props["var"] || null;
+            doNext = props.next === "false" ? false : true;
+            hideCancelButton = props.hideCancelButton === "yes" ? true : false;
+            allowEmptyInput = props.allowEmptyInput === "no" ? false : true;
+            submitText = props.submitText || "";
+            cancelText = props.cancelText || "";
             
             interpreter.bus.trigger("wse.interpreter.commands." + type, command);
             
@@ -10591,8 +10620,15 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
 
 /* global using */
 
-using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
-define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn) {
+using(
+    "MO5.CoreObject",
+    "MO5.transform",
+    "MO5.easing",
+    "WSE.tools",
+    "WSE.tools::warn",
+    "WSE.tools::init"
+).
+define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn, init) {
     
     function DisplayObject () {
         CoreObject.call(this);
@@ -10603,13 +10639,13 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
     DisplayObject.prototype.flash = function flash (command, args) {
         
         var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
-        var visible, parse = tools.getParsedAttribute;
+        var visible, props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = +parse(command, "duration", this.interpreter, 500);
-        maxOpacity = +parse(command, "opacity", this.interpreter, 1);
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        maxOpacity = +init(props, "opacity", 1);
         element = args.element || document.getElementById(this.cssid);
         
         if (!element) {
@@ -10676,12 +10712,13 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         var self, duration, bus, stage, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        duration = command.getAttribute("duration") || 500;
-        times = command.getAttribute("times") || 10;
-        maxOpacity = command.getAttribute("opacity") || 1;
+        duration = +init(props, "duration", 500);
+        times = +init(props, "times", 10);
+        maxOpacity = +init(props, "opacity", 1);
         element = args.element || document.getElementById(this.cssid);
         step = duration / times;
         iteration = 0;
@@ -10765,18 +10802,17 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
-        var xUnit, yUnit;
-        var parse = tools.getParsedAttribute;
+        var xUnit, yUnit, props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = parse(command, "duration", this.interpreter, 500);
-        effect = parse(command, "effect", this.interpreter, "fade");
-        direction = parse(command, "direction", this.interpreter, "left");
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        effect = init(props, "effect", "fade");
+        direction = init(props, "direction", "left");
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
-        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
+        easingType = init(props, "easing", "sineEaseOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
             easing.sineEaseOut;
@@ -10919,18 +10955,18 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
         var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
-        var offsetLeft, offsetTop, oldElementDisplayStyle;
+        var offsetLeft, offsetTop, oldElementDisplayStyle, props = command.properties;
         
         args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
         
-        x = command.getAttribute("x");
-        y = command.getAttribute("y");
-        z = command.getAttribute("z");
+        x = props.x;
+        y = props.y;
+        z = props.z;
         
-        xAnchor = command.getAttribute("xAnchor") || "0";
-        yAnchor = command.getAttribute("yAnchor") || "0";
+        xAnchor = init(props, "xAnchor", "0");
+        yAnchor = init(props, "yAnchor", "0");
         
         if (xAnchor === null && this.xAnchor !== null) {
             xAnchor = this.xAnchor;
@@ -10940,14 +10976,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             yAnchor = this.yAnchor;
         }
         
-        x = tools.replaceVariables(x, this.interpreter);
-        y = tools.replaceVariables(y, this.interpreter);
-        z = tools.replaceVariables(z, this.interpreter);
+        x = tools.replaceVariables(x || "", this.interpreter);
+        y = tools.replaceVariables(y || "", this.interpreter);
+        z = tools.replaceVariables(z || "", this.interpreter);
         xAnchor = tools.replaceVariables(xAnchor, this.interpreter);
         yAnchor = tools.replaceVariables(yAnchor, this.interpreter);
         
-        duration = tools.getParsedAttribute(command, "duration", interpreter, 500);
-        easingType = tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
+        duration = +init(props, "duration", 500);
+        easingType = init(props, "easing", "sineEaseOut");
         
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
@@ -10987,7 +11023,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         
         element.style.display = oldElementDisplayStyle;
         
-        wait = tools.getParsedAttribute(command, "wait", interpreter) === "yes" ? true : false;
+        wait = props.wait === "yes" ? true : false;
         waitX = false;
         waitY = false;
         waitZ = false;
@@ -11094,15 +11130,15 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
     DisplayObject.prototype.shake = function (command, args) {
         
         var dx, dy, element, self, xUnit, yUnit, duration, period;
-        var isAnimation, ox, oy, stage;
-
+        var isAnimation, ox, oy, stage, props = command.properties;
+        
         args = args || {};
         self = this;
         element = document.getElementById(this.cssid);
-        dx = command.getAttribute("dx");
-        dy = command.getAttribute("dy");
-        period = command.getAttribute("period") || 50;
-        duration = command.getAttribute("duration") || 275;
+        dx = props.dx;
+        dy = props.dy;
+        period = +init(props, "period", 50);
+        duration = +init(props, "duration", 275);
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
         
@@ -11157,7 +11193,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
                     duration: duration,
                     easing:   easing
                 }
-            ).
+            ).promise().
             then(function () {
                 element.style.left = ox + xUnit;
                 self.interpreter.waitCounter -= 1;
@@ -11204,14 +11240,14 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
         var bus, stage, element, isAnimation, easingFn, easingType, interpreter;
         var offsetWidth, offsetHeight, startX, startY;
-        var parse = tools.getParsedAttribute;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
-        duration = parse(command, "duration", this.interpreter, 500);
-        effect = parse(command, "effect", this.interpreter, "fade");
-        direction = parse(command, "direction", this.interpreter, "right");
+        wait = props.wait === "yes" ? true : false;
+        duration = +init(props, "duration", 500);
+        effect = init(props, "effect", "fade");
+        direction = init(props, "direction", "right");
         element = args.element || document.getElementById(this.cssid);
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
@@ -11224,7 +11260,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
         interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
-        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
+        easingType = init(props, "easing", "sineEaseOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
             easing.sineEaseOut;
@@ -11354,7 +11390,8 @@ using(
     "MO5.TimerWatcher",
     "WSE.commands",
     "WSE.tools::createTimer",
-    "WSE.tools::warn"
+    "WSE.tools::warn",
+    "WSE.tools::xmlElementToAst"
 ).
 define("WSE.assets.Animation", function (
     transform,
@@ -11364,7 +11401,8 @@ define("WSE.assets.Animation", function (
     TimerWatcher,
     commands,
     createTimer,
-    warn
+    warn,
+    toAst
 ) {
     
     "use strict";
@@ -11397,9 +11435,9 @@ define("WSE.assets.Animation", function (
             };
         }
         
-        function createTransformFn (as, f, t, pn, u, opt) {
+        function createTransformFn (a, f, t, pn, u, opt) {
             return transform(function (v) {
-                as.style[pn] = v + u;
+                a.style[pn] = v + u;
             }, f, t, opt);
         };
         
@@ -11410,7 +11448,7 @@ define("WSE.assets.Animation", function (
             curDoEl = del;
             curDur = curDoEl.getAttribute("duration");
             
-            commands["do"](curDoEl, interpreter, {
+            commands["do"](toAst(curDoEl, interpreter), interpreter, {
                 animation: true
             });
             
@@ -11690,7 +11728,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
          */
         this.play = function (command) {
             
-            var fadeDuration;
+            var fadeDuration, props = command.properties;
             
             if (this._playing) {
                 return {
@@ -11701,10 +11739,10 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
             this._playing = true;
             this._paused = false;
             
-            if (command.getAttribute("fadein")) {
+            if (props.fadein) {
                 
                 this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadein");
+                fadeDuration = +props.fadein;
                 
                 this.tracks[this._currentTrack].volume(0);
                 this.tracks[this._currentTrack].play();
@@ -11741,10 +11779,10 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
             this._playing = false;
             this._paused = false;
             
-            if (command && command.getAttribute("fadeout")) {
+            if (command && command.properties.fadeout) {
                 
                 this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadeout");
+                fadeDuration = +command.properties.fadeout;
                 
                 this.tracks[this._currentTrack].fade(1, 0, fadeDuration, function () {
                     this.tracks[this._currentTrack].stop();
@@ -11822,7 +11860,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
         
         this.stop();
         
-        this._currentTrack = command.getAttribute("track");
+        this._currentTrack = command.properties.track;
         
         if (wasPlaying) {
             this.play();
@@ -11895,7 +11933,7 @@ define("WSE.assets.Character", function (CoreObject) {
     Character.prototype = new CoreObject();
     
     Character.prototype.setTextbox = function (command) {
-        this.asset.setAttribute("textbox", command.getAttribute("textbox"));
+        this.asset.setAttribute("textbox", command.properties.textbox);
         this.bus.trigger("wse.assets.character.settextbox", this);
     };
     
@@ -11974,7 +12012,7 @@ define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
     Curtain.prototype = new DisplayObject();
     
     Curtain.prototype.set = function (asset) {
-        this.color = asset.getAttribute("color") || "black";
+        this.color = asset.properties.color || "black";
         this.element.style.backgroundColor = this.color;
     };
     
@@ -12159,11 +12197,12 @@ define("WSE.assets.Imagepack", function (
     Imagepack.prototype.set = function (command, args) {
         
         var image, name, self, old, duration, isAnimation, bus = this.bus, element;
+        var props = command.properties;
         
         args = args || {};
         self = this;
-        name = command.getAttribute("image");
-        duration = command.getAttribute("duration") || 400;
+        name = props.image;
+        duration = props.duration || 400;
         isAnimation = args.animation === true ? true : false;
         
         if (name === null) {
@@ -12773,16 +12812,17 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
 
 /* global using */
 
-using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
+using("WSE.tools.ui", "WSE.tools::textToHtml", "WSE.tools::init").
+define("WSE.commands.alert", function (ui, textToHtml, init) {
     
     function alert (command, interpreter) {
         
-        var title, message, doNext;
+        var title, message, doNext, props = command.properties;
         
-        title = command.getAttribute("title") || "Alert!";
-        message = command.getAttribute("message") || "Alert!";
-        message = tools.textToHtml(message);
-        doNext = command.getAttribute("next") === "false" ? false : true;
+        title = init(props, "title", "Alert!");
+        message = init(props, "message", "Alert!");
+        message = textToHtml(message);
+        doNext = props.next === "false" ? false : true;
         
         interpreter.bus.trigger("wse.interpreter.commands.alert", command);
         
@@ -12835,8 +12875,22 @@ using().define("WSE.commands.break", function () {
 
 /* global using */
 
-using("WSE.tools", "WSE.DisplayObject").
-define("WSE.commands.choice", function (tools, DisplayObject) {
+using(
+    "WSE.tools::replaceVariables",
+    "WSE.DisplayObject",
+    "WSE.tools::attachEventListener",
+    "WSE.tools::init",
+    "WSE.tools::warn",
+    "WSE.tools::xmlElementToAst"
+).
+define("WSE.commands.choice", function (
+    replaceVars,
+    DisplayObject,
+    attachListener,
+    init,
+    warn,
+    toAst
+) {
     
     "use strict";
     
@@ -12844,7 +12898,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         
         var menuElement, buttons, children, len, i, current, duration;
         var currentButton, scenes, self, sceneName;
-        var makeButtonClickFn, oldState, cssid;
+        var makeButtonClickFn, oldState, cssid, props = command.properties;
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.choice",
@@ -12861,11 +12915,11 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         buttons = [];
         scenes = [];
         self = interpreter;
-        children = command.childNodes;
+        children = command.children;
         len = children.length;
-        duration = command.getAttribute("duration") || 500;
+        duration = +init(props, "duration", 500);
         duration = parseInt(duration, 10);
-        cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
+        cssid = init(props, "cssid", "WSEChoiceMenu");
         
         makeButtonClickFn = function (cur, me, sc, idx) {
             
@@ -12879,7 +12933,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
                 setTimeout(
                     function () {
                         
-                        var childrenLen = cur.childNodes ? cur.childNodes.length : 0;
+                        var childrenLen = cur.children ? cur.children.length : 0;
                         
                         var oldIndex = interpreter.index;
                         var oldSceneId = interpreter.sceneId;
@@ -12893,10 +12947,10 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
                         if (childrenLen > 0) {
                             
                             interpreter.pushToCallStack();
-                            interpreter.currentCommands = cur.childNodes;
+                            interpreter.currentCommands = cur.children;
                             interpreter.sceneId = oldSceneId;
                             interpreter.scenePath = oldScenePath;
-                            interpreter.scenePath.push(oldIndex-1);
+                            interpreter.scenePath.push(oldIndex - 1);
                             interpreter.scenePath.push(idx);
                             interpreter.index = 0;
                             interpreter.currentScene = oldCurrentScene;
@@ -12915,15 +12969,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         };
         
         if (len < 1) {
-            
-            interpreter.bus.trigger(
-                "wse.interpreter.warning",
-                {
-                    element: command,
-                    message: "Element 'choice' is empty. Expected at " +
-                        "least one 'option' element."
-                }
-            );
+            warn(interpreter.bus, "Empty choice. Expected at least one option.", command);
         }
         
         menuElement = document.createElement("div");
@@ -12940,8 +12986,8 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             
             current = children[i];
             
-            if (!current.tagName ||
-                    current.tagName !== "option" ||
+            if (!current.type ||
+                    current.type !== "option" ||
                     !interpreter.checkIfvar(current)) {
                 
                 continue;
@@ -12951,18 +12997,15 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             currentButton.setAttribute("class", "button");
             currentButton.setAttribute("type", "button");
             currentButton.setAttribute("tabindex", i + 1);
-            currentButton.setAttribute("value", current.getAttribute("label"));
+            currentButton.setAttribute("value", current.properties.label);
             
-            currentButton.value = tools.replaceVariables(
-                current.getAttribute("label"),
-                interpreter
-            );
+            currentButton.value = current.properties.label;
             
-            sceneName = current.getAttribute("scene") || null;
+            sceneName = current.properties.scene || null;
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
             
-            tools.attachEventListener(
+            attachListener(
                 currentButton, 
                 'click',
                 makeButtonClickFn(current, menuElement, scenes[i], i)
@@ -13014,6 +13057,7 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     function doCommand (command, interpreter, args) {
         
         var assetName, action, isAnimation, bus = interpreter.bus, assets = interpreter.assets;
+        var props = command.properties;
         
         args = args || {};
         
@@ -13026,8 +13070,8 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
             false
         );
         
-        assetName = command.getAttribute("asset");
-        action = command.getAttribute("action");
+        assetName = props.asset;
+        action = props.action;
         isAnimation = args.animation || false;
         
         if (assetName === null) {
@@ -13066,16 +13110,17 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
 
 /* global using */
 
-using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (functions, warn) {
+using("WSE.functions", "WSE.tools::warn").
+define("WSE.commands.fn", function (functions, warn) {
     
     "use strict";
     
     function fn (command, interpreter) {
         
-        var name, varName, ret;
+        var name, varName, ret, props = command.properties;
         
-        name = command.getAttribute("name") || null;
-        varName = command.getAttribute("tovar") || null;
+        name = props.name || null;
+        varName = props.tovar || null;
         
         if (typeof functions[name] !== "function") {
             warn(interpreter.bus, "No name supplied on fn element.", command);
@@ -13114,10 +13159,10 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
     
     function global (command, interpreter) {
         
-        var name, value, next;
+        var name, value, next, props = command.properties;
         
-        name = command.getAttribute("name") || null;
-        value = command.getAttribute("value") || null;
+        name = props.name || null;
+        value = props.value || null;
         next = {doNext: true};
         
         if (name === null) {
@@ -13149,7 +13194,7 @@ using("WSE.tools::warn").define("WSE.commands.globalize", function (warn) {
         
         var key, next;
         
-        key = command.getAttribute("name") || null;
+        key = command.properties.name || null;
         next = {doNext: true};
         
         if (key === null) {
@@ -13194,7 +13239,7 @@ define("WSE.commands.goto", function (replaceVars, logError) {
             false
         );
         
-        sceneName = command.getAttribute("scene");
+        sceneName = command.properties.scene;
         
         if (sceneName === null) {
             logError(bus, "Element 'goto' misses attribute 'scene'.");
@@ -13229,6 +13274,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
         
         var speakerId, speakerName, textboxName, i, len, current;
         var assetElements, text, doNext, bus = interpreter.bus, next;
+        var props = command.properties;
         
         next = {doNext: true};
         
@@ -13241,8 +13287,8 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
             false
         );
         
-        speakerId = command.getAttribute("s");
-        doNext = command.getAttribute("stop") === "false" ? true : false;
+        speakerId = props.s;
+        doNext = props.stop === "false" ? true : false;
         
         if (speakerId === null) {
             warn(bus, "Element 'line' requires attribute 's'.", command);
@@ -13280,7 +13326,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
             return next;
         }
         
-        text = getSerializedNodes(command);
+        text = command.content;
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName, speakerId);
@@ -13306,7 +13352,7 @@ using("WSE.tools::warn").define("WSE.commands.localize", function (warn) {
         var key, next;
         
         next = {doNext: true};
-        key = command.getAttribute("name") || null;
+        key = command.properties.name || null;
         
         if (key === null) {
             warn(interpreter.bus, "No variable name defined on localize element.", command);
@@ -13386,15 +13432,16 @@ using(
     "WSE.commands.set_vars",
     "WSE.tools::warn",
     "WSE.tools::logError",
-    "WSE.tools::log"
+    "WSE.tools::log",
+    "WSE.tools::xmlElementToAst"
 ).
-define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) {
+define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log, toAst) {
     
     "use strict";
     
     function sub (command, interpreter) {
         
-        var sceneId, scene, doNext, next;
+        var sceneId, scene, doNext, next, props = command.properties;
         
         interpreter.bus.trigger(
             "wse.interpreter.commands.sub",
@@ -13406,8 +13453,8 @@ define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) 
         );
         
         next = {doNext: true};
-        sceneId = command.getAttribute("scene") || null;
-        doNext = command.getAttribute("next") === false ? false : true;
+        sceneId = props.scene || null;
+        doNext = props.next === false ? false : true;
         
         if (sceneId === null) {
             warn(interpreter.bus, "Missing 'scene' attribute on 'sub' command!", command);
@@ -13426,13 +13473,13 @@ define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) 
         
         interpreter.pushToCallStack();
         
-        interpreter.currentCommands = scene.childNodes;
+        interpreter.currentCommands = toAst(scene, interpreter).children;
         interpreter.index = -1;
         interpreter.sceneId = sceneId;
         interpreter.scenePath = [];
         interpreter.currentElement = -1;
         
-        if (command.getAttribute("names")) {
+        if (props.names) {
             setVars(command, interpreter);
         }
         
@@ -13453,7 +13500,7 @@ using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
     
     function trigger (command, interpreter) {
         
-        var triggerName, action, next;
+        var triggerName, action, next, props = command.properties;
         
         next = {doNext: true};
         
@@ -13466,8 +13513,8 @@ using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
             false
         );
         
-        triggerName = command.getAttribute("name") || null;
-        action = command.getAttribute("action") || null;
+        triggerName = props.name || null;
+        action = props.action || null;
         
         if (triggerName === null) {
             warn(interpreter.bus, "No name specified on trigger command.", command);
@@ -13512,7 +13559,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
     
     function varCommand (command, interpreter) {
         
-        var key, val, lval, action, container, next;
+        var key, val, lval, action, container, next, props = command.properties;
         
         next = {doNext: true};
         
@@ -13525,9 +13572,9 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
             false
         );
         
-        key = command.getAttribute("name") || null;
-        val = command.getAttribute("value") || "1";
-        action = command.getAttribute("action") || "set";
+        key = props.name || null;
+        val = props.value || "1";
+        action = props.action || "set";
         
         if (key === null) {
             warn(interpreter.bus, "Command 'var' must have a 'name' attribute.", command);
@@ -13536,7 +13583,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
         
         container = interpreter.runVars;
         
-        if (action !== "set" && !(key in container || command.getAttribute("lvalue"))) {
+        if (action !== "set" && !(key in container || props.lvalue)) {
             warn(interpreter.bus, "Undefined variable.", command);
             return next;
         }
@@ -13548,7 +13595,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
             return next;
         }
         
-        lval = command.getAttribute("lvalue") || container[key];
+        lval = props.lvalue || container[key];
         lval = replaceVars(lval, interpreter);
         
         switch (action) {
@@ -13627,10 +13674,11 @@ using("WSE.tools::logError").define("WSE.commands.set_vars", function (logError)
     function setVars (command, interpreter) {
         
         var container = interpreter.runVars, keys, values, next;
+        var props = command.properties;
         
         next = {doNext: true};
-        keys = (command.getAttribute("names") || "").split(",");
-        values = (command.getAttribute("values") || "").split(",");
+        keys = (props.names || "").split(",");
+        values = (props.values || "").split(",");
         
         if (keys.length !== values.length) {
             logError(interpreter.bus, "Number of names does not match number of values " +
@@ -13669,7 +13717,7 @@ using().define("WSE.commands.wait", function () {
         );
         
         self = interpreter;
-        duration = command.getAttribute("duration");
+        duration = command.properties.duration;
         
         if (duration !== null) {
             
@@ -13710,8 +13758,8 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
     function withCommand (command, interpreter) {
         
         var container = interpreter.runVars;
-        var children = command.childNodes;
-        var variableName = getParsedAttribute(command, "var", interpreter);
+        var children = command.children;
+        var variableName = command.properties["var"];
         var i, numberOfChildren = children.length, current;
         
         for (i = 0; i < numberOfChildren; i += 1) {
@@ -13732,10 +13780,10 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
             
             if (isElse(current) ||
                     isWhen(current) && hasCondition(current) &&
-                    getParsedAttribute(current, "is") === container[variableName]) {
+                    current.properties.is === container[variableName]) {
                 
                 interpreter.pushToCallStack();
-                interpreter.currentCommands = current.childNodes;
+                interpreter.currentCommands = current.children;
                 interpreter.scenePath.push(interpreter.index);
                 interpreter.scenePath.push(i);
                 interpreter.index = -1;
@@ -13754,24 +13802,24 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
     
     
     function shouldBeSkipped (element, interpreter) {
-        return !element.tagName || !interpreter.checkIfvar(element) ||
-            (element.tagName !== "when" && element.tagName !== "else");
+        return !element.type || !interpreter.checkIfvar(element) ||
+            (element.type !== "when" && element.type !== "else");
     }
     
     function isWhen (element) {
-        return tagNameIs(element, "when");
+        return typeIs(element, "when");
     }
     
     function isElse (element) {
-        return tagNameIs(element, "else");
+        return typeIs(element, "else");
     }
     
-    function tagNameIs (element, name) {
-        return element.tagName === name;
+    function typeIs (element, name) {
+        return element.type === name;
     }
     
     function hasCondition (element) {
-        return element.hasAttribute("is");
+        return "is" in element.properties;
     }
     
 });
@@ -13788,8 +13836,8 @@ using().define("WSE.commands.while", function () {
         interpreter.index -= 1;
         interpreter.currentElement -= 1;
         interpreter.pushToCallStack();
-        interpreter.currentCommands = command.childNodes;
-        interpreter.scenePath.push(interpreter.index+1);
+        interpreter.currentCommands = command.children;
+        interpreter.scenePath.push(interpreter.index + 1);
         interpreter.index = -1;
         interpreter.currentElement = -1;
         

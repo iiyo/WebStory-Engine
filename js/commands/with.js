@@ -8,8 +8,8 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
     function withCommand (command, interpreter) {
         
         var container = interpreter.runVars;
-        var children = command.childNodes;
-        var variableName = getParsedAttribute(command, "var", interpreter);
+        var children = command.children;
+        var variableName = command.properties["var"];
         var i, numberOfChildren = children.length, current;
         
         for (i = 0; i < numberOfChildren; i += 1) {
@@ -30,10 +30,10 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
             
             if (isElse(current) ||
                     isWhen(current) && hasCondition(current) &&
-                    getParsedAttribute(current, "is") === container[variableName]) {
+                    current.properties.is === container[variableName]) {
                 
                 interpreter.pushToCallStack();
-                interpreter.currentCommands = current.childNodes;
+                interpreter.currentCommands = current.children;
                 interpreter.scenePath.push(interpreter.index);
                 interpreter.scenePath.push(i);
                 interpreter.index = -1;
@@ -52,24 +52,24 @@ define("WSE.commands.with", function (getParsedAttribute, warn) {
     
     
     function shouldBeSkipped (element, interpreter) {
-        return !element.tagName || !interpreter.checkIfvar(element) ||
-            (element.tagName !== "when" && element.tagName !== "else");
+        return !element.type || !interpreter.checkIfvar(element) ||
+            (element.type !== "when" && element.type !== "else");
     }
     
     function isWhen (element) {
-        return tagNameIs(element, "when");
+        return typeIs(element, "when");
     }
     
     function isElse (element) {
-        return tagNameIs(element, "else");
+        return typeIs(element, "else");
     }
     
-    function tagNameIs (element, name) {
-        return element.tagName === name;
+    function typeIs (element, name) {
+        return element.type === name;
     }
     
     function hasCondition (element) {
-        return element.hasAttribute("is");
+        return "is" in element.properties;
     }
     
 });

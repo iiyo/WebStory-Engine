@@ -21,7 +21,7 @@ define("WSE.commands.goto", function (replaceVars, logError) {
             false
         );
         
-        sceneName = command.getAttribute("scene");
+        sceneName = command.properties.scene;
         
         if (sceneName === null) {
             logError(bus, "Element 'goto' misses attribute 'scene'.");

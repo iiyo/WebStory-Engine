@@ -7,6 +7,7 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     function doCommand (command, interpreter, args) {
         
         var assetName, action, isAnimation, bus = interpreter.bus, assets = interpreter.assets;
+        var props = command.properties;
         
         args = args || {};
         
@@ -19,8 +20,8 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
             false
         );
         
-        assetName = command.getAttribute("asset");
-        action = command.getAttribute("action");
+        assetName = props.asset;
+        action = props.action;
         isAnimation = args.animation || false;
         
         if (assetName === null) {

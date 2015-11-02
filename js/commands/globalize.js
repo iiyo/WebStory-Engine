@@ -8,7 +8,7 @@ using("WSE.tools::warn").define("WSE.commands.globalize", function (warn) {
         
         var key, next;
         
-        key = command.getAttribute("name") || null;
+        key = command.properties.name || null;
         next = {doNext: true};
         
         if (key === null) {

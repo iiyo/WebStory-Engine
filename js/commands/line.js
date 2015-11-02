@@ -9,6 +9,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
         
         var speakerId, speakerName, textboxName, i, len, current;
         var assetElements, text, doNext, bus = interpreter.bus, next;
+        var props = command.properties;
         
         next = {doNext: true};
         
@@ -21,8 +22,8 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
             false
         );
         
-        speakerId = command.getAttribute("s");
-        doNext = command.getAttribute("stop") === "false" ? true : false;
+        speakerId = props.s;
+        doNext = props.stop === "false" ? true : false;
         
         if (speakerId === null) {
             warn(bus, "Element 'line' requires attribute 's'.", command);
@@ -60,7 +61,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
             return next;
         }
         
-        text = getSerializedNodes(command);
+        text = command.content;
         
         interpreter.log.push({speaker: speakerId, text: text});
         interpreter.assets[textboxName].put(text, speakerName, speakerId);

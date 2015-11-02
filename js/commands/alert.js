@@ -1,15 +1,16 @@
 /* global using */
 
-using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
+using("WSE.tools.ui", "WSE.tools::textToHtml", "WSE.tools::init").
+define("WSE.commands.alert", function (ui, textToHtml, init) {
     
     function alert (command, interpreter) {
         
-        var title, message, doNext;
+        var title, message, doNext, props = command.properties;
         
-        title = command.getAttribute("title") || "Alert!";
-        message = command.getAttribute("message") || "Alert!";
-        message = tools.textToHtml(message);
-        doNext = command.getAttribute("next") === "false" ? false : true;
+        title = init(props, "title", "Alert!");
+        message = init(props, "message", "Alert!");
+        message = textToHtml(message);
+        doNext = props.next === "false" ? false : true;
         
         interpreter.bus.trigger("wse.interpreter.commands.alert", command);
         
