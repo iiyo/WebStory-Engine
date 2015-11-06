@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger name="increase_duration_trigger" event="keyup" key="UP_ARROW" scene="increase_duration_scene" />
+            <trigger name="decrease_duration_trigger" event="keyup" key="DOWN_ARROW" scene="decrease_duration_scene" />
+            <trigger name="change_easing" event="keyup" key="E" scene="change_easing_scene" />
+        </triggers>
+        <loadingScreen>
+            <div id="loadingScreen">
+                <b>Loaded:</b> {$loaded} / {$all} ({$progress}%)<br />
+                <b>Remaining:</b> {$remaining} / {$all}
+            </div>
+        </loadingScreen>
+    </settings>
+    <assets>
+        
+        <imagepack name="cecile" x="0" y="0" z="1000">
+            <image src="../../assets/images/cecile/smile.png" name="smile" />
+            <image src="../../assets/images/cecile/amused-smiling.png" name="amused" />
+            <image src="../../assets/images/cecile/crying.png" name="crying" />
+            <image src="../../assets/images/cecile/eyes-closed.png" name="eyes" />
+            <image src="../../assets/images/cecile/pleading.png" name="pleading" />
+            <image src="../../assets/images/cecile/sad.png" name="sad" />
+            <image src="../../assets/images/cecile/shock.png" name="shock" />
+            <image src="../../assets/images/cecile/smile-blush.png" name="blush" />
+        </imagepack>
+        
+        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        
+        <textbox name="tb" cssid="tb" />
+        
+        <character name="n" textbox="tb"></character>
+        
+    </assets>
+    <scenes>
+
+        <scene id="start">
+            
+            <set asset="cecile" image="smile" />
+            
+            <show asset="bg" />
+            <show asset="cecile" />
+            
+        </scene>
+        
+    </scenes>
+</ws>

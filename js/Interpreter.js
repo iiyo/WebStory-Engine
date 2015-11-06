@@ -9,7 +9,8 @@ using(
     "WSE",
     "WSE.tools::logError",
     "WSE.tools::warn",
-    "WSE.LoadingScreen"
+    "WSE.LoadingScreen",
+    "WSE.tools::getSerializedNodes"
 ).
 define("WSE.Interpreter", function (
     transform,
@@ -20,7 +21,8 @@ define("WSE.Interpreter", function (
     WSE,
     logError,
     warn,
-    LoadingScreen
+    LoadingScreen,
+    getSerializedNodes
 ) {
     
     "use strict";
@@ -129,7 +131,7 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.start = function () {
         
-        var self, fn, makeKeyFn, bus;
+        var self, fn, makeKeyFn, bus, startTime = Date.now();
         
         this.story = this.game.ws;
         this.stage = this.game.stage;
@@ -146,7 +148,7 @@ define("WSE.Interpreter", function (
         self = this;
         bus = this.bus;
         
-        this._loadingScreen.show(this.stage);
+        this._startLoadingScreen();
         
         // Adds location info to warnings and errors.
         fn = function (data) {
@@ -240,7 +242,30 @@ define("WSE.Interpreter", function (
         
         this.game.subscribeListeners();
         
-        setTimeout(function () { self.runStory(); }, 1000);
+        this._assetsLoaded = false;
+        
+        this._loadingScreen.subscribe("finished", function () {
+            
+            var time = Date.now() - startTime;
+            
+            if (self._assetsLoaded) {
+                return;
+            }
+            
+            self._assetsLoaded = true;
+            
+            if (time < 1000) {
+                setTimeout(self.runStory.bind(self), 1000 - time);
+            }
+            else {
+                self.runStory();
+            }
+        });
+        
+        if (this._loadingScreen.count() < 1) {
+            this._assetsLoaded = true;
+            this.runStory();
+        }
     };
     
     Interpreter.prototype.runStory = function () {
@@ -1479,6 +1504,17 @@ define("WSE.Interpreter", function (
         menu.appendChild(sgList);
         
         this.stage.appendChild(menu);
+    };
+    
+    Interpreter.prototype._startLoadingScreen = function () {
+        
+        var template = this.story.querySelector("loadingScreen");
+        
+        if (template) {
+            this._loadingScreen.setTemplate(getSerializedNodes(template));
+        }
+        
+        this._loadingScreen.show(this.stage);
     };
     
     return Interpreter;

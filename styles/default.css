@@ -242,8 +242,15 @@ img
 {
     position: absolute;
     left: 20%;
-    top: 40%;
+    top: 30%;
     right: 20%;
+    max-width: 600px;
+    margin: auto;
+}
+
+#WSELoadingScreen .container .logo {
+    text-align: center;
+    margin-bottom: 10%;
 }
 
 #WSELoadingScreen .container .heading
@@ -255,7 +262,7 @@ img
 #WSELoadingScreen .container .progressBar
 {
     background: rgba(40, 40, 40, 0.6);
-    border-radius: 10px;
+    border-radius: 3px;
     margin-top: 5px;
     border: 2px solid rgb(20, 20, 20);
     box-shadow: 0 0 5px rgba(200, 200, 200, 0.6);
@@ -264,9 +271,9 @@ img
 #WSELoadingScreenProgress
 {
     height: 20px;
-    background: rgba(100, 200, 100, 0.8);
+    background: rgba(220, 240, 220, 0.9);
     text-align: right;
-    border-radius: 10px;
+    border-radius: 3px;
 }
 
 #WSELoadingScreenPercentage

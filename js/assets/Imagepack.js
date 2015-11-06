@@ -63,7 +63,8 @@ define("WSE.assets.Imagepack", function (
         element.setAttribute("data-wse-asset-name", this.name);
         
         children = asset.getElementsByTagName("image");
-        triggerDecreaseFn = self.bus.trigger.bind(self.bus, "wse.assets.loading.decrease");
+        triggerDecreaseFn =
+            self.bus.trigger.bind(self.bus, "wse.assets.loading.decrease", null, false);
         
         for (i = 0, len = children.length; i < len; i += 1) {
             
@@ -83,7 +84,7 @@ define("WSE.assets.Imagepack", function (
             
             image = new Image();
             
-            this.bus.trigger("wse.assets.loading.increase");
+            this.bus.trigger("wse.assets.loading.increase", null, false);
             attachListener(image, 'load', triggerDecreaseFn);
             
             image.src = src;
