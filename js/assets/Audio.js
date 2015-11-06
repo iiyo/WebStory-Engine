@@ -258,7 +258,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
         this._currentTrack = command.getAttribute("track");
         
         if (wasPlaying) {
-            this.play();
+            this.play(command);
         }
         
         return {
