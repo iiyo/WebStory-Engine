@@ -5,7 +5,7 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2015.11.1-final.1511061334";
+    var WSE = {}, version = "2015.12.1-final.1512231127";
     
     EventBus.inject(WSE);
     

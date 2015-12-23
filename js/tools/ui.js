@@ -1,6 +1,9 @@
 /* global using */
 
-using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
+using(
+    "WSE.tools::warn",
+    "WSE.tools::replaceVariables"
+).define("WSE.tools.ui", function (warn, replaceVars) {
     
     "use strict";
     
@@ -188,8 +191,8 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
         prompt: function (interpreter, args) {
             
             var title, message, submitText, cancelText, callback, root, dialog, oldState;
-            var tEl, mEl, buttonEl, cancelEl, inputEl, container, defaultValue, pause, doNext;
-            var allowEmptyInput, hideCancelButton;
+            var tEl, mEl, buttonEl, cancelEl, inputEl, container, pause, doNext;
+            var allowEmptyInput, hideCancelButton, prefill;
             
             interpreter.waitCounter += 1;
             //             interpreter.keysDisabled += 1;
@@ -199,7 +202,6 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
             message = args.message || "Please enter something:";
             submitText = args.submitText || "Submit";
             cancelText = args.cancelText || "Cancel";
-            defaultValue = args.defaultValue || "";
             callback = typeof args.callback === "function" ? args.callback : function () {};
             root = args.parent || interpreter.stage;
             pause = args.pause === true ? true : false;
@@ -207,6 +209,7 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
             doNext = args.doNext === true ? true : false;
             allowEmptyInput = args.allowEmptyInput;
             hideCancelButton = args.hideCancelButton;
+            prefill = args.prefill || "";
             
             if (pause === true) {
                 interpreter.state = "pause";
@@ -227,8 +230,8 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
             mEl.setAttribute("class", "message");
             
             inputEl = document.createElement("input");
-            inputEl.setAttribute("value", defaultValue);
-            inputEl.value = defaultValue;
+            inputEl.setAttribute("value", prefill);
+            inputEl.value = prefill;
             inputEl.setAttribute("class", "input text");
             inputEl.setAttribute("type", "text");
             
@@ -275,7 +278,7 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
             buttonEl.setAttribute("class", "submit button");
             buttonEl.setAttribute("type", "button");
             
-            if (!allowEmptyInput && !defaultValue) {
+            if (!allowEmptyInput && !prefill) {
                 buttonEl.disabled = true;
             }
             
@@ -355,16 +358,38 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
         return function (command, interpreter) {
             
             var title, message, container, key, doNext, hideCancelButton, allowEmptyInput;
-            var submitText, cancelText;
+            var submitText, cancelText, prefill;
             
             title = command.getAttribute("title") || "Input required...";
             message = command.getAttribute("message") || "Your input is required:";
             key = command.getAttribute("var") || null;
-            doNext = command.getAttribute("next") === "false" ? false : true;
-            hideCancelButton = command.getAttribute("hideCancelButton") === "yes" ? true : false;
-            allowEmptyInput = command.getAttribute("allowEmptyInput") === "no" ? false : true;
             submitText = command.getAttribute("submitText") || "";
             cancelText = command.getAttribute("cancelText") || "";
+            prefill = command.getAttribute("prefill") || "";
+            
+            allowEmptyInput =
+                replaceVars(command.getAttribute("allowEmptyInput") || "", interpreter) === "no" ?
+                    false :
+                    true;
+            
+            hideCancelButton =
+                replaceVars(command.getAttribute("hideCancelButton") || "", interpreter) === "yes" ?
+                    true :
+                    false;
+            
+            doNext = replaceVars(command.getAttribute("next") || "", interpreter) === "false" ?
+                false :
+                true;
+            
+            if (key !== null) {
+                key = replaceVars(key, interpreter);
+            }
+            
+            title = replaceVars(title, interpreter);
+            message = replaceVars(message, interpreter);
+            cancelText = replaceVars(cancelText, interpreter);
+            submitText = replaceVars(submitText, interpreter);
+            prefill = replaceVars(prefill, interpreter);
             
             interpreter.bus.trigger("wse.interpreter.commands." + type, command);
             
@@ -391,8 +416,10 @@ using("WSE.tools::warn").define("WSE.tools.ui", function (warn) {
                     allowEmptyInput: allowEmptyInput,
                     hideCancelButton: hideCancelButton,
                     submitText: submitText,
-                    cancelText: cancelText
-            });
+                    cancelText: cancelText,
+                    prefill: prefill
+                }
+            );
             
             return {
                 doNext: true

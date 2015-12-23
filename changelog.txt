@@ -1,6 +1,22 @@
 ====== WebStory Engine Changelog ======
 
-===== Version 2015.10.x ======
+===== Version 2015.x ======
+
+==== Version 2015.12.1 ====
+
+ * UI commands can now have attributes with variables.
+ * Added a `prefill` attribute to the prompt comannd. It sets a default value.
+
+==== Version 2015.11.1 ====
+
+ * WebStory code can now be embedded in the HTML so that the engine works without a server on local file systems. Take a look at the xml_embedded test for an example of this.
+ * The loading screen can now be customized by adding a `loadingScreen` element to the `settings` section. It can contain an HTML template snippet with these variables: `{$all}`, `{$loaded}`, `{$remaining}` and `{$progress}`
+
+==== Version 2015.10.2 ====
+
+ * Default extensions didn't work with new module system (mainly side-images)
+ * Added a test game for the side-images extension
+ * Added head images for Cecile and Jack for testing
 
 ==== Version 2015.10.1 ====
 

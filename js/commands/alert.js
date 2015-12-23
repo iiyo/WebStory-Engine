@@ -1,6 +1,10 @@
 /* global using */
 
-using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, tools) {
+using(
+    "WSE.tools.ui",
+    "WSE.tools",
+    "WSE.tools::replaceVariables"
+).define("WSE.commands.alert", function (ui, tools, replaceVars) {
     
     function alert (command, interpreter) {
         
@@ -8,8 +12,15 @@ using("WSE.tools.ui", "WSE.tools").define("WSE.commands.alert", function (ui, to
         
         title = command.getAttribute("title") || "Alert!";
         message = command.getAttribute("message") || "Alert!";
+        
+        doNext = replaceVars(command.getAttribute("next") || "", interpreter) === "false" ?
+            false :
+            true;
+        
+        message = replaceVars(message, interpreter);
+        title = replaceVars(title, interpreter);
+        
         message = tools.textToHtml(message);
-        doNext = command.getAttribute("next") === "false" ? false : true;
         
         interpreter.bus.trigger("wse.interpreter.commands.alert", command);
         

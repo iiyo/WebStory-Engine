@@ -19,6 +19,8 @@
         
         <scene id="start">
             
+            <var name="prefill" value="foo!" />
+            
             <show asset="bg" />
             
             <prompt 
@@ -45,6 +47,21 @@
                 var="foo"
                 hideCancelButton="yes"
                 allowEmptyInput="no" />
+            
+            <prompt
+                title="Prompt with ({$prefill}) variables."
+                message="This prompt has a default ({$prefill}) value loaded from a variable."
+                var="foo"
+                prefill="{$prefill}" />
+            
+            <alert
+                title="An alert with {$prefill}"
+                message="Its message has {$prefill}" />
+            
+            <confirm
+                var="foo"
+                title="A confirm with {$prefill}"
+                message="Its message has {$prefill}" />
             
             <restart />
         </scene>
