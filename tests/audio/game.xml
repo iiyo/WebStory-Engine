@@ -2,7 +2,9 @@
 <ws>
     <settings>
         <stage width="900px" height="636px" id="Stage" create="yes" center="yes" />
-        <triggers/>
+        <triggers>
+            <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
+        </triggers>
     </settings>
     <assets>
         <audio name="music" loop="true" fade="false" autopause="true">
@@ -18,6 +20,7 @@
     </assets>
     <scenes>
         <scene id="start">
+            <trigger name="game_menu_key_trigger" action="activate" />
             <set asset="music" track="main_menu_music" />
             <play asset="music" fadein="500"/>
             <break/>

@@ -296,6 +296,10 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
         this._paused = vals.paused;
         this._currentTrack = vals.currentTrack;
         
+        this.tracks.forEach(function (track) {
+            track.stop();
+        });
+        
         if (this._playing && !this._paused) {
             this.tracks[this._currentTrack].play();
         }
