@@ -7263,7 +7263,7 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2015.12.1-final.1512231127";
+    var WSE = {}, version = "2015.12.3-final.1603171627";
     
     EventBus.inject(WSE);
     
@@ -11962,13 +11962,15 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
      */
     Audio.prototype.restore = function (vals) {
         
+        var key;
+        
         this._playing = vals.playing;
         this._paused = vals.paused;
         this._currentTrack = vals.currentTrack;
         
-        this.tracks.forEach(function (track) {
-            track.stop();
-        });
+        for (key in this.tracks) {
+            this.tracks[key].stop();
+        }
         
         if (this._playing && !this._paused) {
             this.tracks[this._currentTrack].play();

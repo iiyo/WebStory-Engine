@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <ws>
     <settings>
-        <stage width="900px" height="636px" id="Stage" create="yes" center="yes" />
+        <stage width="900px" height="636px" id="Stage" create="yes" center="yes" resize="yes" />
         <triggers>
             <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
         </triggers>
