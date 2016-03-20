@@ -1096,7 +1096,7 @@ define("WSE.Interpreter", function (
                 }
                 
                 interpreter.stage.removeChild(cur);
-                interpreter.commands.choice(com, interpreter);
+                WSE.commands.choice(com, interpreter);
                 interpreter.waitCounter -= 1;
             }
         }(this));

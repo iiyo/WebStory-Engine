@@ -7263,7 +7263,7 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2015.12.3-final.1603171627";
+    var WSE = {}, version = "2015.12.4-final.1603201040";
     
     EventBus.inject(WSE);
     
@@ -9681,7 +9681,7 @@ define("WSE.Interpreter", function (
                 }
                 
                 interpreter.stage.removeChild(cur);
-                interpreter.commands.choice(com, interpreter);
+                WSE.commands.choice(com, interpreter);
                 interpreter.waitCounter -= 1;
             }
         }(this));
