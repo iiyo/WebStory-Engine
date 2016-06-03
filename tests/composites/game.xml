@@ -8,7 +8,7 @@
     </settings>
     <assets>
         
-        <composite name="cecile" x="0" y="0" z="1000">
+        <composite name="colors" x="0" y="0" z="1000">
             <image src="bg.png" tags="bg" />
             <image src="brown.png" tags="brown,horizontal" />
             <image src="pink.png" tags="pink,vertical" />
@@ -31,21 +31,21 @@
             <trigger name="game_menu_key_trigger" action="activate" />
             
             <show asset="bg" />
-            <tag asset="cecile" add="bg, brown" duration="0" />
-            <show asset="cecile" />
+            <tag asset="colors" add="bg, brown" duration="0" />
+            <show asset="colors" />
             
             <break />
             
-            <tag asset="cecile" add="vertical" />
+            <tag asset="colors" add="vertical" />
             <break />
             
-            <move asset="cecile" x="50%" y="20%" />
+            <move asset="colors" x="50%" y="20%" />
             <break />
             
-            <tag asset="cecile" add="yellow, green" remove="horizontal" />
+            <tag asset="colors" add="yellow, green" remove="horizontal" />
             <break />
             
-            <tag asset="cecile" add="blue, pink" remove="*" />
+            <tag asset="colors" add="blue, pink" remove="*" />
             <break />
             
             <restart />
