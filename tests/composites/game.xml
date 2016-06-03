@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<ws>
+    <settings>
+        <stage width="1366px" height="768px" create="yes" center="yes" resize="yes" />
+        <triggers>
+            <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
+        </triggers>
+    </settings>
+    <assets>
+        
+        <composite name="cecile" x="0" y="0" z="1000">
+            <image src="bg.png" tags="bg" />
+            <image src="brown.png" tags="brown,horizontal" />
+            <image src="pink.png" tags="pink,vertical" />
+            <image src="blue.png" tags="blue,horizontal" />
+            <image src="green.png" tags="green,horizontal" />
+            <image src="yellow.png" tags="yellow,vertical" />
+        </composite>
+        
+        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        
+        <textbox name="tb" cssid="tb" />
+        
+        <character name="n" textbox="tb"></character>
+        
+    </assets>
+    <scenes>
+        
+        <scene id="start">
+            
+            <trigger name="game_menu_key_trigger" action="activate" />
+            
+            <show asset="bg" />
+            <tag asset="cecile" add="bg, brown" duration="0" />
+            <show asset="cecile" />
+            
+            <break />
+            
+            <tag asset="cecile" add="vertical" />
+            <break />
+            
+            <move asset="cecile" x="50%" y="20%" />
+            <break />
+            
+            <tag asset="cecile" add="yellow, green" remove="horizontal" />
+            <break />
+            
+            <tag asset="cecile" add="blue, pink" remove="*" />
+            <break />
+            
+            <restart />
+        </scene>
+        
+    </scenes>
+</ws>

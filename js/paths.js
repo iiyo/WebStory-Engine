@@ -12,6 +12,7 @@
     using.modules["WSE.assets.Curtain"] = base + "js/assets/Curtain.js";
     using.modules["WSE.assets.Imagepack"] = base + "js/assets/Imagepack.js";
     using.modules["WSE.assets.Textbox"] = base + "js/assets/Textbox.js";
+    using.modules["WSE.assets.Composite"] = base + "js/assets/Composite.js";
     
     using.modules["WSE.commands"] = base + "js/commands.js";
     using.modules["WSE.commands.alert"] = base + "js/commands/alert.js";

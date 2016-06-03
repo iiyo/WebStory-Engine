@@ -655,7 +655,7 @@ define("WSE.Interpreter", function (
             assetName !== null &&
             assetName in this.assets &&
             typeof this.assets[assetName][tagName] === "function" &&
-            tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|shake|set)/)
+            tagName.match(/(show|hide|clear|flicker|flash|play|start|stop|pause|move|shake|set|tag)/)
         ) {
             
             bus.trigger('game.assets.' + assetName + '.' + tagName);

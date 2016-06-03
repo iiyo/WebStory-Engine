@@ -7,7 +7,8 @@ using(
     "WSE.assets.Character",
     "WSE.assets.Curtain",
     "WSE.assets.Imagepack",
-    "WSE.assets.Textbox"
+    "WSE.assets.Textbox",
+    "WSE.assets.Composite"
 ).
 define("WSE.assets", function (
     AnimationAsset,
@@ -16,7 +17,8 @@ define("WSE.assets", function (
     CharacterAsset,
     CurtainAsset,
     ImagepackAsset,
-    TextboxAsset
+    TextboxAsset,
+    CompositeAsset
 ) {
     
     var assets = {
@@ -26,7 +28,8 @@ define("WSE.assets", function (
         Character: CharacterAsset,
         Curtain: CurtainAsset,
         Imagepack: ImagepackAsset,
-        Textbox: TextboxAsset
+        Textbox: TextboxAsset,
+        Composite: CompositeAsset
     };
     
     return assets;
