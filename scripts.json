@@ -55,6 +55,7 @@
         "WSE.assets.Imagepack": "js/assets/Imagepack.js",
         "WSE.assets.Textbox": "js/assets/Textbox.js",
         "WSE.assets.Background": "js/assets/Background.js",
+        "WSE.assets.Composite": "js/assets/Composite.js",
         
         "WSE.commands.alert": "js/commands/alert.js",
         "WSE.commands.break": "js/commands/break.js",
