@@ -4,3 +4,6 @@
 [submodule "libs/howler"]
 	path = libs/howler
 	url = https://github.com/goldfire/howler.js.git
+[submodule "libs/move"]
+	path = libs/move
+	url = https://github.com/visionmedia/move.js.git
