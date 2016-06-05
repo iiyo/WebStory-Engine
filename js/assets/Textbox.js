@@ -2,7 +2,7 @@
 
 using(
     "MO5.transform",
-    "MO5.dom.effects.typewriter",
+    "WSE.tools.reveal",
     "MO5.dom.Element",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
@@ -10,7 +10,7 @@ using(
 ).
 define("WSE.assets.Textbox", function (
     transform,
-    typewriter,
+    reveal,
     Element,
     DisplayObject,
     applyUnits,
@@ -224,7 +224,7 @@ define("WSE.assets.Textbox", function (
                 nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
                 self.interpreter.waitCounter += 1;
                 
-                typewriter(
+                reveal(
                     container, 
                     { 
                         speed: self.speed,

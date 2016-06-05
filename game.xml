@@ -16,7 +16,7 @@
             name="tb_main"
             x="0" y="365px"
             width="900px" height="120px"
-            speed="0">
+            speed="50">
         </textbox>
         
         <character name="n" textbox="tb_main"></character>

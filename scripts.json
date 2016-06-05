@@ -2,6 +2,7 @@
     "files": {
         
         "howler": "libs/howler/howler.js",
+        "move": "libs/move/move.js",
         
         "MO5.ajax": "libs/MO5/js/ajax.js",
         "MO5.Animation": "libs/MO5/js/Animation.js",
@@ -45,6 +46,7 @@
         "WSE.Interpreter": "js/Interpreter.js",
         "WSE.LoadingScreen": "js/LoadingScreen.js",
         "WSE.tools.ui": "js/tools/ui.js",
+        "WSE.tools.reveal": "js/tools/reveal.js",
         
         "WSE.DisplayObject": "js/DisplayObject.js",
         

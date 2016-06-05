@@ -43,6 +43,7 @@
     
     using.modules["WSE.tools"] = base + "js/tools/tools.js";
     using.modules["WSE.tools.ui"] = base + "js/tools/ui.js";
+    using.modules["WSE.tools.reveal"] = base + "js/tools/reveal.js";
     
     using.modules["WSE.Keys"] = base + "js/Keys.js";
     
@@ -51,6 +52,6 @@
     using.modules["WSE.Interpreter"] = base + "js/Interpreter.js";
     using.modules["WSE.LoadingScreen"] = base + "js/LoadingScreen.js";
     using.modules["WSE.Trigger"] = base + "js/Trigger.js";
-    using.modules["WSE"] = base + "js/WSE.js";
+    using.modules.WSE = base + "js/WSE.js";
     
 }());
