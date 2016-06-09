@@ -10384,6 +10384,12 @@ define("WSE.Interpreter", function (
         
         this.stopped = false;
         
+        if (this.cancelCharAnimation) {
+            this.cancelCharAnimation();
+            this.cancelCharAnimation = null;
+            return;
+        }
+        
         if (this.index >= this.currentCommands.length) {
             
             if (this.callStack.length > 0) {
@@ -12059,7 +12065,7 @@ using().define("WSE.tools.reveal", function () {
         
         markCharacters(element);
         hideCharacters(element);
-        revealCharacters(element, args.speed || 50, args.onFinish || null);
+        return revealCharacters(element, args.speed || 50, args.onFinish || null);
     }
     
     return reveal;
@@ -12075,17 +12081,37 @@ using().define("WSE.tools.reveal", function () {
         
         then = then || function () {};
         
+        console.log("Total:", left);
+        
         [].forEach.call(chars, function (char, i) {
             
             var id = setTimeout(function () {
+                
+                // Workaround for strange move.js behaviour:
+                // Sometimes the last .end() callback doesn't get called, so
+                // we set another timeout to correct this mistake if it happens.
+                var called = false;
+                var duration = 10 * offset;
                 
                 if (stop) {
                     return;
                 }
                 
-                move(char).set("opacity", 1).duration(10 * offset).end(function () {
+                move(char).set("opacity", 1).duration(duration).end(end);
+                
+                setTimeout(end, duration + 2000);
+                
+                function end () {
+                    
+                    if (called) {
+                        return;
+                    }
+                    
+                    called = true;
                     
                     left -= 1;
+                    
+                    console.log("Left:", left, chars.length);
                     
                     if (stop) {
                         return;
@@ -12095,7 +12121,7 @@ using().define("WSE.tools.reveal", function () {
                         then();
                     }
                     
-                });
+                }
                 
             }, i * offset);
             
@@ -14175,17 +14201,18 @@ define("WSE.assets.Textbox", function (
                 textElement.appendChild(container);
                 container.innerHTML = namePart + text;
                 nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
-                self.interpreter.waitCounter += 1;
+                //self.interpreter.waitCounter += 1;
                 
-                reveal(
+                self.interpreter.cancelCharAnimation = reveal(
                     container, 
                     { 
                         speed: self.speed,
                         onFinish: function () {
-                            self.interpreter.waitCounter -= 1; 
+                            //self.interpreter.waitCounter -= 1; 
+                            self.interpreter.cancelCharAnimation = null;
                         }
                     }
-                );
+                ).cancel;
             }());
         }
         else if (this.fadeDuration > 0) {
@@ -14194,7 +14221,7 @@ define("WSE.assets.Textbox", function (
             
             setTimeout(
                 function () {
-            
+                    
                     putText();
                     
                     if (self.type === 'nvl') {

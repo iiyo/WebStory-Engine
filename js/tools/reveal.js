@@ -42,7 +42,7 @@ using().define("WSE.tools.reveal", function () {
         
         markCharacters(element);
         hideCharacters(element);
-        revealCharacters(element, args.speed || 50, args.onFinish || null);
+        return revealCharacters(element, args.speed || 50, args.onFinish || null);
     }
     
     return reveal;
@@ -58,17 +58,37 @@ using().define("WSE.tools.reveal", function () {
         
         then = then || function () {};
         
+        console.log("Total:", left);
+        
         [].forEach.call(chars, function (char, i) {
             
             var id = setTimeout(function () {
+                
+                // Workaround for strange move.js behaviour:
+                // Sometimes the last .end() callback doesn't get called, so
+                // we set another timeout to correct this mistake if it happens.
+                var called = false;
+                var duration = 10 * offset;
                 
                 if (stop) {
                     return;
                 }
                 
-                move(char).set("opacity", 1).duration(10 * offset).end(function () {
+                move(char).set("opacity", 1).duration(duration).end(end);
+                
+                setTimeout(end, duration + 2000);
+                
+                function end () {
+                    
+                    if (called) {
+                        return;
+                    }
+                    
+                    called = true;
                     
                     left -= 1;
+                    
+                    console.log("Left:", left, chars.length);
                     
                     if (stop) {
                         return;
@@ -78,7 +98,7 @@ using().define("WSE.tools.reveal", function () {
                         then();
                     }
                     
-                });
+                }
                 
             }, i * offset);
             

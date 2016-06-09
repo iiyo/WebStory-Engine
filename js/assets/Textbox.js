@@ -222,17 +222,18 @@ define("WSE.assets.Textbox", function (
                 textElement.appendChild(container);
                 container.innerHTML = namePart + text;
                 nameElement.innerHTML = self.nameTemplate.replace(/\{name\}/g, name);
-                self.interpreter.waitCounter += 1;
+                //self.interpreter.waitCounter += 1;
                 
-                reveal(
+                self.interpreter.cancelCharAnimation = reveal(
                     container, 
                     { 
                         speed: self.speed,
                         onFinish: function () {
-                            self.interpreter.waitCounter -= 1; 
+                            //self.interpreter.waitCounter -= 1; 
+                            self.interpreter.cancelCharAnimation = null;
                         }
                     }
-                );
+                ).cancel;
             }());
         }
         else if (this.fadeDuration > 0) {
@@ -241,7 +242,7 @@ define("WSE.assets.Textbox", function (
             
             setTimeout(
                 function () {
-            
+                    
                     putText();
                     
                     if (self.type === 'nvl') {

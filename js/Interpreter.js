@@ -476,6 +476,12 @@ define("WSE.Interpreter", function (
         
         this.stopped = false;
         
+        if (this.cancelCharAnimation) {
+            this.cancelCharAnimation();
+            this.cancelCharAnimation = null;
+            return;
+        }
+        
         if (this.index >= this.currentCommands.length) {
             
             if (this.callStack.length > 0) {
