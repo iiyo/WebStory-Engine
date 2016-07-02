@@ -90,6 +90,10 @@ using().define("WSE.tools.compile", function () {
                     value = name.replace("@", "");
                     name = "asset";
                 }
+                else if (name[0] === ":") {
+                    value = name.replace(":", "");
+                    name = "duration";
+                }
                 else {
                     
                     split.shift();

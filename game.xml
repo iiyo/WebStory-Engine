@@ -66,31 +66,31 @@
             # trigger name next_on_space, action activate
             # trigger name game_menu_key_trigger, action activate
             
-            # set @backgrounds, image rainbow, duration 0
-            # set @cecile, image smile, duration 0
-            # set @logo, image logo, duration 0
+            # set @backgrounds, image rainbow, :0
+            # set @cecile, image smile, :0
+            # set @logo, image logo, :0
             # set @music, track legend
             
-            # move @cecile, x 50%, y 100%, xAnchor 45%, yAnchor 100%, duration 0
-            # move @tb_main, x 50%, y 90%, xAnchor 50%, yAnchor 100%, duration 0
-            # move @logo, x 50%, y 50%, xAnchor 50%, yAnchor 50%, duration 0
+            # move @cecile, x 50%, y 100%, xAnchor 45%, yAnchor 100%, :0
+            # move @tb_main, x 50%, y 90%, xAnchor 50%, yAnchor 100%, :0
+            # move @logo, x 50%, y 50%, xAnchor 50%, yAnchor 50%, :0
             
             # wait
             
-            # show @white, duration 500
-            # show @logo, duration 1000
+            # show @white, :500
+            # show @logo, :1000
             
             # break
             
-            # hide @logo, duration 500
+            # hide @logo, :500
             
             # wait
             
-            # show @cecile, duration 500, effect slide, direction top
+            # show @cecile, :500, effect slide, direction top
             
             # wait
             
-            # show @tb_main, duration 500, effect slide, direction top
+            # show @tb_main, :500, effect slide, direction top
             
             (( c: Welcome to the WebStory Engine demo game! ))
             
@@ -100,19 +100,19 @@
             
             (( c: Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa! ))
             
-            # set @cecile, image crying, duration 200
+            # set @cecile, image crying, :200
             
             (( c: G-great, now they a-all think I'm totally stupid and w-worthless. ))
             
             (( c: I can't stand this anymore. S-somebody, please... h-help meee! ))
             
-            # set @cecile, image amused, duration 200
+            # set @cecile, image amused, :200
             
             (( c: Just kidding, I'm fine! Tehehe~ ))
             
-            # set @jack, image grin, duration 0
-            # move @jack, x 180%, xAnchor 45%, y 100%, yAnchor 100%, duration 0
-            # show @jack, duration 0
+            # set @jack, image grin, :0
+            # move @jack, x 180%, xAnchor 45%, y 100%, yAnchor 100%, :0
+            # show @jack, :0
             
             # wait
             
