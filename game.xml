@@ -62,110 +62,99 @@
         
         <scene id="start">
             
-            <trigger name="next_on_right" action="activate" />
-            <trigger name="next_on_space" action="activate" />
-            <trigger name="game_menu_key_trigger" action="activate" />
+            # trigger name next_on_right, action activate
+            # trigger name next_on_space, action activate
+            # trigger name game_menu_key_trigger, action activate
             
-            <set asset="backgrounds" image="rainbow" duration="0" />
-            <set asset="cecile" image="smile" duration="0" />
-            <set asset="logo" image="logo" duration="0" />
-            <set asset="music" track="legend" />
-            <move asset="cecile" x="50%" y="100%" xAnchor="45%" yAnchor="100%" duration="0" />
-            <move asset="tb_main" x="50%" y="90%" xAnchor="50%" yAnchor="100%" duration="0" />
-            <move asset="logo" x="50%" y="50%" xAnchor="50%" yAnchor="50%" duration="0" />
+            # set asset backgrounds, image rainbow, duration 0
+            # set asset cecile, image smile, duration 0
+            # set asset logo, image logo, duration 0
+            # set asset music, track legend
             
+            # move asset cecile, x 50%, y 100%, xAnchor 45%, yAnchor 100%, duration 0
+            # move asset tb_main, x 50%, y 90%, xAnchor 50%, yAnchor 100%, duration 0
+            # move asset logo, x 50%, y 50%, xAnchor 50%, yAnchor 50%, duration 0
             
-            <wait />
+            # wait
             
-            <show asset="white" duration="500" />
-            <show asset="logo" duration="1000" />
+            # show asset white, duration 500
+            # show asset logo, duration 1000
             
-            <break />
+            # break
             
-            <hide asset="logo" duration="500" />
+            # hide asset logo, duration 500
             
-            <wait />
+            # wait
             
-            <show asset="cecile" duration="500" effect="slide" direction="top" />
+            # show asset cecile, duration 500, effect slide, direction top
             
-            <wait />
+            # wait
             
-            <show asset="tb_main" duration="500" effect="slide" direction="top" />
+            # show asset tb_main, duration 500, effect slide, direction top
             
-            <line s="c">
-                Welcome to the WebStory Engine demo game!
-            </line>
+            (( c: Welcome to the WebStory Engine demo game! ))
             
-            <set asset="cecile" image="shy" />
+            # set asset cecile, image shy
             
             (( c: I... I'm... <b>C-Cecile</b>. ))
             
-            <line s="c">
-                Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa!
-            </line>
+            (( c: Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa! ))
             
-            <set asset="cecile" image="crying" duration="200" />
+            # set asset cecile, image crying, duration 200
             
-            <line s="c">
-                G-great, now they a-all think I'm totally stupid and w-worthless.
-            </line>
+            (( c: G-great, now they a-all think I'm totally stupid and w-worthless. ))
             
-            <line s="c">
-                I can't stand this anymore. S-somebody, please... h-help meee!
-            </line>
+            (( c: I can't stand this anymore. S-somebody, please... h-help meee! ))
             
-            <set asset="cecile" image="amused" duration="200" />
+            # set asset cecile, image amused, duration 200
             
-            <line s="c">
-                Just kidding, I'm fine! Tehehe~
-            </line>
+            (( c: Just kidding, I'm fine! Tehehe~ ))
             
+            # set asset jack, image grin, duration 0
+            # move asset jack, x 180%, xAnchor 45%, y 100%, yAnchor 100%, duration 0
+            # show asset jack, duration 0
             
-            <set asset="jack" image="grin" duration="0" />
-            <move asset="jack" x="180%" xAnchor="45%" y="100%" yAnchor="100%" duration="0" />
-            <show asset="jack" duration="0" />
+            # wait
             
-            <wait />
-            
-            <move asset="cecile" x="20%" xAnchor="45%" />
-            <move asset="jack" x="75%" xAnchor="50%" y="100%" yAnchor="100%" />
+            # move asset cecile, x 20%, xAnchor 45%
+            # move asset jack, x 75%, xAnchor 50%, y 100%, yAnchor 100%
             
             (( j: You're such a tease, C! ))
             
             (( c: I know, right? Haha... ))
             
-            <set asset="jack" image="neutral" />
+            # set asset jack, image neutral
             
             (( j: By the way, why is there no background? ))
             
-            <set asset="cecile" image="surprised" />
+            # set asset cecile, image surprised
             
             (( c:
                 Oh, you are right! I totally forgot about that.
                 Let me give us a cozy sky background...
             ))
             
-            <show asset="backgrounds" />
+            # show asset backgrounds
             
-            <wait />
+            # wait
             
-            <set asset="cecile" image="smile" />
+            # set asset cecile, image smile
             
             (( c: There you go. Better, right? ))
             
-            <set asset="jack" image="smile" />
+            # set asset jack,     image smile
             
             (( j: Yeah, now we're talking! ))
             
-            <hide asset="tb_main" />
-            <clear asset="tb_main" />
+            # hide asset tb_main
+            # clear asset tb_main
             
-            <goto scene="game_start" />
+            # goto scene game_start
+            
         </scene>
         
         <scene id="game_start">
-            
-            <restart />
+            # restart
         </scene>
         
     </scenes>

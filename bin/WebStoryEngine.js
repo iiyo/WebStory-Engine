@@ -12053,8 +12053,6 @@ using().define("WSE.tools.reveal", function () {
         
         then = then || function () {};
         
-        console.log("Total:", left);
-        
         [].forEach.call(chars, function (char, i) {
             
             var id = setTimeout(function () {
@@ -12082,8 +12080,6 @@ using().define("WSE.tools.reveal", function () {
                     called = true;
                     
                     left -= 1;
-                    
-                    console.log("Left:", left, chars.length);
                     
                     if (stop) {
                         return;
@@ -12186,8 +12182,7 @@ using().define("WSE.tools.compile", function () {
     function  compile (text) {
         
         text = compileSpeech(text);
-        
-        console.log(text);
+        text = compileElements(text);
         
         return text;
     }
@@ -12207,7 +12202,80 @@ using().define("WSE.tools.compile", function () {
         compileXmlScenes: compileXmlScenes
     };
     
+//
+// Compiles '# some_element attr1 val1, attr2 val2' to
+// '<some_element attr1="val1", attr2="val2" />';
+//
+    function compileElements (text) {
+        
+        var lines = toLines(text).map(function (line) {
+            
+            var name, attributes, parts, trimmed, head, whitespace, strings, result;
+            
+            trimmed = line.trim();
+            
+            if (trimmed[0] !== "#") {
+                return line;
+            }
+            
+            strings = [];
+            whitespace = line.replace(/^([\s]+).*$/, "$1");
+            
+            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
+                
+                strings.push(p1);
+                
+                return "{{" + strings.length + "}}";
+            });
+            
+            parts = trimmed.split(",");
+            head = parts[0].split(" ");
+            
+            head.shift();
+            
+            name = head[0];
+            
+            head.shift();
+            
+            parts[0] = head.join(" ");
+            
+            attributes = [];
+            
+            parts.forEach(function (current) {
+                
+                var split, name, value;
+                
+                split = current.trim().replace(/[\s]+/g, " ").split(" ");
+                
+                name = split[0].trim();
+                
+                if (!name) {
+                    return;
+                }
+                
+                split.shift();
+                
+                value = split.join(" ");
+                
+                attributes.push(name + '="' + value + '"');
+            });
+            
+            result = whitespace + '<' + name + ' ' + attributes.join(" ") +  ' />';
+            
+            strings.forEach(function (value, i) {
+                result = result.replace("{{" + (i + 1) + "}}", value);
+            });
+            
+            return result;
+            
+        });
+        
+        return toText(lines);
+    }
     
+//
+// Compiles "(( c: I say something ))" to <line s="c">I say something</line>''.
+//
     function compileSpeech (text) {
         return text.replace(
             /([\s]*)\(\([\s]*([a-zA-Z0-9_-]+):[\s]*((.|[\s])*?)([\s]*)\)\)/g,
@@ -12215,6 +12283,13 @@ using().define("WSE.tools.compile", function () {
         );
     }
     
+    function toLines (text) {
+        return text.split("\n");
+    }
+    
+    function toText (lines) {
+        return lines.join("\n");
+    }
     
 });
 
