@@ -98,9 +98,7 @@
             
             <set asset="cecile" image="shy" />
             
-            <line s="c">
-                I... I'm... C-Cecile.
-            </line>
+            (( c: I... I'm... <b>C-Cecile</b>. ))
             
             <line s="c">
                 Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa!
@@ -132,26 +130,20 @@
             <move asset="cecile" x="20%" xAnchor="45%" />
             <move asset="jack" x="75%" xAnchor="50%" y="100%" yAnchor="100%" />
             
-            <line s="j">
-                You're such a tease, C!
-            </line>
+            (( j: You're such a tease, C! ))
             
-            <line s="c">
-                I know, right? Haha...
-            </line>
+            (( c: I know, right? Haha... ))
             
             <set asset="jack" image="neutral" />
             
-            <line s="j">
-                By the way, why is there no background?
-            </line>
+            (( j: By the way, why is there no background? ))
             
             <set asset="cecile" image="surprised" />
             
-            <line s="c">
+            (( c:
                 Oh, you are right! I totally forgot about that.
                 Let me give us a cozy sky background...
-            </line>
+            ))
             
             <show asset="backgrounds" />
             
@@ -159,15 +151,11 @@
             
             <set asset="cecile" image="smile" />
             
-            <line s="c">
-                There you go. Better, right?
-            </line>
+            (( c: There you go. Better, right? ))
             
             <set asset="jack" image="smile" />
             
-            <line s="j">
-                Yeah, now we're talking!
-            </line>
+            (( j: Yeah, now we're talking! ))
             
             <hide asset="tb_main" />
             <clear asset="tb_main" />

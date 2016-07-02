@@ -636,6 +636,7 @@ using.modules['WSE.Interpreter'] = WSEPath;
 using.modules['WSE.LoadingScreen'] = WSEPath;
 using.modules['WSE.tools.ui'] = WSEPath;
 using.modules['WSE.tools.reveal'] = WSEPath;
+using.modules['WSE.tools.compile'] = WSEPath;
 using.modules['WSE.DisplayObject'] = WSEPath;
 using.modules['WSE.assets.Animation'] = WSEPath;
 using.modules['WSE.assets.Audio'] = WSEPath;
@@ -4054,119 +4055,80 @@ using().define("MO5.dom.effects.typewriter", function () {
         speed = args.speed || 50;
         cb = args.onFinish || null;
         
-        markCharacters(element);
-        hideCharacters(element);
-        revealCharacters(element, speed, cb);
+        function hideChildren(el) {
+            
+            var childNodes = el.childNodes, i, len;
+            
+            if (el.nodeType === TYPE_ELEMENT) {
+                
+                el.style.display = 'none';
+                
+                for (i = 0, len = childNodes.length; i < len; i += 1) {
+                    hideChildren(childNodes[i]);
+                }
+            }
+        }
+        
+        hideChildren(element);
+        
+        function showChildren(el, cb) {
+            
+            if (el.nodeType === TYPE_ELEMENT) {
+                (function () {
+                    
+                    var children = [];
+                    
+                    while (el.hasChildNodes()) {
+                        children.push(el.removeChild(el.firstChild));
+                    }
+                    
+                    el.style.display = '';
+                    
+                    (function loopChildren() {
+                        
+                        if (children.length > 0) {
+                            showChildren(children[0], loopChildren);
+                            el.appendChild(children.shift());
+                        }
+                        else if (cb) {
+                            setTimeout(cb, 0);
+                        }
+                    }());
+                    
+                }());
+            }
+            else if (el.nodeType === TYPE_TEXT) {
+                
+                (function () {
+                    
+                    var textContent = el.data.replace(/ +/g, ' '), i, len;
+                    
+                    el.data = '';
+                    i = 0;
+                    len = textContent.length;
+                    
+                    function insertTextContent() {
+                        
+                        el.data += textContent[i];
+                        i += 1;
+                        
+                        if (i < len) {
+                            setTimeout(insertTextContent, 1000 / speed);
+                        }
+                        else if (cb) {
+                            setTimeout(cb, 0);
+                        }
+                    }
+                    
+                    insertTextContent();
+                }());
+            }
+        }
+        
+        showChildren(element, cb);
     }
     
     return typewriter;
-    
-    
-    function revealCharacters (element, speed, then) {
-        
-        var chars = element.querySelectorAll(".Char");
-        var offset = 1000 / (speed || 40);
-        var stop = false;
-        var timeouts = [];
-        var left = chars.length;
-        
-        then = then || function () {};
-        
-        [].forEach.call(chars, function (char, i) {
-            
-            var id = setTimeout(function () {
-                
-                if (stop) {
-                    return;
-                }
-                
-                move(char).set("opacity", 1).duration(10 * offset).end(function () {
-                    
-                    left -= 1;
-                    
-                    if (stop) {
-                        return;
-                    }
-                    
-                    if (left <= 0) {
-                        then();
-                    }
-                    
-                });
-                
-            }, i * offset);
-            
-            timeouts.push(id);
-        });
-        
-        function cancel () {
-            
-            if (stop || left <= 0) {
-                return false;
-            }
-            
-            stop = true;
-            
-            timeouts.forEach(function (id) {
-                clearTimeout(id);
-            });
-            
-            [].forEach.call(chars, function (char) {
-                char.style.opacity = "1";
-            });
-            
-            then();
-            
-            return true;
-        }
-        
-        return {
-            cancel: cancel
-        };
-    }
-    
-    function hideCharacters (element) {
-        
-        var chars = element.querySelectorAll(".Char");
-        
-        [].forEach.call(chars, function (char) {
-            char.style.opacity = 0;
-        });
-    }
-    
-    function markCharacters (element, offset) {
-        
-        var TEXT_NODE = 3;
-        var ELEMENT = 1;
-        
-        offset = offset || 0;
-        
-        [].forEach.call(element.childNodes, function (child) {
-            
-            var text = "", newNode;
-            
-            if (child.nodeType === TEXT_NODE) {
-                
-                [].forEach.call(child.textContent, function (char) {
-                    text += '<span class="Char" data-char="' + offset + '">' + char + '</span>';
-                    offset += 1;
-                });
-                
-                newNode = document.createElement("span");
-                
-                newNode.setAttribute("class", "CharContainer");
-                
-                newNode.innerHTML = text;
-                
-                child.parentNode.replaceChild(newNode, child);
-            }
-            else if (child.nodeType === ELEMENT) {
-                offset = markCharacters(child, offset);
-            }
-        });
-        
-        return offset;
-    }
     
 });
 
@@ -9567,8 +9529,16 @@ define("WSE.Trigger", function (commands, functions, warn) {
 
 /* global using */
 
-using("MO5.EventBus", "MO5.ajax", "WSE.Keys", "WSE.Interpreter", "WSE.tools", "WSE").
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
+using(
+    "MO5.EventBus",
+    "MO5.ajax",
+    "WSE.Keys",
+    "WSE.Interpreter",
+    "WSE.tools",
+    "WSE",
+    "WSE.tools.compile::compileXmlScenes"
+).
+define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compileScenes) {
     
     "use strict";
     
@@ -9716,6 +9686,8 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         catch (e) {
             console.log(e);
         }
+        
+        compileScenes(ws);
         
         width = "800px";
         height = "480px";
@@ -12198,6 +12170,54 @@ using().define("WSE.tools.reveal", function () {
     }
     
 });
+
+//
+// A module containing functions for compiling a simple command language to the old
+// WSE command elements.
+//
+
+/* global using */
+
+using().define("WSE.tools.compile", function () {
+    
+//
+// Compiles the new WSE command language to XML elements.
+//
+    function  compile (text) {
+        
+        text = compileSpeech(text);
+        
+        console.log(text);
+        
+        return text;
+    }
+    
+//
+// Goes through all the scenes in a WebStory DOM and replaces
+// each one's content with the output of the compile() function.
+//
+    function compileXmlScenes (ws) {
+        [].forEach.call(ws.getElementsByTagName("scene"), function (scene) {
+            scene.innerHTML = compile(scene.innerHTML);
+        });
+    }
+    
+    return {
+        compile: compile,
+        compileXmlScenes: compileXmlScenes
+    };
+    
+    
+    function compileSpeech (text) {
+        return text.replace(
+            /([\s]*)\(\([\s]*([a-zA-Z0-9_-]+):[\s]*((.|[\s])*?)([\s]*)\)\)/g,
+            '$1<line s="$2">$3</line>$5'
+        );
+    }
+    
+    
+});
+
 
 /* global using */
 

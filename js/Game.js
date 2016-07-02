@@ -1,7 +1,15 @@
 /* global using */
 
-using("MO5.EventBus", "MO5.ajax", "WSE.Keys", "WSE.Interpreter", "WSE.tools", "WSE").
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
+using(
+    "MO5.EventBus",
+    "MO5.ajax",
+    "WSE.Keys",
+    "WSE.Interpreter",
+    "WSE.tools",
+    "WSE",
+    "WSE.tools.compile::compileXmlScenes"
+).
+define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compileScenes) {
     
     "use strict";
     
@@ -149,6 +157,8 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE) {
         catch (e) {
             console.log(e);
         }
+        
+        compileScenes(ws);
         
         width = "800px";
         height = "480px";

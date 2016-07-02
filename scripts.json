@@ -47,6 +47,7 @@
         "WSE.LoadingScreen": "js/LoadingScreen.js",
         "WSE.tools.ui": "js/tools/ui.js",
         "WSE.tools.reveal": "js/tools/reveal.js",
+        "WSE.tools.compile": "js/tools/compile.js",
         
         "WSE.DisplayObject": "js/DisplayObject.js",
         

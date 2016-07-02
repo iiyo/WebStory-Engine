@@ -44,6 +44,7 @@
     using.modules["WSE.tools"] = base + "js/tools/tools.js";
     using.modules["WSE.tools.ui"] = base + "js/tools/ui.js";
     using.modules["WSE.tools.reveal"] = base + "js/tools/reveal.js";
+    using.modules["WSE.tools.compile"] = base + "js/tools/compile.js";
     
     using.modules["WSE.Keys"] = base + "js/Keys.js";
     
