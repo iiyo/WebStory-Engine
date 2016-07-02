@@ -12184,6 +12184,8 @@ using().define("WSE.tools.compile", function () {
         text = compileSpeech(text);
         text = compileElements(text);
         
+        console.log(text);
+        
         return text;
     }
     
@@ -12253,9 +12255,16 @@ using().define("WSE.tools.compile", function () {
                     return;
                 }
                 
-                split.shift();
-                
-                value = split.join(" ");
+                if (name[0] === "@") {
+                    value = name.replace("@", "");
+                    name = "asset";
+                }
+                else {
+                    
+                    split.shift();
+                    
+                    value = split.join(" ");
+                }
                 
                 attributes.push(name + '="' + value + '"');
             });
