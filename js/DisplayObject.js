@@ -52,7 +52,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             
             function tranformFn (v) {
                 element.style.opacity = v;
-            };
+            }
             
             function finishFn () {
                 if (isAnimation) {
@@ -60,7 +60,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
                 }
                 
                 self.interpreter.waitCounter -= 1;
-            };
+            }
             
             argsObj = {
                 duration: (duration / 3) * 2,
@@ -542,7 +542,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             }
             
             return x;
-        };
+        }
         
         if (dx !== null) {
             
