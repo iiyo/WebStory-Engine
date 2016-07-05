@@ -58,8 +58,6 @@ using().define("WSE.tools.reveal", function () {
         
         then = then || function () {};
         
-        console.log("Total:", left);
-        
         [].forEach.call(chars, function (char, i) {
             
             var id = setTimeout(function () {
@@ -87,8 +85,6 @@ using().define("WSE.tools.reveal", function () {
                     called = true;
                     
                     left -= 1;
-                    
-                    console.log("Left:", left, chars.length);
                     
                     if (stop) {
                         return;
