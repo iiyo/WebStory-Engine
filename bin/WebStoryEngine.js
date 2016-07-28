@@ -594,6 +594,7 @@ var $__WSEScripts = document.getElementsByTagName('script');
 WSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;
 
 using.modules['howler'] = WSEPath;
+using.modules['xmugly'] = WSEPath;
 using.modules['move'] = WSEPath;
 using.modules['MO5.ajax'] = WSEPath;
 using.modules['MO5.Animation'] = WSEPath;
@@ -2020,6 +2021,254 @@ using.modules['WSE.commands.while'] = WSEPath;
   }
 
 })();
+
+
+/* global module */
+
+(function () {
+    
+    //
+    // Compiles
+    //     . some_element attr1 val1, attr2 val2
+    // to:
+    //     <some_element attr1="val1", attr2="val2" />
+    // and
+    //     . some_element attr1 val1 :
+    //     ...
+    //     --
+    // to
+    //     <some_element attr1="val1">
+    //     ...
+    //     </some_element>
+    //
+    function compile (text, defaultMacros) {
+        
+    //
+    // A stack of element names, so that know which "--" closes which element.
+    //
+        var stack = [];
+        var lines = toLines(text);
+        var macros = processMacros(lines);
+        
+        if (Array.isArray(defaultMacros)) {
+            defaultMacros.forEach(function (macro) {
+                macros.push(macro);
+            });
+        }
+        
+        lines = removeMacroDefinitions(lines);
+        
+        lines = lines.map(function (line, i) {
+            
+            var name, attributes, parts, trimmed, head, whitespace, strings, result, hasContent;
+            
+            trimmed = line.trim();
+            strings = [];
+            whitespace = line.replace(/^([\s]*).*$/, "$1");
+            
+            if (trimmed === "--") {
+                
+                if (!stack.length) {
+                    throw new SyntaxError(
+                        "Closing '--' without matching opening tag on line " + (i + 1)
+                    );
+                }
+                
+                return whitespace + '</' + stack.pop() + '>';
+            }
+            
+            if (trimmed[0] !== ".") {
+                return line;
+            }
+            
+            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
+                
+                strings.push(p1);
+                
+                return "{{" + strings.length + "}}";
+            });
+            
+            if (trimmed[trimmed.length - 1] === ":") {
+                hasContent = true;
+                trimmed = trimmed.replace(/:$/, "");
+            }
+            
+            parts = trimmed.split(",");
+            head = parts[0].split(" ");
+            
+            head.shift();
+            
+            name = head[0];
+            
+            if (hasContent) {
+                stack.push(name);
+            }
+            
+            head.shift();
+            
+            parts[0] = head.join(" ");
+            
+            attributes = [];
+            
+            parts.forEach(function (current) {
+                
+                var split, name, value, enlarged;
+                
+                split = normalizeWhitespace(current).split(" ");
+                
+                name = split[0].trim();
+                
+                if (!name) {
+                    return;
+                }
+                
+                enlarged = applyMacros(name, macros);
+                
+                if (enlarged) {
+                    value = enlarged.value;
+                    name = enlarged.name;
+                }
+                else {
+                    
+                    split.shift();
+                    
+                    value = split.join(" ");
+                }
+                
+                attributes.push(name + '="' + value + '"');
+            });
+            
+            result = whitespace + '<' + name + (attributes.length ? ' ' : '') +
+                attributes.join(" ") + (hasContent ? '>' : ' />');
+            
+            strings.forEach(function (value, i) {
+                result = result.replace("{{" + (i + 1) + "}}", value);
+            });
+            
+            return result;
+            
+        });
+        
+        return toText(lines);
+    }
+
+    function toLines (text) {
+        return text.split("\n");
+    }
+
+    function toText (lines) {
+        return lines.join("\n");
+    }
+
+    //
+    // Creates a replacement rule from an attribute macro line.
+    // Attribute macros look like this:
+    //
+    // ~ @ asset _
+    //
+    // The ~ at the start of a line signalizes that this is an attribute macro.
+    // The first non-whitespace part (@ in this case) is the character or text part
+    // which will be used as the macro identifier.
+    // The second part (asset in this case) is the attribute name.
+    // The third and last part (_ here) is the attribute value.
+    // The "_" character will be replaced by whatever follows the macro identifier.
+    // 
+    // The example above will result in this transformation:
+    //
+    // . move @frodo => <move asset="frodo" />
+    //
+    // Some more examples:
+    //
+    // Macro: ~ : duration _
+    // Transformation: . wait :200 => <wait duration="200" />
+    //
+    // Macro: ~ + _ true
+    // Macro: ~ - _ false
+    // Transformation: . stage -resize, +center => <stage resize="false" center="true" />
+    //
+    function processAttributeMacro (line) {
+        
+        var parts = normalizeWhitespace(line).split(" ");
+        
+        parts.shift();
+        
+        return {
+            identifier: parts[0],
+            attribute: parts[1],
+            value: parts[2]
+        };
+    }
+
+    function processMacros (lines) {
+        
+        var macros = [];
+        
+        lines.forEach(function (line) {
+            
+            if (line.trim()[0] !== "~") {
+                return;
+            }
+            
+            macros.push(processAttributeMacro(line));
+        });
+        
+        return macros;
+    }
+
+    function applyMacros (raw, macros) {
+        
+        var name, value;
+        
+        macros.some(function (macro) {
+            
+            var macroValue;
+            
+            if (raw[0] !== macro.identifier) {
+                return false;
+            }
+            
+            macroValue = raw.replace(macro.identifier, "");
+            name = (macro.attribute === "_" ? macroValue : macro.attribute);
+            value = (macro.value === "_" ? macroValue : macro.value);
+            
+            return true;
+        });
+        
+        if (!name) {
+            return null;
+        }
+        
+        return {
+            name: name,
+            value: value
+        };
+    }
+    
+    function removeMacroDefinitions (lines) {
+        return lines.filter(function (line) {
+            return line.trim()[0] !== "~";
+        });
+    }
+    
+    //
+    // Replaces all whitespace with a single space character.
+    //
+    function normalizeWhitespace (text) {
+        return text.trim().replace(/[\s]+/g, " ");
+    }
+    
+    if (typeof module !== "undefined") {
+        module.exports = {
+            compile: compile
+        };
+    }
+    else {
+        window.xmugly = {
+            compile: compile
+        };
+    }
+    
+}());
 
 
 
@@ -8548,7 +8797,7 @@ define("WSE", function (EventBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2015.12.4-final.1603201040";
+    var WSE = {}, version = "2016.7.0-final.1607281539";
     
     EventBus.inject(WSE);
     
@@ -9536,9 +9785,9 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.tools.compile::compileXmlScenes"
+    "WSE.tools.compile::compile"
 ).
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compileScenes) {
+define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compile) {
     
     "use strict";
     
@@ -9576,7 +9825,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         if (this.gameId) {
             
             this.ws = new DOMParser().parseFromString(
-                document.getElementById(this.gameId).innerHTML, "application/xml"
+                compile(document.getElementById(this.gameId).innerHTML), "application/xml"
             );
             
             console.log("this.ws:", this.ws);
@@ -9593,7 +9842,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
                     parser = new DOMParser();
                     xml = host.get(url);
                         
-                    return parser.parseFromString(xml, "application/xml");
+                    return parser.parseFromString(compile(xml), "application/xml");
                 }(this.url));
                 
                 this.init();
@@ -9628,7 +9877,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
             }, 
             "wse.interpreter.warning"
         );
-    };
+    }
     
     /**
      * Loads the WebStory file using the AJAX function and triggers
@@ -9642,8 +9891,9 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         self = this;
         
         fn = function (obj) {
-            self.ws = obj.responseXML;
-            //console.log("Response XML: " + obj.responseXML);
+            self.ws = new DOMParser().parseFromString(
+                compile(obj.responseText), "application/xml"
+            );
             self.init();
         };
         
@@ -9680,14 +9930,29 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         self = this;
         ws = this.ws;
         
+        (function () {
+            
+            var parseErrors = ws.getElementsByTagName("parsererror");
+            
+            console.log("parsererror:", parseErrors);
+            
+            if (parseErrors.length) {
+                document.body.innerHTML = "" +
+                    '<div class="parseError">'+
+                        "<h1>Cannot parse WebStory file!</h3>" +
+                        "<p>Your WebStory file is mal-formed XML and contains these errors:</p>" +
+                        '<pre class="errors">' + parseErrors[0].innerHTML + '</pre>' +
+                    '</div>';
+                throw new Error("Can't parse game file, not well-formed XML:", parseErrors[0]);
+            }
+        }());
+        
         try {
             stageElements = ws.getElementsByTagName("stage");
         }
         catch (e) {
             console.log(e);
         }
-        
-        compileScenes(ws);
         
         width = "800px";
         height = "480px";
@@ -12181,110 +12446,43 @@ using().define("WSE.tools.compile", function () {
 //
     function  compile (text) {
         
-        text = compileSpeech(text);
-        text = compileElements(text);
+        text = xmugly.compile(text, [
+            {
+                identifier: "@",
+                attribute: "asset",
+                value: "_"
+            },
+            {
+                identifier: ":",
+                attribute: "duration",
+                value: "_"
+            },
+            {
+                identifier: "+",
+                attribute: "_",
+                value: "yes"
+            },
+            {
+                identifier: "-",
+                attribute: "_",
+                value: "no"
+            },
+            {
+                identifier: "#",
+                attribute: "id",
+                value: "_"
+            }
+        ]);
         
-        console.log(text);
+        text = compileSpeech(text);
         
         return text;
     }
     
-//
-// Goes through all the scenes in a WebStory DOM and replaces
-// each one's content with the output of the compile() function.
-//
-    function compileXmlScenes (ws) {
-        [].forEach.call(ws.getElementsByTagName("scene"), function (scene) {
-            scene.innerHTML = compile(scene.innerHTML);
-        });
-    }
-    
     return {
-        compile: compile,
-        compileXmlScenes: compileXmlScenes
+        compile: compile
     };
     
-//
-// Compiles '# some_element attr1 val1, attr2 val2' to
-// '<some_element attr1="val1", attr2="val2" />';
-//
-    function compileElements (text) {
-        
-        var lines = toLines(text).map(function (line) {
-            
-            var name, attributes, parts, trimmed, head, whitespace, strings, result;
-            
-            trimmed = line.trim();
-            
-            if (trimmed[0] !== "#") {
-                return line;
-            }
-            
-            strings = [];
-            whitespace = line.replace(/^([\s]+).*$/, "$1");
-            
-            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
-                
-                strings.push(p1);
-                
-                return "{{" + strings.length + "}}";
-            });
-            
-            parts = trimmed.split(",");
-            head = parts[0].split(" ");
-            
-            head.shift();
-            
-            name = head[0];
-            
-            head.shift();
-            
-            parts[0] = head.join(" ");
-            
-            attributes = [];
-            
-            parts.forEach(function (current) {
-                
-                var split, name, value;
-                
-                split = current.trim().replace(/[\s]+/g, " ").split(" ");
-                
-                name = split[0].trim();
-                
-                if (!name) {
-                    return;
-                }
-                
-                if (name[0] === "@") {
-                    value = name.replace("@", "");
-                    name = "asset";
-                }
-                else if (name[0] === ":") {
-                    value = name.replace(":", "");
-                    name = "duration";
-                }
-                else {
-                    
-                    split.shift();
-                    
-                    value = split.join(" ");
-                }
-                
-                attributes.push(name + '="' + value + '"');
-            });
-            
-            result = whitespace + '<' + name + ' ' + attributes.join(" ") +  ' />';
-            
-            strings.forEach(function (value, i) {
-                result = result.replace("{{" + (i + 1) + "}}", value);
-            });
-            
-            return result;
-            
-        });
-        
-        return toText(lines);
-    }
     
 //
 // Compiles "(( c: I say something ))" to <line s="c">I say something</line>''.
@@ -12294,14 +12492,6 @@ using().define("WSE.tools.compile", function () {
             /([\s]*)\(\([\s]*([a-zA-Z0-9_-]+):[\s]*((.|[\s])*?)([\s]*)\)\)/g,
             '$1<line s="$2">$3</line>$5'
         );
-    }
-    
-    function toLines (text) {
-        return text.split("\n");
-    }
-    
-    function toText (lines) {
-        return lines.join("\n");
     }
     
 });
@@ -12361,7 +12551,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             
             function tranformFn (v) {
                 element.style.opacity = v;
-            };
+            }
             
             function finishFn () {
                 if (isAnimation) {
@@ -12369,7 +12559,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
                 }
                 
                 self.interpreter.waitCounter -= 1;
-            };
+            }
             
             argsObj = {
                 duration: (duration / 3) * 2,
@@ -12851,7 +13041,7 @@ define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn
             }
             
             return x;
-        };
+        }
         
         if (dx !== null) {
             
@@ -15396,7 +15586,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
                 
                 try {
                     speakerName =
-                        getSerializedNodes(current.getElementsByTagName("displayname")[0]);
+                        getSerializedNodes(current.getElementsByTagName("displayname")[0]).trim();
                 }
                 catch (e) {}
                 

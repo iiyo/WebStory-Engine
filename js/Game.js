@@ -7,9 +7,9 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.tools.compile::compileXmlScenes"
+    "WSE.tools.compile::compile"
 ).
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compileScenes) {
+define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compile) {
     
     "use strict";
     
@@ -47,7 +47,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         if (this.gameId) {
             
             this.ws = new DOMParser().parseFromString(
-                document.getElementById(this.gameId).innerHTML, "application/xml"
+                compile(document.getElementById(this.gameId).innerHTML), "application/xml"
             );
             
             console.log("this.ws:", this.ws);
@@ -64,7 +64,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
                     parser = new DOMParser();
                     xml = host.get(url);
                         
-                    return parser.parseFromString(xml, "application/xml");
+                    return parser.parseFromString(compile(xml), "application/xml");
                 }(this.url));
                 
                 this.init();
@@ -99,7 +99,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
             }, 
             "wse.interpreter.warning"
         );
-    };
+    }
     
     /**
      * Loads the WebStory file using the AJAX function and triggers
@@ -113,8 +113,9 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         self = this;
         
         fn = function (obj) {
-            self.ws = obj.responseXML;
-            //console.log("Response XML: " + obj.responseXML);
+            self.ws = new DOMParser().parseFromString(
+                compile(obj.responseText), "application/xml"
+            );
             self.init();
         };
         
@@ -151,14 +152,29 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         self = this;
         ws = this.ws;
         
+        (function () {
+            
+            var parseErrors = ws.getElementsByTagName("parsererror");
+            
+            console.log("parsererror:", parseErrors);
+            
+            if (parseErrors.length) {
+                document.body.innerHTML = "" +
+                    '<div class="parseError">'+
+                        "<h1>Cannot parse WebStory file!</h3>" +
+                        "<p>Your WebStory file is mal-formed XML and contains these errors:</p>" +
+                        '<pre class="errors">' + parseErrors[0].innerHTML + '</pre>' +
+                    '</div>';
+                throw new Error("Can't parse game file, not well-formed XML:", parseErrors[0]);
+            }
+        }());
+        
         try {
             stageElements = ws.getElementsByTagName("stage");
         }
         catch (e) {
             console.log(e);
         }
-        
-        compileScenes(ws);
         
         width = "800px";
         height = "480px";

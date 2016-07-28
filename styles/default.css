@@ -433,3 +433,31 @@ input:disabled
     opacity: 0.3;
 }
 
+.parseError {
+    max-width: 600px;
+    padding: 20px;
+    background: red;
+    color: white;
+    border: 2px solid darkred;
+    margin: auto;
+    margin-top: 50px;
+    border-radius: 10px;
+}
+
+.parseError h1 {
+    font-weight: bold;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+.parseError .errors {
+    background: white;
+    color: black;
+    padding: 10px;
+    font-family: monospace;
+}
+
+.parseError div, .parseError p, .parseError h2, .parseError h3 {
+    margin-bottom: 20px;
+}
+
