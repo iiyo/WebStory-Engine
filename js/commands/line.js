@@ -47,7 +47,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
                 
                 try {
                     speakerName =
-                        getSerializedNodes(current.getElementsByTagName("displayname")[0]);
+                        getSerializedNodes(current.getElementsByTagName("displayname")[0]).trim();
                 }
                 catch (e) {}
                 
