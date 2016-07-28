@@ -1,13 +1,10 @@
 /* global using */
 
-using("MO5.CoreObject").
-define("WSE.assets.Character", function (CoreObject) {
+using().define("WSE.assets.Character", function () {
     
     "use strict";
     
     function Character (asset, interpreter) {
-        
-        CoreObject.call(this);
         
         this.asset = asset;
         this.stage = interpreter.stage;
@@ -15,8 +12,6 @@ define("WSE.assets.Character", function (CoreObject) {
         this.name = asset.getAttribute('name');
         this.bus.trigger("wse.assets.character.constructor", this);
     }
-    
-    Character.prototype = new CoreObject();
     
     Character.prototype.setTextbox = function (command) {
         this.asset.setAttribute("textbox", command.getAttribute("textbox"));
