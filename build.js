@@ -93,16 +93,16 @@ function writeFileFn (concatFile)
         };
     }
     
-    mkdirSync('./bin');
-    fs.writeFileSync('./bin/WebStoryEngine.js', concatFile);
+    mkdirSync('./build');
+    fs.writeFileSync('./build/WebStoryEngine.js', concatFile);
     makeErrorFn('WebStory Engine file created.')();
     
-    minify('./bin/WebStoryEngine.js', function(error, data) {
+    minify('./build/WebStoryEngine.js', function(error, data) {
         if (error) {
             console.log(error);
         }
         else {
-            fs.writeFile('./bin/WebStoryEngine.min.js', data, 
+            fs.writeFile('./build/WebStoryEngine.min.js', data, 
                 makeErrorFn("Minified WebStory Engine file created."));
         }
     });
