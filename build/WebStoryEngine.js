@@ -12499,14 +12499,11 @@ using().define("WSE.tools.compile", function () {
 
 /* global using */
 
-using("MO5.CoreObject", "MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
-define("WSE.DisplayObject", function (CoreObject, transform, easing, tools, warn) {
+using("MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
+define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     function DisplayObject () {
-        CoreObject.call(this);
     }
-    
-    DisplayObject.prototype = new CoreObject();
     
     DisplayObject.prototype.flash = function flash (command, args) {
         
