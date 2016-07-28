@@ -1,34 +1,48 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<ws>
-    <settings>
-        <stage width="900px" height="636px" id="Stage" create="yes" center="yes" resize="yes" />
-        <triggers>
-            <trigger name="game_menu_key_trigger" event="keyup" key="ESCAPE" function="savegames" />
-        </triggers>
-    </settings>
-    <assets>
-        <audio name="music" loop="true" fade="false" autopause="true">
-            <track title="main_menu_music">
-                <source href="chaos-circus.mp3" type="mp3" />
-                <source href="chaos-circus.ogg" type="ogg" />
-            </track>
-            <track title="badass">
-                <source href="chaos-circus.mp3" type="mp3" />
-                <source href="chaos-circus.ogg" type="ogg" />
-            </track>
-        </audio>
-    </assets>
-    <scenes>
-        <scene id="start">
-            <trigger name="game_menu_key_trigger" action="activate" />
-            <set asset="music" track="main_menu_music" />
-            <play asset="music" fadein="500"/>
-            <break/>
-            <stop asset="music" fade="true" fadeout="1000" />
-            <wait />
-            <set asset="music" track="badass" />
-            <play asset="music" />
-            <restart/>
-        </scene>
-    </scenes>
-</ws>
+
+. ws :
+    
+    . settings :
+        . stage width 900px, height 636px, id Stage, +create, +center, +resize
+        . triggers :
+            . trigger name game_menu_key_trigger, event keyup, key ESCAPE, function savegames
+        --
+    --
+    
+    . assets :
+        
+        . audio name music, +loop, -fade, +autopause :
+            
+            . track title main_menu_music :
+                . source href chaos-circus.mp3, type mp3
+                . source href chaos-circus.ogg, type ogg
+            --
+            
+            . track title badass :
+                . source href chaos-circus.mp3, type mp3
+                . source href chaos-circus.ogg, type ogg
+            --
+            
+        --
+        
+    --
+    
+    . scenes :
+        
+        . scene id start :
+            
+            . trigger name game_menu_key_trigger, action activate
+            . set @music, track main_menu_music
+            . play @music, fadein 500
+            . break
+            . stop @music, fade true, fadeout 1000
+            . wait
+            . set @music, track badass
+            . play @music
+            . restart
+        
+        --
+    
+    --
+    
+--
