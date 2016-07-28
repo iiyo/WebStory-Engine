@@ -1,0 +1,39 @@
+{
+  "name": "webstory-engine",
+  "version": "2016.7.0",
+  "description": "A web-based visual novel engine.",
+  "main": "index.html",
+  "bin": {
+    "webstory-engine": "WebStoryEngine.js"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "minify": "^2.0.0",
+    "xmugly": "^1.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iiyo/WebStory-Engine.git"
+  },
+  "keywords": [
+    "webstory",
+    "engine",
+    "visual",
+    "novels",
+    "game",
+    "engine",
+    "presentations"
+  ],
+  "author": "J. Steinbeck",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/iiyo/WebStory-Engine/issues"
+  },
+  "homepage": "https://github.com/iiyo/WebStory-Engine#readme"
+}
