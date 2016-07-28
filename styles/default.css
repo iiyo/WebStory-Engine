@@ -113,17 +113,6 @@ img
     -o-user-select: none;
     user-select: none;
 }
-/*
- * #MainTb
- * {
- *    top: 250px;
- }*/
-
-#NvlTb
-{
-    /*     height: 340px; */
-    /*     top: 10px; */
-}
 
 #NvlTb p
 {
