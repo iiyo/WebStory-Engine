@@ -1,7 +1,7 @@
 /* global using, Howl */
 
-using("MO5.CoreObject", "WSE.tools::warn").
-define("WSE.assets.Audio", function (CoreObject, warn) {
+using("WSE.tools::warn").
+define("WSE.assets.Audio", function (warn) {
     
     "use strict";
     
@@ -17,8 +17,6 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
         
         var self, sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
-        
-        CoreObject.call(this);
         
         bus = interpreter.bus;
         self = this;
@@ -234,9 +232,7 @@ define("WSE.assets.Audio", function (CoreObject, warn) {
                 this.tracks[this._currentTrack].fade(0, 1, 200);
             }
         }.bind(this));
-    };
-    
-    Audio.prototype = new CoreObject();
+    }
     
     /**
      * Changes the currently active track.
