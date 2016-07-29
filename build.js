@@ -130,7 +130,12 @@ function writeFileFn (concatFile)
 
 function removeUnwantedSections (fileContents) {
     
-    fileContents = fileContents.replace(/\/\*<ON_DEPLOY_REMOVE>\*\/[\s\S]*\/\*<\/ON_DEPLOY_REMOVE>\*\//g, "");
+    fileContents = fileContents.replace(
+        /\/\*<ON_DEPLOY_REMOVE>\*\/[\s\S]*\/\*<\/ON_DEPLOY_REMOVE>\*\//g,
+        ""
+    );
+    
+    fileContents = fileContents.replace(/%%%version%%%/g, info.version);
     
     return fileContents;
 }

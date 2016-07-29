@@ -5,7 +5,7 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2016.7.0-final.1607281539";
+    var WSE = {}, version = "%%%version%%%";
     
     DataBus.inject(WSE);
     
