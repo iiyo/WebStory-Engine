@@ -32,14 +32,14 @@
     <assets>
         
         <imagepack name="cecile" x="0" y="0" z="1000">
-            <image src="../../assets/images/cecile/smile.png" name="smile" />
+            <image src="../../story/assets/images/cecile/smile.png" name="smile" />
         </imagepack>
         
         <imagepack name="cecile2" x="0" y="0" z="1000">
-            <image src="../../assets/images/cecile/crying.png" name="smile" />
+            <image src="../../story/assets/images/cecile/crying.png" name="smile" />
         </imagepack>
         
-        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        <background name="bg" src="../../story/assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
         
         <textbox name="tb" cssid="tb" />
         

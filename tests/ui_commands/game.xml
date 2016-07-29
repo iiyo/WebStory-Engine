@@ -7,7 +7,7 @@
     </settings>
     <assets>
         
-        <background name="bg" src="../../assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
+        <background name="bg" src="../../story/assets/images/Rainbow_A_01.jpg" width="100%" height="100%" />
         
         <textbox name="tb" cssid="tb" />
         

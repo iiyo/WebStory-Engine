@@ -6,8 +6,10 @@ var fs = require("fs");
 var os = require("os");
 var normalizePath = require("path").normalize;
 var minify = require("minify");
+var copy = require("ncp").ncp;
 
 mkdirSync('./build');
+mkdirSync('./export');
 
 var dependencyFilePath = normalizePath(os.tmpdir() + "/WebStoryEngine_dependencies.js");
 var dependencyFile = fs.createWriteStream(dependencyFilePath);
@@ -122,10 +124,18 @@ function writeFileFn (concatFile)
             console.log(error);
         }
         else {
-            fs.writeFile('./build/WebStoryEngine.min.js', data, 
-                makeErrorFn("Minified WebStory Engine file created."));
+            fs.writeFile('./build/WebStoryEngine.min.js', data, makeExport);
         }
     });
+    
+    function makeExport (err) {
+        makeErrorFn("Minified WebStory Engine file created.")(err);
+        copy("./build", "./export", function () {
+            copy("./story", "./export", function () {
+                console.log("Exported WebStory Engine skeleton to export folder.");
+            });
+        });
+    }
 }
 
 function removeUnwantedSections (fileContents) {
