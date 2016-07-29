@@ -1,0 +1,97 @@
+
+. scene #start :
+    
+    . trigger name next_on_right, action activate
+    . trigger name next_on_space, action activate
+    . trigger name game_menu_key_trigger, action activate
+    
+    . set @backgrounds, image rainbow, :0
+    . set @cecile, image smile, :0
+    . set @logo, image logo, :0
+    . set @music, track legend
+    
+    . move @cecile, x 50%, y 100%, xAnchor 45%, yAnchor 100%, :0
+    . move @tb_main, x 50%, y 90%, xAnchor 50%, yAnchor 100%, :0
+    . move @logo, x 50%, y 50%, xAnchor 50%, yAnchor 50%, :0
+    
+    . wait
+    
+    . show @white, :500
+    . show @logo, :1000
+    
+    . break
+    
+    . hide @logo, :500
+    
+    . wait
+    
+    . show @cecile, :500, effect slide, direction top
+    
+    . wait
+    
+    . show @tb_main, :500, effect slide, direction top
+    
+    (( c: Welcome to the WebStory Engine demo game! ))
+    
+    . set @cecile, image shy
+    
+    (( c: I... I'm... <b>C-Cecile</b>. ))
+    
+    (( c: Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa! ))
+    
+    . set @cecile, image crying, :200
+    
+    (( c: G-great, now they a-all think I'm totally stupid and w-worthless. ))
+    
+    (( c: I can't stand this anymore. S-somebody, please... h-help meee! ))
+    
+    . set @cecile, image amused, :200
+    
+    (( c: Just kidding, I'm fine! Tehehe~ ))
+    
+    . set @jack, image grin, :0
+    . move @jack, x 180%, xAnchor 45%, y 100%, yAnchor 100%, :0
+    . show @jack, :0
+    
+    . wait
+    
+    . move @cecile, x 20%, xAnchor 45%
+    . move @jack, x 75%, xAnchor 50%, y 100%, yAnchor 100%
+    
+    (( j: You're such a tease, C! ))
+    
+    (( c: I know, right? Haha... ))
+    
+    . set @jack, image neutral
+    
+    (( j: By the way, why is there no background? ))
+    
+    . set @cecile, image surprised
+    
+    (( c:
+        Oh, you are right! I totally forgot about that.
+        Let me give us a cozy sky background...
+    ))
+    
+    . show @backgrounds
+    
+    . wait
+    
+    . set @cecile, image smile
+    
+    (( c: There you go. Better, right? ))
+    
+    . set @jack, image smile
+    
+    (( j: Yeah, now we're talking! ))
+    
+    . hide @tb_main
+    . clear @tb_main
+    
+    . goto scene game_start
+    
+--
+
+. scene #game_start :
+    . restart
+--

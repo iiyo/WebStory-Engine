@@ -1,0 +1,9 @@
+. stage width 1366px, height 768px, +create, +center, +resize
+. triggers :
+    . trigger name game_menu_key_trigger, event keyup, key ESCAPE, function savegames
+    . trigger name next_on_right, event keyup, key RIGHT_ARROW, special next
+    . trigger name next_on_space, event keyup, key SPACE, special next
+    . trigger name sub_scene_by_key, event keyup, key UP_ARROW, sub custom_event_scene
+--
+. setting name host.stage.resize, value true
+. setting name host.inspector.enable, value true

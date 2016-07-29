@@ -1,0 +1,44 @@
+
+. textbox name tb_main, x 0, y 365px, width 900px, height 120px, speed 50
+
+. character name n, textbox tb_main
+
+. character name c, textbox tb_main :
+    . displayname :
+        Cecile
+    --
+--
+
+. character name j, textbox tb_main :
+    . displayname :
+        Jack
+    --
+--
+
+. imagepack name backgrounds, x 0, y 0, z 5, width 1366px :
+    . image src assets/images/daytime_clouds_A_01.jpg, name clouds01
+    . image src assets/images/Evening_clouds_C_01.jpg, name clouds02
+    . image src assets/images/Rainbow_A_01.jpg, name rainbow
+--
+
+. imagepack name cecile, x 50%, y 0, z 10, xAnchor 50% :
+    . image src assets/images/cecile/smile.png, name smile
+    . image src assets/images/cecile/amused-smiling.png, name amused
+    . image src assets/images/cecile/smile-blush.png, name blush
+    . image src assets/images/cecile/shy-or-surprise.png, name shy
+    . image src assets/images/cecile/shy-or-surprise-without-blush.png, name surprised
+    . image src assets/images/cecile/crying.png, name crying
+--
+
+. imagepack name jack, x 50%, y 0, z 10, xAnchor 50% :
+    . image src assets/images/jack/grin.png, name grin
+    . image src assets/images/jack/neutral.png, name neutral
+    . image src assets/images/jack/scold.png, name scold
+    . image src assets/images/jack/smile.png, name smile
+--
+
+. imagepack name logo, x 50%, y 0, z 10, xAnchor 50% :
+    . image src assets/images/logo.png, name logo
+--
+
+. curtain name white, color white, z 0
