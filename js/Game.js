@@ -92,7 +92,6 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
      */
     Game.prototype.load = function (gameDocument) {
         this.ws = gameDocument;
-        console.log("gameFile:", new XMLSerializer().serializeToString(gameDocument));
         this.init();
     };
     
