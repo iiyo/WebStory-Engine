@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+. ws :
+    . file type settings, url story/settings.xmugly
+    . file type assets, url story/assets.xmugly
+    . file type scenes, url story/scenes.xmugly
+--

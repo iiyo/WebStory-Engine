@@ -10,6 +10,7 @@
     "test": "tests"
   },
   "dependencies": {
+    "archiver": "^1.0.1",
     "browserify": "^13.1.0",
     "databus": "^1.0.1",
     "eases": "^1.0.8",
