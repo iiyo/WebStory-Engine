@@ -1,2 +1,4 @@
 releases/**/*
 node_modules/*
+.vscode/*
+build/dependencies.js
