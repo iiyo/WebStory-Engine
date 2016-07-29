@@ -80,7 +80,7 @@ define("WSE.loader", function (ajax, compile) {
             return {
                 type: element.getAttribute("type"),
                 url: element.getAttribute("url")
-            }
+            };
         });
     }
     
