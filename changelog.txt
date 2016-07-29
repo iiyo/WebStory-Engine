@@ -1,5 +1,13 @@
 ====== WebStory Engine Changelog ======
 
+===== Version 2016.x =====
+
+==== Version 2016.7 ====
+
+ * Added a composite asset which is meant to replace the imagepack asset. Instead of showing just one image at a time, it can display an arbitrary number of images at a time depending on which of its tags are activated.
+ * Changed the implementation of the reveal/typewriter effect: It now uses CSS animations and uses opacity on the characters in place instead of adding characters to the textbox one after the other.
+ * Added a precompiler to make games easier to write.
+
 ===== Version 2015.x ======
 
 ==== Version 2015.12.1 ====
