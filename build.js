@@ -10,6 +10,7 @@ var copy = require("ncp").ncp;
 
 mkdirSync('./build');
 mkdirSync('./export');
+mkdirSync('./export/engine');
 
 var dependencyFilePath = normalizePath(os.tmpdir() + "/WebStoryEngine_dependencies.js");
 var dependencyFile = fs.createWriteStream(dependencyFilePath);
@@ -130,7 +131,7 @@ function writeFileFn (concatFile)
     
     function makeExport (err) {
         makeErrorFn("Minified WebStory Engine file created.")(err);
-        copy("./build", "./export", function () {
+        copy("./build", "./export/engine", function () {
             copy("./story", "./export", function () {
                 console.log("Exported WebStory Engine skeleton to export folder.");
             });
