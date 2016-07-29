@@ -3,24 +3,27 @@
 var processScriptsFileFn, concatJsFiles, scriptsFilePath;
 var browserify = require("browserify");
 var fs = require("fs");
+var os = require("os");
+var normalizePath = require("path").normalize;
 var minify = require("minify");
 
 mkdirSync('./build');
 
-var outputFile = fs.createWriteStream("build/dependencies.js");
+var dependencyFilePath = normalizePath(os.tmpdir() + "/WebStoryEngine_dependencies.js");
+var dependencyFile = fs.createWriteStream(dependencyFilePath);
 var bundle = browserify("browserifyToUsing.js").bundle();
 var info = JSON.parse("" + fs.readFileSync("package.json"));
 
 scriptsFilePath = 'scripts.json';
 
-outputFile.write(
+dependencyFile.write(
     "/*\n" +
     "    WebStory Engine dependencies (v" + info.version + ")\n" +
     "    Build time: " + (new Date().toUTCString()) + 
     "\n*/\n"
 );
 
-bundle.pipe(outputFile);
+bundle.pipe(dependencyFile);
 
 
 function mkdirSync (path)
@@ -72,7 +75,7 @@ concatJsFiles = function (files)
             concatFile += "\n\n" + removeUnwantedSections(data);
         };
         
-        concFn(fs.readFileSync('./' + path, 'utf-8'));
+        concFn(fs.readFileSync(normalizePath(path), 'utf-8'));
     };
     
     moduleString += "\n\nvar $__WSEScripts = document.getElementsByTagName('script');";
@@ -83,7 +86,7 @@ concatJsFiles = function (files)
     }
     
     fn("libs/MO5/libs/using.js/using.js");
-    fn("build/dependencies.js");
+    fn(dependencyFilePath);
     fn("libs/MO5/js/MO5.js");
     
     concatFile += moduleString;
