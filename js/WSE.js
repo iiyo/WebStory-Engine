@@ -1,13 +1,13 @@
 /* global using */
 
-using("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
-define("WSE", function (EventBus, assets, commands, dataSources, functions) {
+using("databus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
+define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
     var WSE = {}, version = "2016.7.0-final.1607281539";
     
-    EventBus.inject(WSE);
+    DataBus.inject(WSE);
     
     WSE.dataSources = dataSources;
     WSE.assets = assets;

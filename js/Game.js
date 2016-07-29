@@ -1,7 +1,7 @@
 /* global using */
 
 using(
-    "MO5.EventBus",
+    "databus",
     "MO5.ajax",
     "WSE.Keys",
     "WSE.Interpreter",
@@ -9,7 +9,7 @@ using(
     "WSE",
     "WSE.tools.compile::compile"
 ).
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compile) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compile) {
     
     "use strict";
     
@@ -35,7 +35,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         WSE.trigger("wse.game.constructor", {args: args, game: this});
         
         args = args || {};
-        this.bus = new EventBus();
+        this.bus = new DataBus();
         this.url = args.url || "game.xml";
         this.gameId = args.gameId || null;
         this.ws = null;
