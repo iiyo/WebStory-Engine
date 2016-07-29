@@ -1,8 +1,8 @@
 /* global using */
 
 using(
-    "MO5.transform",
-    "MO5.easing",
+    "transform::transform",
+    "eases",
     "MO5.Animation",
     "MO5.CoreObject",
     "MO5.TimerWatcher",
@@ -52,10 +52,10 @@ define("WSE.assets.Animation", function (
         }
         
         function createTransformFn (as, f, t, pn, u, opt) {
-            return transform(function (v) {
+            return transform(f, t, function (v) {
                 as.style[pn] = v + u;
-            }, f, t, opt);
-        };
+            }, opt);
+        }
         
         function runDoCommandFn (del, watcher) {
             

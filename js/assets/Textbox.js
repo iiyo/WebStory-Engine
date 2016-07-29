@@ -1,7 +1,7 @@
 /* global using */
 
 using(
-    "MO5.transform",
+    "transform::transform",
     "WSE.tools.reveal",
     "MO5.dom.Element",
     "WSE.DisplayObject",
@@ -198,8 +198,7 @@ define("WSE.assets.Textbox", function (
                         duration: self.fadeDuration
                     };
                     
-                    transform(valFn, 1, 0, options).promise().
-                    then(finishFn);
+                    transform(1, 0, valFn, options, finishFn);
                 }());
             }
             else {
@@ -250,11 +249,11 @@ define("WSE.assets.Textbox", function (
                     }
                     
                     transform(
+                        0,
+                        1,
                         function (v) {
                             textElement.style.opacity = v;
                         },
-                        0,
-                        1,
                         {
                             duration: self.fadeDuration,
                             onFinish: function () {

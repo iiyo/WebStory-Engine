@@ -256,7 +256,7 @@ var using = (function () {
         
         function define (moduleName, callback) {
             
-            if (moduleName in definitions) {
+            if (exists(moduleName)) {
                 throw new Error("Module '" + moduleName + "' is already defined.");
             }
             
@@ -284,6 +284,11 @@ var using = (function () {
         }
     }
     
+    function exists (name) {
+        return name in definitions;
+    }
+    
+    using.exists = exists;
     using.path = "";
     
     (function () {
@@ -412,6 +417,2241 @@ using.ajax = (function () {
     return ajax;
     
 }());
+
+
+/*
+    WebStory Engine dependencies (v2016.7.0)
+    Build time: Fri, 29 Jul 2016 15:16:47 GMT
+*/
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/* global using, require */
+
+var move = require("move-js");
+var transform = require("transform-js");
+var databus = require("databus");
+var xmugly = require("xmugly");
+var eases = require("eases");
+
+using().define("move", function () {
+    return move;
+});
+
+using().define("transform", function () {
+    return transform;
+});
+
+using().define("databus", function () {
+    return databus;
+});
+
+using().define("xmugly", function () {
+    return xmugly;
+});
+
+using().define("eases", function () {
+    return eases;
+});
+
+},{"databus":2,"eases":22,"move-js":36,"transform-js":46,"xmugly":79}],2:[function(require,module,exports){
+/* global require, module */
+
+module.exports = require("./src/databus");
+
+},{"./src/databus":3}],3:[function(require,module,exports){
+/* global using, setTimeout, console, window, module */
+
+(function DataBusBootstrap () {
+    
+    if (typeof require === "function") {
+        module.exports = DataBusModule();
+    }
+    else if (typeof using === "function") {
+        using().define("databus", DataBusModule);
+    }
+    else {
+        window.DataBus = DataBusModule();
+    }
+    
+    function DataBusModule () {
+        
+        "use strict";
+        
+        function DataBus (args) {
+            
+            var self = this;
+            
+            args = args || {};
+            
+            this.debug = args.debug || false;
+            this.interceptErrors = args.interceptErrors || false;
+            this.log = args.log || false;
+            this.logData = args.logData || false;
+            this.defaults = args.defaults || {};
+            this.defaults.flowType = this.defaults.flowType || DataBus.FLOW_TYPE_ASYNCHRONOUS;
+            
+            this.callbacks = {
+                "*": []
+            };
+            
+            this.subscribe(errorListener, "EventBus.error");
+            
+            function errorListener (data) {
+                
+                var name;
+                
+                if (self.debug !== true) {
+                    return;
+                }
+                
+                name = data.error.name || "Error";
+                console.log(name + " in listener; Event: " + data.info.event + "; Message: " +
+                    data.error.message);
+            }
+        }
+        
+        DataBus.FLOW_TYPE_ASYNCHRONOUS = 0;
+        DataBus.FLOW_TYPE_SYNCHRONOUS = 1;
+        
+        DataBus.create = function(args) {
+            
+            args = args || {};
+            
+            return new DataBus(args);
+        };
+        
+        DataBus.prototype.subscribe = function(parameter1, parameter2) {
+            
+            var listener, event, self = this;
+            
+            if (parameter2 === undefined) {
+                event = "*";
+                listener = parameter1;
+            }
+            else if (typeof parameter1 === "string" || typeof parameter1 === "number") {
+                event = parameter1;
+                listener = parameter2;
+            }
+            else if (typeof parameter2 === "string" || typeof parameter2 === "number") {
+                event = parameter2;
+                listener = parameter1;
+            }
+            
+            if (typeof event !== "string" && typeof event !== "number") {
+                throw new Error("Event names can only be strings or numbers! event: ", event);
+            }
+            
+            if (typeof listener !== "function") {
+                throw new Error("Only functions may be used as listeners!");
+            }
+            
+            event = event || '*';
+            
+            this.callbacks[event] = this.callbacks[event] || [];
+            this.callbacks[event].push(listener);
+            
+            this.trigger(
+                "EventBus.subscribe", 
+                {
+                    listener: listener,
+                    event: event,
+                    bus: this
+                }
+            );
+            
+            return function unsubscriber () {
+                self.unsubscribe(listener, event);
+            };
+        };
+        
+        DataBus.prototype.unsubscribe = function(parameter1, parameter2) {
+            
+            var cbs, len, i, listener, event;
+            
+            if (parameter2 === undefined) {
+                event = "*";
+                listener = parameter1;
+            }
+            else if (typeof parameter1 === "string" || typeof parameter1 === "number") {
+                event = parameter1;
+                listener = parameter2;
+            }
+            else if (typeof parameter2 === "string" || typeof parameter2 === "number") {
+                event = parameter2;
+                listener = parameter1;
+            }
+            
+            if (typeof event !== "string" && typeof event !== "number") {
+                throw new Error("Event names can only be strings or numbers! event: ", event);
+            }
+            
+            if (typeof listener !== "function") {
+                throw new Error("Only functions may be used as listeners!");
+            }
+            
+            event = event || '*';
+            cbs = this.callbacks[event] || [];
+            len = cbs.length;
+            
+            for (i = 0; i < len; ++i) {
+                if (cbs[i] === listener) {
+                    this.callbacks[event].splice(i, 1);
+                }
+            }
+            
+            this.trigger(
+                "EventBus.unsubscribe", 
+                {
+                    listener: listener,
+                    event: event,
+                    bus: this
+                }
+            );
+        };
+        
+        DataBus.prototype.once = function (listenerOrEvent1, listenerOrEvent2) {
+            
+            var fn, self = this, event, listener;
+            var firstParamIsFunction, secondParamIsFunction, called = false;
+            
+            firstParamIsFunction = typeof listenerOrEvent1 === "function";
+            secondParamIsFunction = typeof listenerOrEvent2 === "function";
+            
+            if ((firstParamIsFunction && secondParamIsFunction) || 
+                    (!firstParamIsFunction && !secondParamIsFunction)) {
+                throw new Error("Parameter mismatch; one parameter needs to be a function, " +
+                    "the other one must be a string.");
+            }
+            
+            if (firstParamIsFunction) {
+                listener = listenerOrEvent1;
+                event = listenerOrEvent2;
+            }
+            else {
+                listener = listenerOrEvent2;
+                event = listenerOrEvent1;
+            }
+            
+            event = event || "*";
+            
+            fn = function (data, info) {
+                
+                if (called) {
+                    return;
+                }
+                
+                called = true;
+                self.unsubscribe(fn, event);
+                listener(data, info);
+            };
+            
+            this.subscribe(fn, event);
+        };
+        
+        DataBus.prototype.trigger = function(event, data, async) {
+            
+            var cbs, len, info, j, f, cur, self, flowType;
+            
+            if (
+                typeof event !== "undefined" &&
+                typeof event !== "string" &&
+                typeof event !== "number"
+            ) {
+                throw new Error("Event names can only be strings or numbers! event: ", event);
+            }
+            
+            self = this;
+            event = arguments.length ? event : "*";
+            
+            flowType = (typeof async !== "undefined" && async === false) ?
+                DataBus.FLOW_TYPE_SYNCHRONOUS :
+                this.defaults.flowType;
+            
+            // get subscribers in all relevant namespaces
+            cbs = (function() {
+                
+                var n, words, wc, matches, k, kc, old = "", out = [];
+                
+                // split event name into namespaces and get all subscribers
+                words = event.split(".");
+                
+                for (n = 0, wc = words.length ; n < wc ; ++n) {
+                    
+                    old = old + (n > 0 ? "." : "") + words[n];
+                    matches = self.callbacks[old] || [];
+                    
+                    for (k = 0, kc = matches.length; k < kc; ++k) {
+                        out.push(matches[k]);
+                    }
+                }
+                
+                if (event === "*") {
+                    return out;
+                }
+                
+                // get subscribers for "*" and add them, too
+                matches = self.callbacks["*"] || [];
+                
+                for (k = 0, kc = matches.length ; k < kc ; ++k) {
+                    out.push( matches[ k ] );
+                }
+                
+                return out;
+            }());
+            
+            len = cbs.length;
+            
+            info = {
+                event: event,
+                subscribers: len,
+                async: flowType === DataBus.FLOW_TYPE_ASYNCHRONOUS ? true : false,
+                getQueueLength: function() {
+                    
+                    if (len === 0) {
+                        return 0;
+                    }
+                    
+                    return len - (j + 1);
+                }
+            };
+            
+            function asyncThrow (e) {
+                setTimeout(
+                    function () {
+                        throw e;
+                    },
+                    0
+                );
+            }
+            
+            // function for iterating through the list of relevant listeners
+            f = function() {
+                
+                if (self.log === true) {
+                    console.log( 
+                        "EventBus event triggered: " + event + "; Subscribers: " + len, 
+                        self.logData === true ? "; Data: " + data : "" 
+                    );
+                }
+                
+                for (j = 0; j < len; ++j) {
+                    
+                    cur = cbs[j];
+                    
+                    try {
+                        cur(data, info);
+                    }
+                    catch (e) {
+                        
+                        console.log(e);
+                        
+                        self.trigger(
+                            "EventBus.error", 
+                            {
+                                error: e,
+                                info: info
+                            }
+                        );
+                        
+                        if (self.interceptErrors !== true) {
+                            asyncThrow(e);
+                        }
+                    }
+                }
+            };
+            
+            if (flowType === DataBus.FLOW_TYPE_ASYNCHRONOUS) {
+                setTimeout(f, 0);
+            }
+            else {
+                f();
+            }
+        };
+        
+        DataBus.prototype.triggerSync = function (event, data) {
+            return this.trigger(event, data, false);
+        };
+        
+        DataBus.prototype.triggerAsync = function (event, data) {
+            return this.trigger(event, data, true);
+        };
+        
+        DataBus.inject = function (obj, args) {
+            
+            args = args || {};
+            
+            var squid = new DataBus(args);
+            
+            obj.subscribe = function (listener, event) {
+                squid.subscribe(listener, event);
+            };
+            
+            obj.unsubscribe = function (listener, event) {
+                squid.unsubscribe(listener, event);
+            };
+            
+            obj.once = function (listener, event) {
+                squid.once(listener, event);
+            };
+            
+            obj.trigger = function (event, data, async) {
+                async = (typeof async !== "undefined" && async === false) ? false : true;
+                squid.trigger(event, data, async);
+            };
+            
+            obj.triggerSync = squid.triggerSync.bind(squid);
+            obj.triggerAsync = squid.triggerAsync.bind(squid);
+            
+            obj.subscribe("destroyed", function () {
+                squid.callbacks = [];
+            });
+        };
+        
+        return DataBus;
+        
+    }
+}());
+
+},{}],4:[function(require,module,exports){
+function backInOut(t) {
+  var s = 1.70158 * 1.525
+  if ((t *= 2) < 1)
+    return 0.5 * (t * t * ((s + 1) * t - s))
+  return 0.5 * ((t -= 2) * t * ((s + 1) * t + s) + 2)
+}
+
+module.exports = backInOut
+},{}],5:[function(require,module,exports){
+function backIn(t) {
+  var s = 1.70158
+  return t * t * ((s + 1) * t - s)
+}
+
+module.exports = backIn
+},{}],6:[function(require,module,exports){
+function backOut(t) {
+  var s = 1.70158
+  return --t * t * ((s + 1) * t + s) + 1
+}
+
+module.exports = backOut
+},{}],7:[function(require,module,exports){
+var bounceOut = require('./bounce-out')
+
+function bounceInOut(t) {
+  return t < 0.5
+    ? 0.5 * (1.0 - bounceOut(1.0 - t * 2.0))
+    : 0.5 * bounceOut(t * 2.0 - 1.0) + 0.5
+}
+
+module.exports = bounceInOut
+},{"./bounce-out":9}],8:[function(require,module,exports){
+var bounceOut = require('./bounce-out')
+
+function bounceIn(t) {
+  return 1.0 - bounceOut(1.0 - t)
+}
+
+module.exports = bounceIn
+},{"./bounce-out":9}],9:[function(require,module,exports){
+function bounceOut(t) {
+  var a = 4.0 / 11.0
+  var b = 8.0 / 11.0
+  var c = 9.0 / 10.0
+
+  var ca = 4356.0 / 361.0
+  var cb = 35442.0 / 1805.0
+  var cc = 16061.0 / 1805.0
+
+  var t2 = t * t
+
+  return t < a
+    ? 7.5625 * t2
+    : t < b
+      ? 9.075 * t2 - 9.9 * t + 3.4
+      : t < c
+        ? ca * t2 - cb * t + cc
+        : 10.8 * t * t - 20.52 * t + 10.72
+}
+
+module.exports = bounceOut
+},{}],10:[function(require,module,exports){
+function circInOut(t) {
+  if ((t *= 2) < 1) return -0.5 * (Math.sqrt(1 - t * t) - 1)
+  return 0.5 * (Math.sqrt(1 - (t -= 2) * t) + 1)
+}
+
+module.exports = circInOut
+},{}],11:[function(require,module,exports){
+function circIn(t) {
+  return 1.0 - Math.sqrt(1.0 - t * t)
+}
+
+module.exports = circIn
+},{}],12:[function(require,module,exports){
+function circOut(t) {
+  return Math.sqrt(1 - ( --t * t ))
+}
+
+module.exports = circOut
+},{}],13:[function(require,module,exports){
+function cubicInOut(t) {
+  return t < 0.5
+    ? 4.0 * t * t * t
+    : 0.5 * Math.pow(2.0 * t - 2.0, 3.0) + 1.0
+}
+
+module.exports = cubicInOut
+},{}],14:[function(require,module,exports){
+function cubicIn(t) {
+  return t * t * t
+}
+
+module.exports = cubicIn
+},{}],15:[function(require,module,exports){
+function cubicOut(t) {
+  var f = t - 1.0
+  return f * f * f + 1.0
+}
+
+module.exports = cubicOut
+},{}],16:[function(require,module,exports){
+function elasticInOut(t) {
+  return t < 0.5
+    ? 0.5 * Math.sin(+13.0 * Math.PI/2 * 2.0 * t) * Math.pow(2.0, 10.0 * (2.0 * t - 1.0))
+    : 0.5 * Math.sin(-13.0 * Math.PI/2 * ((2.0 * t - 1.0) + 1.0)) * Math.pow(2.0, -10.0 * (2.0 * t - 1.0)) + 1.0
+}
+
+module.exports = elasticInOut
+},{}],17:[function(require,module,exports){
+function elasticIn(t) {
+  return Math.sin(13.0 * t * Math.PI/2) * Math.pow(2.0, 10.0 * (t - 1.0))
+}
+
+module.exports = elasticIn
+},{}],18:[function(require,module,exports){
+function elasticOut(t) {
+  return Math.sin(-13.0 * (t + 1.0) * Math.PI/2) * Math.pow(2.0, -10.0 * t) + 1.0
+}
+
+module.exports = elasticOut
+},{}],19:[function(require,module,exports){
+function expoInOut(t) {
+  return (t === 0.0 || t === 1.0)
+    ? t
+    : t < 0.5
+      ? +0.5 * Math.pow(2.0, (20.0 * t) - 10.0)
+      : -0.5 * Math.pow(2.0, 10.0 - (t * 20.0)) + 1.0
+}
+
+module.exports = expoInOut
+},{}],20:[function(require,module,exports){
+function expoIn(t) {
+  return t === 0.0 ? t : Math.pow(2.0, 10.0 * (t - 1.0))
+}
+
+module.exports = expoIn
+},{}],21:[function(require,module,exports){
+function expoOut(t) {
+  return t === 1.0 ? t : 1.0 - Math.pow(2.0, -10.0 * t)
+}
+
+module.exports = expoOut
+},{}],22:[function(require,module,exports){
+module.exports = {
+	'backInOut': require('./back-in-out'),
+	'backIn': require('./back-in'),
+	'backOut': require('./back-out'),
+	'bounceInOut': require('./bounce-in-out'),
+	'bounceIn': require('./bounce-in'),
+	'bounceOut': require('./bounce-out'),
+	'circInOut': require('./circ-in-out'),
+	'circIn': require('./circ-in'),
+	'circOut': require('./circ-out'),
+	'cubicInOut': require('./cubic-in-out'),
+	'cubicIn': require('./cubic-in'),
+	'cubicOut': require('./cubic-out'),
+	'elasticInOut': require('./elastic-in-out'),
+	'elasticIn': require('./elastic-in'),
+	'elasticOut': require('./elastic-out'),
+	'expoInOut': require('./expo-in-out'),
+	'expoIn': require('./expo-in'),
+	'expoOut': require('./expo-out'),
+	'linear': require('./linear'),
+	'quadInOut': require('./quad-in-out'),
+	'quadIn': require('./quad-in'),
+	'quadOut': require('./quad-out'),
+	'quartInOut': require('./quart-in-out'),
+	'quartIn': require('./quart-in'),
+	'quartOut': require('./quart-out'),
+	'quintInOut': require('./quint-in-out'),
+	'quintIn': require('./quint-in'),
+	'quintOut': require('./quint-out'),
+	'sineInOut': require('./sine-in-out'),
+	'sineIn': require('./sine-in'),
+	'sineOut': require('./sine-out')
+}
+},{"./back-in":5,"./back-in-out":4,"./back-out":6,"./bounce-in":8,"./bounce-in-out":7,"./bounce-out":9,"./circ-in":11,"./circ-in-out":10,"./circ-out":12,"./cubic-in":14,"./cubic-in-out":13,"./cubic-out":15,"./elastic-in":17,"./elastic-in-out":16,"./elastic-out":18,"./expo-in":20,"./expo-in-out":19,"./expo-out":21,"./linear":23,"./quad-in":25,"./quad-in-out":24,"./quad-out":26,"./quart-in":28,"./quart-in-out":27,"./quart-out":29,"./quint-in":31,"./quint-in-out":30,"./quint-out":32,"./sine-in":34,"./sine-in-out":33,"./sine-out":35}],23:[function(require,module,exports){
+function linear(t) {
+  return t
+}
+
+module.exports = linear
+},{}],24:[function(require,module,exports){
+function quadInOut(t) {
+    t /= 0.5
+    if (t < 1) return 0.5*t*t
+    t--
+    return -0.5 * (t*(t-2) - 1)
+}
+
+module.exports = quadInOut
+},{}],25:[function(require,module,exports){
+function quadIn(t) {
+  return t * t
+}
+
+module.exports = quadIn
+},{}],26:[function(require,module,exports){
+function quadOut(t) {
+  return -t * (t - 2.0)
+}
+
+module.exports = quadOut
+},{}],27:[function(require,module,exports){
+function quarticInOut(t) {
+  return t < 0.5
+    ? +8.0 * Math.pow(t, 4.0)
+    : -8.0 * Math.pow(t - 1.0, 4.0) + 1.0
+}
+
+module.exports = quarticInOut
+},{}],28:[function(require,module,exports){
+function quarticIn(t) {
+  return Math.pow(t, 4.0)
+}
+
+module.exports = quarticIn
+},{}],29:[function(require,module,exports){
+function quarticOut(t) {
+  return Math.pow(t - 1.0, 3.0) * (1.0 - t) + 1.0
+}
+
+module.exports = quarticOut
+},{}],30:[function(require,module,exports){
+function qinticInOut(t) {
+    if ( ( t *= 2 ) < 1 ) return 0.5 * t * t * t * t * t
+    return 0.5 * ( ( t -= 2 ) * t * t * t * t + 2 )
+}
+
+module.exports = qinticInOut
+},{}],31:[function(require,module,exports){
+function qinticIn(t) {
+  return t * t * t * t * t
+}
+
+module.exports = qinticIn
+},{}],32:[function(require,module,exports){
+function qinticOut(t) {
+  return --t * t * t * t * t + 1
+}
+
+module.exports = qinticOut
+},{}],33:[function(require,module,exports){
+function sineInOut(t) {
+  return -0.5 * (Math.cos(Math.PI*t) - 1)
+}
+
+module.exports = sineInOut
+},{}],34:[function(require,module,exports){
+function sineIn (t) {
+  var v = Math.cos(t * Math.PI * 0.5)
+  if (Math.abs(v) < 1e-14) return 1
+  else return 1 - v
+}
+
+module.exports = sineIn
+
+},{}],35:[function(require,module,exports){
+function sineOut(t) {
+  return Math.sin(t * Math.PI/2)
+}
+
+module.exports = sineOut
+},{}],36:[function(require,module,exports){
+// Patch IE9 and below
+try {
+  document.createElement('DIV').style.setProperty('opacity', 0, '');
+} catch (error) {
+  CSSStyleDeclaration.prototype.getProperty = function(a) {
+    return this.getAttribute(a);
+  };
+  
+  CSSStyleDeclaration.prototype.setProperty = function(a,b) {
+    return this.setAttribute(a, b + '');
+  };
+
+  CSSStyleDeclaration.prototype.removeProperty = function(a) {
+    return this.removeAttribute(a);
+  };
+}
+
+/**
+ * Module Dependencies.
+ */
+
+var Emitter = require('component-emitter');
+var query = require('component-query');
+var after = require('after-transition');
+var has3d = require('has-translate3d');
+var ease = require('css-ease');
+
+/**
+ * CSS Translate
+ */
+
+var translate = has3d
+  ? ['translate3d(', ', 0)']
+  : ['translate(', ')'];
+
+
+/**
+ * Export `Move`
+ */
+
+module.exports = Move;
+
+/**
+ * Get computed style.
+ */
+
+var style = window.getComputedStyle
+  || window.currentStyle;
+
+/**
+ * Library version.
+ */
+
+Move.version = '0.5.0';
+
+/**
+ * Export `ease`
+ */
+
+Move.ease = ease;
+
+/**
+ * Defaults.
+ *
+ *   `duration` - default duration of 500ms
+ *
+ */
+
+Move.defaults = {
+  duration: 500
+};
+
+/**
+ * Default element selection utilized by `move(selector)`.
+ *
+ * Override to implement your own selection, for example
+ * with jQuery one might write:
+ *
+ *     move.select = function(selector) {
+ *       return jQuery(selector).get(0);
+ *     };
+ *
+ * @param {Object|String} selector
+ * @return {Element}
+ * @api public
+ */
+
+Move.select = function(selector){
+  if ('string' != typeof selector) return selector;
+  return query(selector);
+};
+
+/**
+ * Initialize a new `Move` with the given `el`.
+ *
+ * @param {Element} el
+ * @api public
+ */
+
+function Move(el) {
+  if (!(this instanceof Move)) return new Move(el);
+  if ('string' == typeof el) el = query(el);
+  if (!el) throw new TypeError('Move must be initialized with element or selector');
+  this.el = el;
+  this._props = {};
+  this._rotate = 0;
+  this._transitionProps = [];
+  this._transforms = [];
+  this.duration(Move.defaults.duration)
+};
+
+
+/**
+ * Inherit from `EventEmitter.prototype`.
+ */
+
+Emitter(Move.prototype);
+
+/**
+ * Buffer `transform`.
+ *
+ * @param {String} transform
+ * @return {Move} for chaining
+ * @api private
+ */
+
+Move.prototype.transform = function(transform){
+  this._transforms.push(transform);
+  return this;
+};
+
+/**
+ * Skew `x` and `y`.
+ *
+ * @param {Number} x
+ * @param {Number} y
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.skew = function(x, y){
+  return this.transform('skew('
+    + x + 'deg, '
+    + (y || 0)
+    + 'deg)');
+};
+
+/**
+ * Skew x by `n`.
+ *
+ * @param {Number} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.skewX = function(n){
+  return this.transform('skewX(' + n + 'deg)');
+};
+
+/**
+ * Skew y by `n`.
+ *
+ * @param {Number} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.skewY = function(n){
+  return this.transform('skewY(' + n + 'deg)');
+};
+
+/**
+ * Translate `x` and `y` axis.
+ *
+ * @param {Number|String} x
+ * @param {Number|String} y
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.translate =
+Move.prototype.to = function(x, y){
+  return this.transform(translate.join(''
+    + fixUnits(x) + ', '
+    + fixUnits(y || 0)));
+};
+
+/**
+ * Translate on the x axis to `n`.
+ *
+ * @param {Number|String} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.translateX =
+Move.prototype.x = function(n){
+  return this.transform('translateX(' + fixUnits(n) + ')');
+};
+
+/**
+ * Translate on the y axis to `n`.
+ *
+ * @param {Number|String} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.translateY =
+Move.prototype.y = function(n){
+  return this.transform('translateY(' + fixUnits(n) + ')');
+};
+
+/**
+ * Scale the x and y axis by `x`, or
+ * individually scale `x` and `y`.
+ *
+ * @param {Number} x
+ * @param {Number} y
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.scale = function(x, y){
+  return this.transform('scale('
+    + x + ', '
+    + (y || x)
+    + ')');
+};
+
+/**
+ * Scale x axis by `n`.
+ *
+ * @param {Number} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.scaleX = function(n){
+  return this.transform('scaleX(' + n + ')')
+};
+
+/**
+ * Apply a matrix transformation
+ *
+ * @param {Number} m11 A matrix coefficient
+ * @param {Number} m12 A matrix coefficient
+ * @param {Number} m21 A matrix coefficient
+ * @param {Number} m22 A matrix coefficient
+ * @param {Number} m31 A matrix coefficient
+ * @param {Number} m32 A matrix coefficient
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.matrix = function(m11, m12, m21, m22, m31, m32){
+  return this.transform('matrix(' + [m11,m12,m21,m22,m31,m32].join(',') + ')');
+};
+
+/**
+ * Scale y axis by `n`.
+ *
+ * @param {Number} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.scaleY = function(n){
+  return this.transform('scaleY(' + n + ')')
+};
+
+/**
+ * Rotate `n` degrees.
+ *
+ * @param {Number} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.rotate = function(n){
+  return this.transform('rotate(' + n + 'deg)');
+};
+
+/**
+ * Set transition easing function to to `fn` string.
+ *
+ * When:
+ *
+ *   - null "ease" is used
+ *   - "in" "ease-in" is used
+ *   - "out" "ease-out" is used
+ *   - "in-out" "ease-in-out" is used
+ *
+ * @param {String} fn
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.ease = function(fn){
+  fn = ease[fn] || fn || 'ease';
+  return this.setVendorProperty('transition-timing-function', fn);
+};
+
+/**
+ * Set animation properties
+ *
+ * @param {String} name
+ * @param {Object} props
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.animate = function(name, props){
+  for (var i in props){
+    if (props.hasOwnProperty(i)){
+      this.setVendorProperty('animation-' + i, props[i])
+    }
+  }
+  return this.setVendorProperty('animation-name', name);
+}
+
+/**
+ * Set duration to `n`.
+ *
+ * @param {Number|String} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.duration = function(n){
+  n = this._duration = 'string' == typeof n
+    ? parseFloat(n) * 1000
+    : n;
+  return this.setVendorProperty('transition-duration', n + 'ms');
+};
+
+/**
+ * Delay the animation by `n`.
+ *
+ * @param {Number|String} n
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.delay = function(n){
+  n = 'string' == typeof n
+    ? parseFloat(n) * 1000
+    : n;
+  return this.setVendorProperty('transition-delay', n + 'ms');
+};
+
+/**
+ * Set `prop` to `val`, deferred until `.end()` is invoked.
+ *
+ * @param {String} prop
+ * @param {String} val
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.setProperty = function(prop, val){
+  this._props[prop] = val;
+  return this;
+};
+
+/**
+ * Set a vendor prefixed `prop` with the given `val`.
+ *
+ * @param {String} prop
+ * @param {String} val
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.setVendorProperty = function(prop, val){
+  this.setProperty('-webkit-' + prop, val);
+  this.setProperty('-moz-' + prop, val);
+  this.setProperty('-ms-' + prop, val);
+  this.setProperty('-o-' + prop, val);
+  return this;
+};
+
+/**
+ * Set `prop` to `value`, deferred until `.end()` is invoked
+ * and adds the property to the list of transition props.
+ *
+ * @param {String} prop
+ * @param {String} val
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.set = function(prop, val){
+  this.transition(prop);
+  this._props[prop] = val;
+  return this;
+};
+
+/**
+ * Increment `prop` by `val`, deferred until `.end()` is invoked
+ * and adds the property to the list of transition props.
+ *
+ * @param {String} prop
+ * @param {Number} val
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.add = function(prop, val){
+  if (!style) return;
+  var self = this;
+  return this.on('start', function(){
+    var curr = parseInt(self.current(prop), 10);
+    self.set(prop, curr + val + 'px');
+  });
+};
+
+/**
+ * Decrement `prop` by `val`, deferred until `.end()` is invoked
+ * and adds the property to the list of transition props.
+ *
+ * @param {String} prop
+ * @param {Number} val
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.sub = function(prop, val){
+  if (!style) return;
+  var self = this;
+  return this.on('start', function(){
+    var curr = parseInt(self.current(prop), 10);
+    self.set(prop, curr - val + 'px');
+  });
+};
+
+/**
+ * Get computed or "current" value of `prop`.
+ *
+ * @param {String} prop
+ * @return {String}
+ * @api public
+ */
+
+Move.prototype.current = function(prop){
+  return style(this.el).getPropertyValue(prop);
+};
+
+/**
+ * Add `prop` to the list of internal transition properties.
+ *
+ * @param {String} prop
+ * @return {Move} for chaining
+ * @api private
+ */
+
+Move.prototype.transition = function(prop){
+  if (!this._transitionProps.indexOf(prop)) return this;
+  this._transitionProps.push(prop);
+  return this;
+};
+
+/**
+ * Commit style properties, aka apply them to `el.style`.
+ *
+ * @return {Move} for chaining
+ * @see Move#end()
+ * @api private
+ */
+
+Move.prototype.applyProperties = function(){
+  for (var prop in this._props) {
+    this.el.style.setProperty(prop, this._props[prop], '');
+  }
+  return this;
+};
+
+/**
+ * Re-select element via `selector`, replacing
+ * the current element.
+ *
+ * @param {String} selector
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.move =
+Move.prototype.select = function(selector){
+  this.el = Move.select(selector);
+  return this;
+};
+
+/**
+ * Defer the given `fn` until the animation
+ * is complete. `fn` may be one of the following:
+ *
+ *   - a function to invoke
+ *   - an instanceof `Move` to call `.end()`
+ *   - nothing, to return a clone of this `Move` instance for chaining
+ *
+ * @param {Function|Move} fn
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.then = function(fn){
+  // invoke .end()
+  if (fn instanceof Move) {
+    this.on('end', function(){
+      fn.end();
+    });
+  // callback
+  } else if ('function' == typeof fn) {
+    this.on('end', fn);
+  // chain
+  } else {
+    var clone = new Move(this.el);
+    clone._transforms = this._transforms.slice(0);
+    this.then(clone);
+    clone.parent = this;
+    return clone;
+  }
+
+  return this;
+};
+
+/**
+ * Pop the move context.
+ *
+ * @return {Move} parent Move
+ * @api public
+ */
+
+Move.prototype.pop = function(){
+  return this.parent;
+};
+
+/**
+ * Reset duration.
+ *
+ * @return {Move}
+ * @api public
+ */
+
+Move.prototype.reset = function(){
+  this.el.style.webkitTransitionDuration =
+  this.el.style.mozTransitionDuration =
+  this.el.style.msTransitionDuration =
+  this.el.style.oTransitionDuration = '';
+  return this;
+};
+
+/**
+ * Start animation, optionally calling `fn` when complete.
+ *
+ * @param {Function} fn
+ * @return {Move} for chaining
+ * @api public
+ */
+
+Move.prototype.end = function(fn){
+  var self = this;
+
+  // emit "start" event
+  this.emit('start');
+
+  // transforms
+  if (this._transforms.length) {
+    this.setVendorProperty('transform', this._transforms.join(' '));
+  }
+
+  // transition properties
+  this.setVendorProperty('transition-properties', this._transitionProps.join(', '));
+  this.applyProperties();
+
+  // callback given
+  if (fn) this.then(fn);
+
+  // emit "end" when complete
+  after.once(this.el, function(){
+    self.reset();
+    self.emit('end');
+  });
+
+  return this;
+};
+
+/**
+ * Fix value units
+ *
+ * @param {Number|String} val
+ * @return {String}
+ * @api private
+ */
+
+function fixUnits(val) {
+  return 'string' === typeof val && isNaN(+val) ? val : val + 'px';
+}
+
+},{"after-transition":37,"component-emitter":41,"component-query":42,"css-ease":43,"has-translate3d":44}],37:[function(require,module,exports){
+var hasTransitions = require('has-transitions');
+var emitter = require('css-emitter');
+
+function afterTransition(el, callback) {
+  if(hasTransitions(el)) {
+    return emitter(el).bind(callback);
+  }
+  return callback.apply(el);
+};
+
+afterTransition.once = function(el, callback) {
+  afterTransition(el, function fn(){
+    callback.apply(el);
+    emitter(el).unbind(fn);
+  });
+};
+
+module.exports = afterTransition;
+},{"css-emitter":38,"has-transitions":40}],38:[function(require,module,exports){
+/**
+ * Module Dependencies
+ */
+
+var events = require('event');
+
+// CSS events
+
+var watch = [
+  'transitionend'
+, 'webkitTransitionEnd'
+, 'oTransitionEnd'
+, 'MSTransitionEnd'
+, 'animationend'
+, 'webkitAnimationEnd'
+, 'oAnimationEnd'
+, 'MSAnimationEnd'
+];
+
+/**
+ * Expose `CSSnext`
+ */
+
+module.exports = CssEmitter;
+
+/**
+ * Initialize a new `CssEmitter`
+ *
+ */
+
+function CssEmitter(element){
+  if (!(this instanceof CssEmitter)) return new CssEmitter(element);
+  this.el = element;
+}
+
+/**
+ * Bind CSS events.
+ *
+ * @api public
+ */
+
+CssEmitter.prototype.bind = function(fn){
+  for (var i=0; i < watch.length; i++) {
+    events.bind(this.el, watch[i], fn);
+  }
+  return this;
+};
+
+/**
+ * Unbind CSS events
+ * 
+ * @api public
+ */
+
+CssEmitter.prototype.unbind = function(fn){
+  for (var i=0; i < watch.length; i++) {
+    events.unbind(this.el, watch[i], fn);
+  }
+  return this;
+};
+
+/**
+ * Fire callback only once
+ * 
+ * @api public
+ */
+
+CssEmitter.prototype.once = function(fn){
+  var self = this;
+  function on(){
+    self.unbind(on);
+    fn.apply(self.el, arguments);
+  }
+  self.bind(on);
+  return this;
+};
+
+
+},{"event":39}],39:[function(require,module,exports){
+
+/**
+ * Bind `el` event `type` to `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.bind = function(el, type, fn, capture){
+  if (el.addEventListener) {
+    el.addEventListener(type, fn, capture);
+  } else {
+    el.attachEvent('on' + type, fn);
+  }
+  return fn;
+};
+
+/**
+ * Unbind `el` event `type`'s callback `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.unbind = function(el, type, fn, capture){
+  if (el.removeEventListener) {
+    el.removeEventListener(type, fn, capture);
+  } else {
+    el.detachEvent('on' + type, fn);
+  }
+  return fn;
+};
+
+},{}],40:[function(require,module,exports){
+/**
+ * This will store the property that the current
+ * browser uses for transitionDuration
+ */
+var property;
+
+/**
+ * The properties we'll check on an element
+ * to determine if it actually has transitions
+ * We use duration as this is the only property
+ * needed to technically have transitions
+ * @type {Array}
+ */
+var types = [
+  "transitionDuration",
+  "MozTransitionDuration",
+  "webkitTransitionDuration"
+];
+
+/**
+ * Determine the correct property for this browser
+ * just once so we done need to check every time
+ */
+while(types.length) {
+  var type = types.shift();
+  if(type in document.body.style) {
+    property = type;
+  }
+}
+
+/**
+ * Determine if the browser supports transitions or
+ * if an element has transitions at all.
+ * @param  {Element}  el Optional. Returns browser support if not included
+ * @return {Boolean}
+ */
+function hasTransitions(el){
+  if(!property) {
+    return false; // No browser support for transitions
+  }
+  if(!el) {
+    return property != null; // We just want to know if browsers support it
+  }
+  var duration = getComputedStyle(el)[property];
+  return duration !== "" && parseFloat(duration) !== 0; // Does this element have transitions?
+}
+
+module.exports = hasTransitions;
+},{}],41:[function(require,module,exports){
+
+/**
+ * Expose `Emitter`.
+ */
+
+if (typeof module !== 'undefined') {
+  module.exports = Emitter;
+}
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  function on() {
+    this.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  on.fn = fn;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks['$' + event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks['$' + event];
+    return this;
+  }
+
+  // remove specific handler
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+  var args = [].slice.call(arguments, 1)
+    , callbacks = this._callbacks['$' + event];
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks['$' + event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+},{}],42:[function(require,module,exports){
+function one(selector, el) {
+  return el.querySelector(selector);
+}
+
+exports = module.exports = function(selector, el){
+  el = el || document;
+  return one(selector, el);
+};
+
+exports.all = function(selector, el){
+  el = el || document;
+  return el.querySelectorAll(selector);
+};
+
+exports.engine = function(obj){
+  if (!obj.one) throw new Error('.one callback required');
+  if (!obj.all) throw new Error('.all callback required');
+  one = obj.one;
+  exports.all = obj.all;
+  return exports;
+};
+
+},{}],43:[function(require,module,exports){
+
+/**
+ * CSS Easing functions
+ */
+
+module.exports = {
+    'in':                'ease-in'
+  , 'out':               'ease-out'
+  , 'in-out':            'ease-in-out'
+  , 'snap':              'cubic-bezier(0,1,.5,1)'
+  , 'linear':            'cubic-bezier(0.250, 0.250, 0.750, 0.750)'
+  , 'ease-in-quad':      'cubic-bezier(0.550, 0.085, 0.680, 0.530)'
+  , 'ease-in-cubic':     'cubic-bezier(0.550, 0.055, 0.675, 0.190)'
+  , 'ease-in-quart':     'cubic-bezier(0.895, 0.030, 0.685, 0.220)'
+  , 'ease-in-quint':     'cubic-bezier(0.755, 0.050, 0.855, 0.060)'
+  , 'ease-in-sine':      'cubic-bezier(0.470, 0.000, 0.745, 0.715)'
+  , 'ease-in-expo':      'cubic-bezier(0.950, 0.050, 0.795, 0.035)'
+  , 'ease-in-circ':      'cubic-bezier(0.600, 0.040, 0.980, 0.335)'
+  , 'ease-in-back':      'cubic-bezier(0.600, -0.280, 0.735, 0.045)'
+  , 'ease-out-quad':     'cubic-bezier(0.250, 0.460, 0.450, 0.940)'
+  , 'ease-out-cubic':    'cubic-bezier(0.215, 0.610, 0.355, 1.000)'
+  , 'ease-out-quart':    'cubic-bezier(0.165, 0.840, 0.440, 1.000)'
+  , 'ease-out-quint':    'cubic-bezier(0.230, 1.000, 0.320, 1.000)'
+  , 'ease-out-sine':     'cubic-bezier(0.390, 0.575, 0.565, 1.000)'
+  , 'ease-out-expo':     'cubic-bezier(0.190, 1.000, 0.220, 1.000)'
+  , 'ease-out-circ':     'cubic-bezier(0.075, 0.820, 0.165, 1.000)'
+  , 'ease-out-back':     'cubic-bezier(0.175, 0.885, 0.320, 1.275)'
+  , 'ease-out-quad':     'cubic-bezier(0.455, 0.030, 0.515, 0.955)'
+  , 'ease-out-cubic':    'cubic-bezier(0.645, 0.045, 0.355, 1.000)'
+  , 'ease-in-out-quart': 'cubic-bezier(0.770, 0.000, 0.175, 1.000)'
+  , 'ease-in-out-quint': 'cubic-bezier(0.860, 0.000, 0.070, 1.000)'
+  , 'ease-in-out-sine':  'cubic-bezier(0.445, 0.050, 0.550, 0.950)'
+  , 'ease-in-out-expo':  'cubic-bezier(1.000, 0.000, 0.000, 1.000)'
+  , 'ease-in-out-circ':  'cubic-bezier(0.785, 0.135, 0.150, 0.860)'
+  , 'ease-in-out-back':  'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
+};
+
+},{}],44:[function(require,module,exports){
+
+var prop = require('transform-property');
+
+// IE <=8 doesn't have `getComputedStyle`
+if (!prop || !window.getComputedStyle) {
+  module.exports = false;
+
+} else {
+  var map = {
+    webkitTransform: '-webkit-transform',
+    OTransform: '-o-transform',
+    msTransform: '-ms-transform',
+    MozTransform: '-moz-transform',
+    transform: 'transform'
+  };
+
+  // from: https://gist.github.com/lorenzopolidori/3794226
+  var el = document.createElement('div');
+  el.style[prop] = 'translate3d(1px,1px,1px)';
+  document.body.insertBefore(el, null);
+  var val = getComputedStyle(el).getPropertyValue(map[prop]);
+  document.body.removeChild(el);
+  module.exports = null != val && val.length && 'none' != val;
+}
+
+},{"transform-property":45}],45:[function(require,module,exports){
+
+var styles = [
+  'webkitTransform',
+  'MozTransform',
+  'msTransform',
+  'OTransform',
+  'transform'
+];
+
+var el = document.createElement('p');
+var style;
+
+for (var i = 0; i < styles.length; i++) {
+  style = styles[i];
+  if (null != el.style[style]) {
+    module.exports = style;
+    break;
+  }
+}
+
+},{}],46:[function(require,module,exports){
+/* global requestAnimationFrame */
+
+var eases = require("eases");
+
+if (typeof requestAnimationFrame === "undefined") {
+    var requestAnimationFrame = function (fn) {
+        setTimeout(fn, 1000 / 60);
+    }
+}
+
+function transformation (from, to, callback, args, after) {
+    
+    var dur, easing, cv, diff, c, lastExecution, fps;
+    var canceled, paused, running, stopped;
+    var timeElapsed, startTime, pauseTimeElapsed, pauseStartTime;
+    
+    args = args || {};
+    
+    if (typeof args === "function" && !after) {
+        after = args;
+        args = {};
+    }
+    
+    after = typeof after === "function" ? after : function () {};
+    
+    if (typeof callback === "undefined" || !callback) {
+        throw new Error("Argument callback must be a function.");
+    }
+    
+    init();
+    
+    function init () {
+        
+        dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500;
+        cv = from;
+        diff = to - from;
+        c = 0, // number of times loop get's executed
+        lastExecution = 0;
+        fps = args.fps || 60;
+        canceled = false;
+        paused = false;
+        running = false;
+        stopped = false;
+        timeElapsed = 0;
+        startTime = 0;
+        pauseTimeElapsed = 0;
+        pauseStartTime = 0;
+        easing = eases.linear;
+        
+        if (args.easing) {
+            if (typeof args.easing === "function") {
+                easing = args.easing;
+            }
+            else {
+                easing = eases[args.easing];
+            }
+        }
+    }
+    
+    function loop () {
+        
+        var dt, tElapsed;
+        
+        if (!running) {
+            return;
+        }
+        
+        if ((Date.now() - lastExecution) > (1000 / fps)) {
+            
+            if (canceled || paused) {
+                return;
+            }
+            
+            c += 1;
+            tElapsed = elapsed();
+            
+            if (tElapsed > dur || stopped) {
+                
+                cv = from + diff;
+                
+                if (!stopped) {
+                    stop();
+                }
+                
+                return;
+            }
+            
+            cv = easing(tElapsed / dur) * diff + from;
+            
+            callback(cv);
+            
+            dt = elapsed() - tElapsed;
+            
+            lastExecution = Date.now();
+        }
+        
+        requestAnimationFrame(loop);
+    };
+    
+    function elapsed () {
+        
+        if (running && !paused) {
+            timeElapsed = ((+(new Date()) - startTime) - pauseTimeElapsed);
+        }
+        
+        return timeElapsed;
+    }
+    
+    function start () {
+        
+        reset();
+        
+        startTime = +(new Date());
+        pauseStartTime = startTime;
+        running = true;
+        
+        requestAnimationFrame(loop);
+    }
+    
+    function stop () {
+        
+        running = false;
+        paused = false;
+        
+        callback(to);
+        after();
+    }
+    
+    function resume () {
+        
+        if (!paused) {
+            return;
+        }
+        
+        paused = false;
+        pauseTimeElapsed += +(new Date()) - pauseStartTime;
+        
+        requestAnimationFrame(loop);
+    }
+    
+    function pause () {
+        paused = true;
+        pauseStartTime = +(new Date());
+    }
+    
+    function cancel () {
+        
+        if (!running) {
+            return;
+        }
+        
+        elapsed();
+        
+        canceled = true;
+        running = false;
+        paused = false;
+        
+        after();
+    }
+    
+    function reset () {
+        
+        if (running) {
+            cancel();
+        }
+        
+        init();
+    }
+    
+    return {
+        start: start,
+        stop: stop,
+        pause: pause,
+        resume: resume,
+        cancel: cancel,
+        elapsed: elapsed,
+        reset: reset
+    };
+}
+
+function transform () {
+    
+    var t = transformation.apply(undefined, arguments);
+    
+    t.start();
+    
+    return t;
+}
+
+module.exports = {
+    transformation: transformation,
+    transform: transform
+};
+
+},{"eases":65}],47:[function(require,module,exports){
+arguments[4][4][0].apply(exports,arguments)
+},{"dup":4}],48:[function(require,module,exports){
+arguments[4][5][0].apply(exports,arguments)
+},{"dup":5}],49:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],50:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"./bounce-out":52,"dup":7}],51:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"./bounce-out":52,"dup":8}],52:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],53:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],54:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"dup":11}],55:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],56:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],57:[function(require,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],58:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],59:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],60:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17}],61:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],62:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19}],63:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],64:[function(require,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21}],65:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"./back-in":48,"./back-in-out":47,"./back-out":49,"./bounce-in":51,"./bounce-in-out":50,"./bounce-out":52,"./circ-in":54,"./circ-in-out":53,"./circ-out":55,"./cubic-in":57,"./cubic-in-out":56,"./cubic-out":58,"./elastic-in":60,"./elastic-in-out":59,"./elastic-out":61,"./expo-in":63,"./expo-in-out":62,"./expo-out":64,"./linear":66,"./quad-in":68,"./quad-in-out":67,"./quad-out":69,"./quart-in":71,"./quart-in-out":70,"./quart-out":72,"./quint-in":74,"./quint-in-out":73,"./quint-out":75,"./sine-in":77,"./sine-in-out":76,"./sine-out":78,"dup":22}],66:[function(require,module,exports){
+arguments[4][23][0].apply(exports,arguments)
+},{"dup":23}],67:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24}],68:[function(require,module,exports){
+arguments[4][25][0].apply(exports,arguments)
+},{"dup":25}],69:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],70:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],71:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],72:[function(require,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"dup":29}],73:[function(require,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"dup":30}],74:[function(require,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"dup":31}],75:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],76:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],77:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"dup":34}],78:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],79:[function(require,module,exports){
+/* global module, require */
+
+module.exports = require("./src/xmugly.js");
+
+},{"./src/xmugly.js":80}],80:[function(require,module,exports){
+/* global module */
+
+(function () {
+    
+    //
+    // Compiles
+    //     . some_element attr1 val1, attr2 val2
+    // to:
+    //     <some_element attr1="val1", attr2="val2" />
+    // and
+    //     . some_element attr1 val1 :
+    //     ...
+    //     --
+    // to
+    //     <some_element attr1="val1">
+    //     ...
+    //     </some_element>
+    //
+    function compile (text, defaultMacros) {
+        
+    //
+    // A stack of element names, so that know which "--" closes which element.
+    //
+        var stack = [];
+        var lines = toLines(text);
+        var macros = processMacros(lines);
+        
+        if (Array.isArray(defaultMacros)) {
+            defaultMacros.forEach(function (macro) {
+                macros.push(macro);
+            });
+        }
+        
+        lines = removeMacroDefinitions(lines);
+        
+        lines = lines.map(function (line, i) {
+            
+            var name, attributes, parts, trimmed, head, whitespace, strings, result, hasContent;
+            
+            trimmed = line.trim();
+            strings = [];
+            whitespace = line.replace(/^([\s]*).*$/, "$1");
+            
+            if (trimmed === "--") {
+                
+                if (!stack.length) {
+                    throw new SyntaxError(
+                        "Closing '--' without matching opening tag on line " + (i + 1)
+                    );
+                }
+                
+                return whitespace + '</' + stack.pop() + '>';
+            }
+            
+            if (trimmed[0] !== ".") {
+                return line;
+            }
+            
+            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
+                
+                strings.push(p1);
+                
+                return "{{" + strings.length + "}}";
+            });
+            
+            if (trimmed[trimmed.length - 1] === ":") {
+                hasContent = true;
+                trimmed = trimmed.replace(/:$/, "");
+            }
+            
+            parts = trimmed.split(",");
+            head = parts[0].split(" ");
+            
+            head.shift();
+            
+            name = head[0];
+            
+            if (hasContent) {
+                stack.push(name);
+            }
+            
+            head.shift();
+            
+            parts[0] = head.join(" ");
+            
+            attributes = [];
+            
+            parts.forEach(function (current) {
+                
+                var split, name, value, enlarged;
+                
+                split = normalizeWhitespace(current).split(" ");
+                
+                name = split[0].trim();
+                
+                if (!name) {
+                    return;
+                }
+                
+                enlarged = applyMacros(name, macros);
+                
+                if (enlarged) {
+                    value = enlarged.value;
+                    name = enlarged.name;
+                }
+                else {
+                    
+                    split.shift();
+                    
+                    value = split.join(" ");
+                }
+                
+                attributes.push(name + '="' + value + '"');
+            });
+            
+            result = whitespace + '<' + name + (attributes.length ? ' ' : '') +
+                attributes.join(" ") + (hasContent ? '>' : ' />');
+            
+            strings.forEach(function (value, i) {
+                result = result.replace("{{" + (i + 1) + "}}", value);
+            });
+            
+            return result;
+            
+        });
+        
+        return toText(lines);
+    }
+
+    function toLines (text) {
+        return text.split("\n");
+    }
+
+    function toText (lines) {
+        return lines.join("\n");
+    }
+
+    //
+    // Creates a replacement rule from an attribute macro line.
+    // Attribute macros look like this:
+    //
+    // ~ @ asset _
+    //
+    // The ~ at the start of a line signalizes that this is an attribute macro.
+    // The first non-whitespace part (@ in this case) is the character or text part
+    // which will be used as the macro identifier.
+    // The second part (asset in this case) is the attribute name.
+    // The third and last part (_ here) is the attribute value.
+    // The "_" character will be replaced by whatever follows the macro identifier.
+    // 
+    // The example above will result in this transformation:
+    //
+    // . move @frodo => <move asset="frodo" />
+    //
+    // Some more examples:
+    //
+    // Macro: ~ : duration _
+    // Transformation: . wait :200 => <wait duration="200" />
+    //
+    // Macro: ~ + _ true
+    // Macro: ~ - _ false
+    // Transformation: . stage -resize, +center => <stage resize="false" center="true" />
+    //
+    function processAttributeMacro (line) {
+        
+        var parts = normalizeWhitespace(line).split(" ");
+        
+        parts.shift();
+        
+        return {
+            identifier: parts[0],
+            attribute: parts[1],
+            value: parts[2]
+        };
+    }
+
+    function processMacros (lines) {
+        
+        var macros = [];
+        
+        lines.forEach(function (line) {
+            
+            if (line.trim()[0] !== "~") {
+                return;
+            }
+            
+            macros.push(processAttributeMacro(line));
+        });
+        
+        return macros;
+    }
+
+    function applyMacros (raw, macros) {
+        
+        var name, value;
+        
+        macros.some(function (macro) {
+            
+            var macroValue;
+            
+            if (raw[0] !== macro.identifier) {
+                return false;
+            }
+            
+            macroValue = raw.replace(macro.identifier, "");
+            name = (macro.attribute === "_" ? macroValue : macro.attribute);
+            value = (macro.value === "_" ? macroValue : macro.value);
+            
+            return true;
+        });
+        
+        if (!name) {
+            return null;
+        }
+        
+        return {
+            name: name,
+            value: value
+        };
+    }
+    
+    function removeMacroDefinitions (lines) {
+        return lines.filter(function (line) {
+            return line.trim()[0] !== "~";
+        });
+    }
+    
+    //
+    // Replaces all whitespace with a single space character.
+    //
+    function normalizeWhitespace (text) {
+        return text.trim().replace(/[\s]+/g, " ");
+    }
+    
+    if (typeof module !== "undefined") {
+        module.exports = {
+            compile: compile
+        };
+    }
+    else {
+        window.xmugly = {
+            compile: compile
+        };
+    }
+    
+}());
+
+},{}]},{},[1]);
 
 
 /*/////////////////////////////////////////////////////////////////////////////////
@@ -594,8 +2834,6 @@ var $__WSEScripts = document.getElementsByTagName('script');
 WSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;
 
 using.modules['howler'] = WSEPath;
-using.modules['xmugly'] = WSEPath;
-using.modules['move'] = WSEPath;
 using.modules['MO5.ajax'] = WSEPath;
 using.modules['MO5.Animation'] = WSEPath;
 using.modules['MO5.assert'] = WSEPath;
@@ -2021,1532 +4259,6 @@ using.modules['WSE.commands.while'] = WSEPath;
   }
 
 })();
-
-
-/* global module */
-
-(function () {
-    
-    //
-    // Compiles
-    //     . some_element attr1 val1, attr2 val2
-    // to:
-    //     <some_element attr1="val1", attr2="val2" />
-    // and
-    //     . some_element attr1 val1 :
-    //     ...
-    //     --
-    // to
-    //     <some_element attr1="val1">
-    //     ...
-    //     </some_element>
-    //
-    function compile (text, defaultMacros) {
-        
-    //
-    // A stack of element names, so that know which "--" closes which element.
-    //
-        var stack = [];
-        var lines = toLines(text);
-        var macros = processMacros(lines);
-        
-        if (Array.isArray(defaultMacros)) {
-            defaultMacros.forEach(function (macro) {
-                macros.push(macro);
-            });
-        }
-        
-        lines = removeMacroDefinitions(lines);
-        
-        lines = lines.map(function (line, i) {
-            
-            var name, attributes, parts, trimmed, head, whitespace, strings, result, hasContent;
-            
-            trimmed = line.trim();
-            strings = [];
-            whitespace = line.replace(/^([\s]*).*$/, "$1");
-            
-            if (trimmed === "--") {
-                
-                if (!stack.length) {
-                    throw new SyntaxError(
-                        "Closing '--' without matching opening tag on line " + (i + 1)
-                    );
-                }
-                
-                return whitespace + '</' + stack.pop() + '>';
-            }
-            
-            if (trimmed[0] !== ".") {
-                return line;
-            }
-            
-            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
-                
-                strings.push(p1);
-                
-                return "{{" + strings.length + "}}";
-            });
-            
-            if (trimmed[trimmed.length - 1] === ":") {
-                hasContent = true;
-                trimmed = trimmed.replace(/:$/, "");
-            }
-            
-            parts = trimmed.split(",");
-            head = parts[0].split(" ");
-            
-            head.shift();
-            
-            name = head[0];
-            
-            if (hasContent) {
-                stack.push(name);
-            }
-            
-            head.shift();
-            
-            parts[0] = head.join(" ");
-            
-            attributes = [];
-            
-            parts.forEach(function (current) {
-                
-                var split, name, value, enlarged;
-                
-                split = normalizeWhitespace(current).split(" ");
-                
-                name = split[0].trim();
-                
-                if (!name) {
-                    return;
-                }
-                
-                enlarged = applyMacros(name, macros);
-                
-                if (enlarged) {
-                    value = enlarged.value;
-                    name = enlarged.name;
-                }
-                else {
-                    
-                    split.shift();
-                    
-                    value = split.join(" ");
-                }
-                
-                attributes.push(name + '="' + value + '"');
-            });
-            
-            result = whitespace + '<' + name + (attributes.length ? ' ' : '') +
-                attributes.join(" ") + (hasContent ? '>' : ' />');
-            
-            strings.forEach(function (value, i) {
-                result = result.replace("{{" + (i + 1) + "}}", value);
-            });
-            
-            return result;
-            
-        });
-        
-        return toText(lines);
-    }
-
-    function toLines (text) {
-        return text.split("\n");
-    }
-
-    function toText (lines) {
-        return lines.join("\n");
-    }
-
-    //
-    // Creates a replacement rule from an attribute macro line.
-    // Attribute macros look like this:
-    //
-    // ~ @ asset _
-    //
-    // The ~ at the start of a line signalizes that this is an attribute macro.
-    // The first non-whitespace part (@ in this case) is the character or text part
-    // which will be used as the macro identifier.
-    // The second part (asset in this case) is the attribute name.
-    // The third and last part (_ here) is the attribute value.
-    // The "_" character will be replaced by whatever follows the macro identifier.
-    // 
-    // The example above will result in this transformation:
-    //
-    // . move @frodo => <move asset="frodo" />
-    //
-    // Some more examples:
-    //
-    // Macro: ~ : duration _
-    // Transformation: . wait :200 => <wait duration="200" />
-    //
-    // Macro: ~ + _ true
-    // Macro: ~ - _ false
-    // Transformation: . stage -resize, +center => <stage resize="false" center="true" />
-    //
-    function processAttributeMacro (line) {
-        
-        var parts = normalizeWhitespace(line).split(" ");
-        
-        parts.shift();
-        
-        return {
-            identifier: parts[0],
-            attribute: parts[1],
-            value: parts[2]
-        };
-    }
-
-    function processMacros (lines) {
-        
-        var macros = [];
-        
-        lines.forEach(function (line) {
-            
-            if (line.trim()[0] !== "~") {
-                return;
-            }
-            
-            macros.push(processAttributeMacro(line));
-        });
-        
-        return macros;
-    }
-
-    function applyMacros (raw, macros) {
-        
-        var name, value;
-        
-        macros.some(function (macro) {
-            
-            var macroValue;
-            
-            if (raw[0] !== macro.identifier) {
-                return false;
-            }
-            
-            macroValue = raw.replace(macro.identifier, "");
-            name = (macro.attribute === "_" ? macroValue : macro.attribute);
-            value = (macro.value === "_" ? macroValue : macro.value);
-            
-            return true;
-        });
-        
-        if (!name) {
-            return null;
-        }
-        
-        return {
-            name: name,
-            value: value
-        };
-    }
-    
-    function removeMacroDefinitions (lines) {
-        return lines.filter(function (line) {
-            return line.trim()[0] !== "~";
-        });
-    }
-    
-    //
-    // Replaces all whitespace with a single space character.
-    //
-    function normalizeWhitespace (text) {
-        return text.trim().replace(/[\s]+/g, " ");
-    }
-    
-    if (typeof module !== "undefined") {
-        module.exports = {
-            compile: compile
-        };
-    }
-    else {
-        window.xmugly = {
-            compile: compile
-        };
-    }
-    
-}());
-
-
-
-;(function(){
-
-/**
- * Require the module at `name`.
- *
- * @param {String} name
- * @return {Object} exports
- * @api public
- */
-
-function require(name) {
-  var module = require.modules[name];
-  if (!module) throw new Error('failed to require "' + name + '"');
-
-  if (!('exports' in module) && typeof module.definition === 'function') {
-    module.client = module.component = true;
-    module.definition.call(this, module.exports = {}, module);
-    delete module.definition;
-  }
-
-  return module.exports;
-}
-
-/**
- * Meta info, accessible in the global scope unless you use AMD option.
- */
-
-require.loader = 'component';
-
-/**
- * Internal helper object, contains a sorting function for semantiv versioning
- */
-require.helper = {};
-require.helper.semVerSort = function(a, b) {
-  var aArray = a.version.split('.');
-  var bArray = b.version.split('.');
-  for (var i=0; i<aArray.length; ++i) {
-    var aInt = parseInt(aArray[i], 10);
-    var bInt = parseInt(bArray[i], 10);
-    if (aInt === bInt) {
-      var aLex = aArray[i].substr((""+aInt).length);
-      var bLex = bArray[i].substr((""+bInt).length);
-      if (aLex === '' && bLex !== '') return 1;
-      if (aLex !== '' && bLex === '') return -1;
-      if (aLex !== '' && bLex !== '') return aLex > bLex ? 1 : -1;
-      continue;
-    } else if (aInt > bInt) {
-      return 1;
-    } else {
-      return -1;
-    }
-  }
-  return 0;
-}
-
-/**
- * Find and require a module which name starts with the provided name.
- * If multiple modules exists, the highest semver is used. 
- * This function can only be used for remote dependencies.
-
- * @param {String} name - module name: `user~repo`
- * @param {Boolean} returnPath - returns the canonical require path if true, 
- *                               otherwise it returns the epxorted module
- */
-require.latest = function (name, returnPath) {
-  function showError(name) {
-    throw new Error('failed to find latest module of "' + name + '"');
-  }
-  // only remotes with semvers, ignore local files conataining a '/'
-  var versionRegexp = /(.*)~(.*)@v?(\d+\.\d+\.\d+[^\/]*)$/;
-  var remoteRegexp = /(.*)~(.*)/;
-  if (!remoteRegexp.test(name)) showError(name);
-  var moduleNames = Object.keys(require.modules);
-  var semVerCandidates = [];
-  var otherCandidates = []; // for instance: name of the git branch
-  for (var i=0; i<moduleNames.length; i++) {
-    var moduleName = moduleNames[i];
-    if (new RegExp(name + '@').test(moduleName)) {
-        var version = moduleName.substr(name.length+1);
-        var semVerMatch = versionRegexp.exec(moduleName);
-        if (semVerMatch != null) {
-          semVerCandidates.push({version: version, name: moduleName});
-        } else {
-          otherCandidates.push({version: version, name: moduleName});
-        } 
-    }
-  }
-  if (semVerCandidates.concat(otherCandidates).length === 0) {
-    showError(name);
-  }
-  if (semVerCandidates.length > 0) {
-    var module = semVerCandidates.sort(require.helper.semVerSort).pop().name;
-    if (returnPath === true) {
-      return module;
-    }
-    return require(module);
-  }
-  // if the build contains more than one branch of the same module
-  // you should not use this funciton
-  var module = otherCandidates.sort(function(a, b) {return a.name > b.name})[0].name;
-  if (returnPath === true) {
-    return module;
-  }
-  return require(module);
-}
-
-/**
- * Registered modules.
- */
-
-require.modules = {};
-
-/**
- * Register module at `name` with callback `definition`.
- *
- * @param {String} name
- * @param {Function} definition
- * @api private
- */
-
-require.register = function (name, definition) {
-  require.modules[name] = {
-    definition: definition
-  };
-};
-
-/**
- * Define a module's exports immediately with `exports`.
- *
- * @param {String} name
- * @param {Generic} exports
- * @api private
- */
-
-require.define = function (name, exports) {
-  require.modules[name] = {
-    exports: exports
-  };
-};
-require.register("component~transform-property@0.0.1", function (exports, module) {
-
-var styles = [
-  'webkitTransform',
-  'MozTransform',
-  'msTransform',
-  'OTransform',
-  'transform'
-];
-
-var el = document.createElement('p');
-var style;
-
-for (var i = 0; i < styles.length; i++) {
-  style = styles[i];
-  if (null != el.style[style]) {
-    module.exports = style;
-    break;
-  }
-}
-
-});
-
-require.register("component~has-translate3d@0.0.3", function (exports, module) {
-
-var prop = require('component~transform-property@0.0.1');
-
-// IE <=8 doesn't have `getComputedStyle`
-if (!prop || !window.getComputedStyle) {
-  module.exports = false;
-
-} else {
-  var map = {
-    webkitTransform: '-webkit-transform',
-    OTransform: '-o-transform',
-    msTransform: '-ms-transform',
-    MozTransform: '-moz-transform',
-    transform: 'transform'
-  };
-
-  // from: https://gist.github.com/lorenzopolidori/3794226
-  var el = document.createElement('div');
-  el.style[prop] = 'translate3d(1px,1px,1px)';
-  document.body.insertBefore(el, null);
-  var val = getComputedStyle(el).getPropertyValue(map[prop]);
-  document.body.removeChild(el);
-  module.exports = null != val && val.length && 'none' != val;
-}
-
-});
-
-require.register("yields~has-transitions@1.0.0", function (exports, module) {
-/**
- * Check if `el` or browser supports transitions.
- *
- * @param {Element} el
- * @return {Boolean}
- * @api public
- */
-
-exports = module.exports = function(el){
-  switch (arguments.length) {
-    case 0: return bool;
-    case 1: return bool
-      ? transitions(el)
-      : bool;
-  }
-};
-
-/**
- * Check if the given `el` has transitions.
- *
- * @param {Element} el
- * @return {Boolean}
- * @api private
- */
-
-function transitions(el, styl){
-  if (el.transition) return true;
-  styl = window.getComputedStyle(el);
-  return !! parseFloat(styl.transitionDuration, 10);
-}
-
-/**
- * Style.
- */
-
-var styl = document.body.style;
-
-/**
- * Export support.
- */
-
-var bool = 'transition' in styl
-  || 'webkitTransition' in styl
-  || 'MozTransition' in styl
-  || 'msTransition' in styl;
-
-});
-
-require.register("component~event@0.1.4", function (exports, module) {
-var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
-    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
-    prefix = bind !== 'addEventListener' ? 'on' : '';
-
-/**
- * Bind `el` event `type` to `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.bind = function(el, type, fn, capture){
-  el[bind](prefix + type, fn, capture || false);
-  return fn;
-};
-
-/**
- * Unbind `el` event `type`'s callback `fn`.
- *
- * @param {Element} el
- * @param {String} type
- * @param {Function} fn
- * @param {Boolean} capture
- * @return {Function}
- * @api public
- */
-
-exports.unbind = function(el, type, fn, capture){
-  el[unbind](prefix + type, fn, capture || false);
-  return fn;
-};
-});
-
-require.register("ecarter~css-emitter@0.0.1", function (exports, module) {
-/**
- * Module Dependencies
- */
-
-var events = require('component~event@0.1.4');
-
-// CSS events
-
-var watch = [
-  'transitionend'
-, 'webkitTransitionEnd'
-, 'oTransitionEnd'
-, 'MSTransitionEnd'
-, 'animationend'
-, 'webkitAnimationEnd'
-, 'oAnimationEnd'
-, 'MSAnimationEnd'
-];
-
-/**
- * Expose `CSSnext`
- */
-
-module.exports = CssEmitter;
-
-/**
- * Initialize a new `CssEmitter`
- *
- */
-
-function CssEmitter(element){
-  if (!(this instanceof CssEmitter)) return new CssEmitter(element);
-  this.el = element;
-}
-
-/**
- * Bind CSS events.
- *
- * @api public
- */
-
-CssEmitter.prototype.bind = function(fn){
-  for (var i=0; i < watch.length; i++) {
-    events.bind(this.el, watch[i], fn);
-  }
-  return this;
-};
-
-/**
- * Unbind CSS events
- * 
- * @api public
- */
-
-CssEmitter.prototype.unbind = function(fn){
-  for (var i=0; i < watch.length; i++) {
-    events.unbind(this.el, watch[i], fn);
-  }
-  return this;
-};
-
-/**
- * Fire callback only once
- * 
- * @api public
- */
-
-CssEmitter.prototype.once = function(fn){
-  var self = this;
-  function on(){
-    self.unbind(on);
-    fn.apply(self.el, arguments);
-  }
-  self.bind(on);
-  return this;
-};
-
-
-});
-
-require.register("component~once@0.0.1", function (exports, module) {
-
-/**
- * Identifier.
- */
-
-var n = 0;
-
-/**
- * Global.
- */
-
-var global = (function(){ return this })();
-
-/**
- * Make `fn` callable only once.
- *
- * @param {Function} fn
- * @return {Function}
- * @api public
- */
-
-module.exports = function(fn) {
-  var id = n++;
-
-  function once(){
-    // no receiver
-    if (this == global) {
-      if (once.called) return;
-      once.called = true;
-      return fn.apply(this, arguments);
-    }
-
-    // receiver
-    var key = '__called_' + id + '__';
-    if (this[key]) return;
-    this[key] = true;
-    return fn.apply(this, arguments);
-  }
-
-  return once;
-};
-
-});
-
-require.register("yields~after-transition@0.0.1", function (exports, module) {
-
-/**
- * dependencies
- */
-
-var has = require('yields~has-transitions@1.0.0')
-  , emitter = require('ecarter~css-emitter@0.0.1')
-  , once = require('component~once@0.0.1');
-
-/**
- * Transition support.
- */
-
-var supported = has();
-
-/**
- * Export `after`
- */
-
-module.exports = after;
-
-/**
- * Invoke the given `fn` after transitions
- *
- * It will be invoked only if the browser
- * supports transitions __and__
- * the element has transitions
- * set in `.style` or css.
- *
- * @param {Element} el
- * @param {Function} fn
- * @return {Function} fn
- * @api public
- */
-
-function after(el, fn){
-  if (!supported || !has(el)) return fn();
-  emitter(el).bind(fn);
-  return fn;
-};
-
-/**
- * Same as `after()` only the function is invoked once.
- *
- * @param {Element} el
- * @param {Function} fn
- * @return {Function}
- * @api public
- */
-
-after.once = function(el, fn){
-  var callback = once(fn);
-  after(el, fn = function(){
-    emitter(el).unbind(fn);
-    callback();
-  });
-};
-
-});
-
-require.register("component~emitter@1.2.0", function (exports, module) {
-
-/**
- * Expose `Emitter`.
- */
-
-module.exports = Emitter;
-
-/**
- * Initialize a new `Emitter`.
- *
- * @api public
- */
-
-function Emitter(obj) {
-  if (obj) return mixin(obj);
-};
-
-/**
- * Mixin the emitter properties.
- *
- * @param {Object} obj
- * @return {Object}
- * @api private
- */
-
-function mixin(obj) {
-  for (var key in Emitter.prototype) {
-    obj[key] = Emitter.prototype[key];
-  }
-  return obj;
-}
-
-/**
- * Listen on the given `event` with `fn`.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.on =
-Emitter.prototype.addEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
-    .push(fn);
-  return this;
-};
-
-/**
- * Adds an `event` listener that will be invoked a single
- * time then automatically removed.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.once = function(event, fn){
-  function on() {
-    this.off(event, on);
-    fn.apply(this, arguments);
-  }
-
-  on.fn = fn;
-  this.on(event, on);
-  return this;
-};
-
-/**
- * Remove the given callback for `event` or all
- * registered callbacks.
- *
- * @param {String} event
- * @param {Function} fn
- * @return {Emitter}
- * @api public
- */
-
-Emitter.prototype.off =
-Emitter.prototype.removeListener =
-Emitter.prototype.removeAllListeners =
-Emitter.prototype.removeEventListener = function(event, fn){
-  this._callbacks = this._callbacks || {};
-
-  // all
-  if (0 == arguments.length) {
-    this._callbacks = {};
-    return this;
-  }
-
-  // specific event
-  var callbacks = this._callbacks['$' + event];
-  if (!callbacks) return this;
-
-  // remove all handlers
-  if (1 == arguments.length) {
-    delete this._callbacks['$' + event];
-    return this;
-  }
-
-  // remove specific handler
-  var cb;
-  for (var i = 0; i < callbacks.length; i++) {
-    cb = callbacks[i];
-    if (cb === fn || cb.fn === fn) {
-      callbacks.splice(i, 1);
-      break;
-    }
-  }
-  return this;
-};
-
-/**
- * Emit `event` with the given args.
- *
- * @param {String} event
- * @param {Mixed} ...
- * @return {Emitter}
- */
-
-Emitter.prototype.emit = function(event){
-  this._callbacks = this._callbacks || {};
-  var args = [].slice.call(arguments, 1)
-    , callbacks = this._callbacks['$' + event];
-
-  if (callbacks) {
-    callbacks = callbacks.slice(0);
-    for (var i = 0, len = callbacks.length; i < len; ++i) {
-      callbacks[i].apply(this, args);
-    }
-  }
-
-  return this;
-};
-
-/**
- * Return array of callbacks for `event`.
- *
- * @param {String} event
- * @return {Array}
- * @api public
- */
-
-Emitter.prototype.listeners = function(event){
-  this._callbacks = this._callbacks || {};
-  return this._callbacks['$' + event] || [];
-};
-
-/**
- * Check if this emitter has `event` handlers.
- *
- * @param {String} event
- * @return {Boolean}
- * @api public
- */
-
-Emitter.prototype.hasListeners = function(event){
-  return !! this.listeners(event).length;
-};
-
-});
-
-require.register("yields~css-ease@0.0.1", function (exports, module) {
-
-/**
- * CSS Easing functions
- */
-
-module.exports = {
-    'in':                'ease-in'
-  , 'out':               'ease-out'
-  , 'in-out':            'ease-in-out'
-  , 'snap':              'cubic-bezier(0,1,.5,1)'
-  , 'linear':            'cubic-bezier(0.250, 0.250, 0.750, 0.750)'
-  , 'ease-in-quad':      'cubic-bezier(0.550, 0.085, 0.680, 0.530)'
-  , 'ease-in-cubic':     'cubic-bezier(0.550, 0.055, 0.675, 0.190)'
-  , 'ease-in-quart':     'cubic-bezier(0.895, 0.030, 0.685, 0.220)'
-  , 'ease-in-quint':     'cubic-bezier(0.755, 0.050, 0.855, 0.060)'
-  , 'ease-in-sine':      'cubic-bezier(0.470, 0.000, 0.745, 0.715)'
-  , 'ease-in-expo':      'cubic-bezier(0.950, 0.050, 0.795, 0.035)'
-  , 'ease-in-circ':      'cubic-bezier(0.600, 0.040, 0.980, 0.335)'
-  , 'ease-in-back':      'cubic-bezier(0.600, -0.280, 0.735, 0.045)'
-  , 'ease-out-quad':     'cubic-bezier(0.250, 0.460, 0.450, 0.940)'
-  , 'ease-out-cubic':    'cubic-bezier(0.215, 0.610, 0.355, 1.000)'
-  , 'ease-out-quart':    'cubic-bezier(0.165, 0.840, 0.440, 1.000)'
-  , 'ease-out-quint':    'cubic-bezier(0.230, 1.000, 0.320, 1.000)'
-  , 'ease-out-sine':     'cubic-bezier(0.390, 0.575, 0.565, 1.000)'
-  , 'ease-out-expo':     'cubic-bezier(0.190, 1.000, 0.220, 1.000)'
-  , 'ease-out-circ':     'cubic-bezier(0.075, 0.820, 0.165, 1.000)'
-  , 'ease-out-back':     'cubic-bezier(0.175, 0.885, 0.320, 1.275)'
-  , 'ease-out-quad':     'cubic-bezier(0.455, 0.030, 0.515, 0.955)'
-  , 'ease-out-cubic':    'cubic-bezier(0.645, 0.045, 0.355, 1.000)'
-  , 'ease-in-out-quart': 'cubic-bezier(0.770, 0.000, 0.175, 1.000)'
-  , 'ease-in-out-quint': 'cubic-bezier(0.860, 0.000, 0.070, 1.000)'
-  , 'ease-in-out-sine':  'cubic-bezier(0.445, 0.050, 0.550, 0.950)'
-  , 'ease-in-out-expo':  'cubic-bezier(1.000, 0.000, 0.000, 1.000)'
-  , 'ease-in-out-circ':  'cubic-bezier(0.785, 0.135, 0.150, 0.860)'
-  , 'ease-in-out-back':  'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
-};
-
-});
-
-require.register("component~query@0.0.3", function (exports, module) {
-function one(selector, el) {
-  return el.querySelector(selector);
-}
-
-exports = module.exports = function(selector, el){
-  el = el || document;
-  return one(selector, el);
-};
-
-exports.all = function(selector, el){
-  el = el || document;
-  return el.querySelectorAll(selector);
-};
-
-exports.engine = function(obj){
-  if (!obj.one) throw new Error('.one callback required');
-  if (!obj.all) throw new Error('.all callback required');
-  one = obj.one;
-  exports.all = obj.all;
-  return exports;
-};
-
-});
-
-require.register("move", function (exports, module) {
-/**
- * Module Dependencies.
- */
-
-var Emitter = require('component~emitter@1.2.0');
-var query = require('component~query@0.0.3');
-var after = require('yields~after-transition@0.0.1');
-var has3d = require('component~has-translate3d@0.0.3');
-var ease = require('yields~css-ease@0.0.1');
-
-/**
- * CSS Translate
- */
-
-var translate = has3d
-  ? ['translate3d(', ', 0)']
-  : ['translate(', ')'];
-
-/**
- * Export `Move`
- */
-
-module.exports = Move;
-
-/**
- * Get computed style.
- */
-
-var style = window.getComputedStyle
-  || window.currentStyle;
-
-/**
- * Library version.
- */
-
-Move.version = '0.5.0';
-
-/**
- * Export `ease`
- */
-
-Move.ease = ease;
-
-/**
- * Defaults.
- *
- *   `duration` - default duration of 500ms
- *
- */
-
-Move.defaults = {
-  duration: 500
-};
-
-/**
- * Default element selection utilized by `move(selector)`.
- *
- * Override to implement your own selection, for example
- * with jQuery one might write:
- *
- *     move.select = function(selector) {
- *       return jQuery(selector).get(0);
- *     };
- *
- * @param {Object|String} selector
- * @return {Element}
- * @api public
- */
-
-Move.select = function(selector){
-  if ('string' != typeof selector) return selector;
-  return query(selector);
-};
-
-/**
- * Initialize a new `Move` with the given `el`.
- *
- * @param {Element} el
- * @api public
- */
-
-function Move(el) {
-  if (!(this instanceof Move)) return new Move(el);
-  if ('string' == typeof el) el = query(el);
-  if (!el) throw new TypeError('Move must be initialized with element or selector');
-  this.el = el;
-  this._props = {};
-  this._rotate = 0;
-  this._transitionProps = [];
-  this._transforms = [];
-  this.duration(Move.defaults.duration)
-};
-
-
-/**
- * Inherit from `EventEmitter.prototype`.
- */
-
-Emitter(Move.prototype);
-
-/**
- * Buffer `transform`.
- *
- * @param {String} transform
- * @return {Move} for chaining
- * @api private
- */
-
-Move.prototype.transform = function(transform){
-  this._transforms.push(transform);
-  return this;
-};
-
-/**
- * Skew `x` and `y`.
- *
- * @param {Number} x
- * @param {Number} y
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.skew = function(x, y){
-  return this.transform('skew('
-    + x + 'deg, '
-    + (y || 0)
-    + 'deg)');
-};
-
-/**
- * Skew x by `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.skewX = function(n){
-  return this.transform('skewX(' + n + 'deg)');
-};
-
-/**
- * Skew y by `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.skewY = function(n){
-  return this.transform('skewY(' + n + 'deg)');
-};
-
-/**
- * Translate `x` and `y` axis.
- *
- * @param {Number} x
- * @param {Number} y
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.translate =
-Move.prototype.to = function(x, y){
-  return this.transform(translate.join(''
-    + x +'px, '
-    + (y || 0)
-    + 'px'));
-};
-
-/**
- * Translate on the x axis to `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.translateX =
-Move.prototype.x = function(n){
-  return this.transform('translateX(' + n + 'px)');
-};
-
-/**
- * Translate on the y axis to `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.translateY =
-Move.prototype.y = function(n){
-  return this.transform('translateY(' + n + 'px)');
-};
-
-/**
- * Scale the x and y axis by `x`, or
- * individually scale `x` and `y`.
- *
- * @param {Number} x
- * @param {Number} y
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.scale = function(x, y){
-  return this.transform('scale('
-    + x + ', '
-    + (y || x)
-    + ')');
-};
-
-/**
- * Scale x axis by `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.scaleX = function(n){
-  return this.transform('scaleX(' + n + ')')
-};
-
-/**
- * Apply a matrix transformation
- *
- * @param {Number} m11 A matrix coefficient
- * @param {Number} m12 A matrix coefficient
- * @param {Number} m21 A matrix coefficient
- * @param {Number} m22 A matrix coefficient
- * @param {Number} m31 A matrix coefficient
- * @param {Number} m32 A matrix coefficient
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.matrix = function(m11, m12, m21, m22, m31, m32){
-  return this.transform('matrix(' + [m11,m12,m21,m22,m31,m32].join(',') + ')');
-};
-
-/**
- * Scale y axis by `n`.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.scaleY = function(n){
-  return this.transform('scaleY(' + n + ')')
-};
-
-/**
- * Rotate `n` degrees.
- *
- * @param {Number} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.rotate = function(n){
-  return this.transform('rotate(' + n + 'deg)');
-};
-
-/**
- * Set transition easing function to to `fn` string.
- *
- * When:
- *
- *   - null "ease" is used
- *   - "in" "ease-in" is used
- *   - "out" "ease-out" is used
- *   - "in-out" "ease-in-out" is used
- *
- * @param {String} fn
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.ease = function(fn){
-  fn = ease[fn] || fn || 'ease';
-  return this.setVendorProperty('transition-timing-function', fn);
-};
-
-/**
- * Set animation properties
- *
- * @param {String} name
- * @param {Object} props
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.animate = function(name, props){
-  for (var i in props){
-    if (props.hasOwnProperty(i)){
-      this.setVendorProperty('animation-' + i, props[i])
-    }
-  }
-  return this.setVendorProperty('animation-name', name);
-}
-
-/**
- * Set duration to `n`.
- *
- * @param {Number|String} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.duration = function(n){
-  n = this._duration = 'string' == typeof n
-    ? parseFloat(n) * 1000
-    : n;
-  return this.setVendorProperty('transition-duration', n + 'ms');
-};
-
-/**
- * Delay the animation by `n`.
- *
- * @param {Number|String} n
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.delay = function(n){
-  n = 'string' == typeof n
-    ? parseFloat(n) * 1000
-    : n;
-  return this.setVendorProperty('transition-delay', n + 'ms');
-};
-
-/**
- * Set `prop` to `val`, deferred until `.end()` is invoked.
- *
- * @param {String} prop
- * @param {String} val
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.setProperty = function(prop, val){
-  this._props[prop] = val;
-  return this;
-};
-
-/**
- * Set a vendor prefixed `prop` with the given `val`.
- *
- * @param {String} prop
- * @param {String} val
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.setVendorProperty = function(prop, val){
-  this.setProperty('-webkit-' + prop, val);
-  this.setProperty('-moz-' + prop, val);
-  this.setProperty('-ms-' + prop, val);
-  this.setProperty('-o-' + prop, val);
-  return this;
-};
-
-/**
- * Set `prop` to `value`, deferred until `.end()` is invoked
- * and adds the property to the list of transition props.
- *
- * @param {String} prop
- * @param {String} val
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.set = function(prop, val){
-  this.transition(prop);
-  this._props[prop] = val;
-  return this;
-};
-
-/**
- * Increment `prop` by `val`, deferred until `.end()` is invoked
- * and adds the property to the list of transition props.
- *
- * @param {String} prop
- * @param {Number} val
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.add = function(prop, val){
-  if (!style) return;
-  var self = this;
-  return this.on('start', function(){
-    var curr = parseInt(self.current(prop), 10);
-    self.set(prop, curr + val + 'px');
-  });
-};
-
-/**
- * Decrement `prop` by `val`, deferred until `.end()` is invoked
- * and adds the property to the list of transition props.
- *
- * @param {String} prop
- * @param {Number} val
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.sub = function(prop, val){
-  if (!style) return;
-  var self = this;
-  return this.on('start', function(){
-    var curr = parseInt(self.current(prop), 10);
-    self.set(prop, curr - val + 'px');
-  });
-};
-
-/**
- * Get computed or "current" value of `prop`.
- *
- * @param {String} prop
- * @return {String}
- * @api public
- */
-
-Move.prototype.current = function(prop){
-  return style(this.el).getPropertyValue(prop);
-};
-
-/**
- * Add `prop` to the list of internal transition properties.
- *
- * @param {String} prop
- * @return {Move} for chaining
- * @api private
- */
-
-Move.prototype.transition = function(prop){
-  if (!this._transitionProps.indexOf(prop)) return this;
-  this._transitionProps.push(prop);
-  return this;
-};
-
-/**
- * Commit style properties, aka apply them to `el.style`.
- *
- * @return {Move} for chaining
- * @see Move#end()
- * @api private
- */
-
-Move.prototype.applyProperties = function(){
-  for (var prop in this._props) {
-    this.el.style.setProperty(prop, this._props[prop], '');
-  }
-  return this;
-};
-
-/**
- * Re-select element via `selector`, replacing
- * the current element.
- *
- * @param {String} selector
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.move =
-Move.prototype.select = function(selector){
-  this.el = Move.select(selector);
-  return this;
-};
-
-/**
- * Defer the given `fn` until the animation
- * is complete. `fn` may be one of the following:
- *
- *   - a function to invoke
- *   - an instanceof `Move` to call `.end()`
- *   - nothing, to return a clone of this `Move` instance for chaining
- *
- * @param {Function|Move} fn
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.then = function(fn){
-  // invoke .end()
-  if (fn instanceof Move) {
-    this.on('end', function(){
-      fn.end();
-    });
-  // callback
-  } else if ('function' == typeof fn) {
-    this.on('end', fn);
-  // chain
-  } else {
-    var clone = new Move(this.el);
-    clone._transforms = this._transforms.slice(0);
-    this.then(clone);
-    clone.parent = this;
-    return clone;
-  }
-
-  return this;
-};
-
-/**
- * Pop the move context.
- *
- * @return {Move} parent Move
- * @api public
- */
-
-Move.prototype.pop = function(){
-  return this.parent;
-};
-
-/**
- * Reset duration.
- *
- * @return {Move}
- * @api public
- */
-
-Move.prototype.reset = function(){
-  this.el.style.webkitTransitionDuration =
-  this.el.style.mozTransitionDuration =
-  this.el.style.msTransitionDuration =
-  this.el.style.oTransitionDuration = '';
-  return this;
-};
-
-/**
- * Start animation, optionally calling `fn` when complete.
- *
- * @param {Function} fn
- * @return {Move} for chaining
- * @api public
- */
-
-Move.prototype.end = function(fn){
-  var self = this;
-
-  // emit "start" event
-  this.emit('start');
-
-  // transforms
-  if (this._transforms.length) {
-    this.setVendorProperty('transform', this._transforms.join(' '));
-  }
-
-  // transition properties
-  this.setVendorProperty('transition-properties', this._transitionProps.join(', '));
-  this.applyProperties();
-
-  // callback given
-  if (fn) this.then(fn);
-
-  // emit "end" when complete
-  after.once(this.el, function(){
-    self.reset();
-    self.emit('end');
-  });
-
-  return this;
-};
-
-});
-
-if (typeof exports == "object") {
-  module.exports = require("move");
-} else if (typeof define == "function" && define.amd) {
-  define("move", [], function(){ return require("move"); });
-} else {
-  (this || window)["move"] = require("move");
-}
-})()
 
 
 /* global using */
@@ -8792,14 +9504,14 @@ define("WSE.dataSources", function (LocalStorageDataSource) {
 
 /* global using */
 
-using("MO5.EventBus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
-define("WSE", function (EventBus, assets, commands, dataSources, functions) {
+using("databus", "WSE.assets", "WSE.commands", "WSE.dataSources", "WSE.functions").
+define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
     var WSE = {}, version = "2016.7.0-final.1607281539";
     
-    EventBus.inject(WSE);
+    DataBus.inject(WSE);
     
     WSE.dataSources = dataSources;
     WSE.assets = assets;
@@ -9750,7 +10462,7 @@ define("WSE.Trigger", function (commands, functions, warn) {
             default:
                 this.fn = fn;
         }
-    };
+    }
     
     Trigger.prototype.activate = function () {
         
@@ -9779,7 +10491,7 @@ define("WSE.Trigger", function (commands, functions, warn) {
 /* global using */
 
 using(
-    "MO5.EventBus",
+    "databus",
     "MO5.ajax",
     "WSE.Keys",
     "WSE.Interpreter",
@@ -9787,7 +10499,7 @@ using(
     "WSE",
     "WSE.tools.compile::compile"
 ).
-define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, compile) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compile) {
     
     "use strict";
     
@@ -9813,7 +10525,7 @@ define("WSE.Game", function (EventBus, ajax, Keys, Interpreter, tools, WSE, comp
         WSE.trigger("wse.game.constructor", {args: args, game: this});
         
         args = args || {};
-        this.bus = new EventBus();
+        this.bus = new DataBus();
         this.url = args.url || "game.xml";
         this.gameId = args.gameId || null;
         this.ws = null;
@@ -11673,7 +12385,7 @@ define("WSE.Interpreter", function (
 
 /* global using */
 
-using("MO5.transform", "MO5.CoreObject").
+using("transform::transform", "MO5.CoreObject").
 define("WSE.LoadingScreen", function (transform, CoreObject) {
     
     function LoadingScreen () {
@@ -11799,7 +12511,7 @@ define("WSE.LoadingScreen", function (transform, CoreObject) {
             self._container.parentNode.removeChild(self._container);
         }
         
-        transform(valFn, 1, 0, {
+        transform(1, 0, valFn, {
             duration: 500,
             onFinish: finishFn
         });
@@ -12294,7 +13006,7 @@ using(
 
 /* global using, setTimeout */
 
-using().define("WSE.tools.reveal", function () {
+using("move").define("WSE.tools.reveal", function (move) {
     
     function reveal (element, args) {
         
@@ -12439,7 +13151,7 @@ using().define("WSE.tools.reveal", function () {
 
 /* global using */
 
-using().define("WSE.tools.compile", function () {
+using("xmugly").define("WSE.tools.compile", function (xmugly) {
     
 //
 // Compiles the new WSE command language to XML elements.
@@ -12499,7 +13211,7 @@ using().define("WSE.tools.compile", function () {
 
 /* global using */
 
-using("MO5.transform", "MO5.easing", "WSE.tools", "WSE.tools::warn").
+using("transform::transform", "eases", "WSE.tools", "WSE.tools::warn").
 define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     function DisplayObject () {
@@ -12532,45 +13244,45 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         }
         
         transform(
+            visible ? maxOpacity : 0,
+            visible ? 0 : maxOpacity,
             function (v) {
                 element.style.opacity = v;
             },
-            visible ? maxOpacity : 0,
-            visible ? 0 : maxOpacity,
             {
                 duration: duration / 3,
-                easing: easing.easeInCubic
-            }
-        ).promise().
-        then(function () {
-            
-            var argsObj;
-            
-            function tranformFn (v) {
-                element.style.opacity = v;
-            }
-            
-            function finishFn () {
-                if (isAnimation) {
-                    return;
+                easing: easing.cubicIn
+            },
+            function () {
+                
+                var argsObj;
+                
+                function tranformFn (v) {
+                    element.style.opacity = v;
                 }
                 
-                self.interpreter.waitCounter -= 1;
+                function finishFn () {
+                    if (isAnimation) {
+                        return;
+                    }
+                    
+                    self.interpreter.waitCounter -= 1;
+                }
+                
+                argsObj = {
+                    duration: (duration / 3) * 2,
+                    easing: easing.cubicOut
+                };
+                
+                transform(
+                    visible ? 0 : maxOpacity,
+                    visible ? maxOpacity : 0,
+                    tranformFn,
+                    argsObj,
+                    finishFn
+                );
             }
-            
-            argsObj = {
-                duration: (duration / 3) * 2,
-                easing: easing.easeOutCubic
-            };
-            
-            transform(
-                tranformFn,
-                visible ? 0 : maxOpacity,
-                visible ? maxOpacity : 0,
-                argsObj
-            ).promise().
-            then(finishFn);
-        });
+        );
         
         return {
             doNext: true
@@ -12622,41 +13334,41 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             iteration += 1;
             
             transform(
+                val1,
+                val2,
                 function (v) {
                     element.style.opacity = v;
                 },
-                val1,
-                val2,
                 {
                     duration: dur1,
-                    easing: easing.easeInQuad
+                    easing: easing.quadIn
+                },
+                function () {
+                    
+                    transform(
+                        val2,
+                        val1,
+                        function (v) {
+                            element.style.opacity = v;
+                        },
+                        {
+                            duration: dur2,
+                            easing: easing.quadIn
+                        },
+                        function () {
+                            
+                            if (iteration <= times) {
+                                setTimeout(fn, 0);
+                                return;
+                            }
+                            
+                            if (!isAnimation) {
+                                self.interpreter.waitCounter -= 1;
+                            }
+                        }
+                    );
                 }
-            ).promise().
-            then(function () {
-                
-                transform(
-                    function (v) {
-                        element.style.opacity = v;
-                    },
-                    val2,
-                    val1,
-                    {
-                        duration: dur2,
-                        easing: easing.easeInQuad
-                    }
-                ).promise().
-                then(function () {
-                    
-                    if (iteration <= times) {
-                        setTimeout(fn, 0);
-                        return;
-                    }
-                    
-                    if (!isAnimation) {
-                        self.interpreter.waitCounter -= 1;
-                    }
-                });
-            });
+            );
         };
         
         fn();
@@ -12684,7 +13396,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
-            easing.sineEaseOut;
+            easing.sineOut;
         stage = this.stage;
         xUnit = this.xUnit || 'px';
         yUnit = this.yUnit || 'px';
@@ -12777,8 +13489,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
                     easing: easingFn
                 };
                 
-                transform(valFn, from, to, options).promise().
-                then(finishFn);
+                transform(from, to, valFn, options, finishFn);
             }());
         }
         else {
@@ -12809,8 +13520,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
                     easing: easingFn
                 };
                 
-                transform(valFn, 1, 0, options).promise().
-                then(finishFn);
+                transform(1, 0, valFn, options, finishFn);
             }());
         }
         
@@ -12856,7 +13566,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
-            easing.sineEaseOut;
+            easing.sineOut;
         
         isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
@@ -12917,21 +13627,21 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             }
             
             transform(
+                ox,
+                x,
                 function (v) {
                     element.style.left = v + xUnit;
                 },
-                ox,
-                x,
                 {
                     duration: duration,
                     easing: easingFn
+                },
+                function () {
+                    if (!isAnimation) {
+                        self.interpreter.waitCounter -= 1;
+                    }
                 }
-            ).promise().
-            then(function () {
-                if (!isAnimation) {
-                    self.interpreter.waitCounter -= 1;
-                }
-            });
+            );
         }
         
         if (y !== null) {
@@ -12948,21 +13658,21 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             }
             
             transform(
+                oy,
+                y,
                 function (v) {
                     element.style.top = v + yUnit;
                 },
-                oy,
-                y,
                 {
                     duration: duration,
                     easing: easingFn
+                },
+                function () {
+                    if (!isAnimation) {
+                        self.interpreter.waitCounter -= 1;
+                    }
                 }
-            ).promise().
-            then(function () {
-                if (!isAnimation) {
-                    self.interpreter.waitCounter -= 1;
-                }
-            });
+            );
         }
         
         if (z !== null) {
@@ -12972,21 +13682,21 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             }
             
             transform(
+                element.style.zIndex || 0,
+                parseInt(z, 10),
                 function (v) {
                     element.style.zIndex = v;
                 },
-                element.style.zIndex || 0,
-                parseInt(z, 10),
                 {
                     duration: duration,
                     easing: easingFn
+                },
+                function () {
+                    if (!isAnimation) {
+                        self.interpreter.waitCounter -= 1;
+                    }
                 }
-            ).promise().
-            then(function () {
-                if (!isAnimation) {
-                    self.interpreter.waitCounter -= 1;
-                }
-            });
+            );
         }
         
         this.bus.trigger("wse.assets.mixins.move", this);
@@ -13052,12 +13762,12 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             self.interpreter.waitCounter += 1;
             
             transform(
+                ox - dx,
+                ox + dx,
                 function (v)
                 {
                     element.style.left = v + xUnit;
                 },
-                ox - dx,
-                ox + dx,
                 {
                     duration: duration,
                     easing:   easing
@@ -13081,20 +13791,20 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             self.interpreter.waitCounter += 1;
             
             transform(
+                oy - dy,
+                oy + dy,
                 function (v) {
                     element.style.top = v + yUnit;
                 },
-                oy - dy,
-                oy + dy,
                 {
                     duration: duration,
                     easing:   easing
+                },
+                function () {
+                    element.style.top = oy + yUnit;
+                    self.interpreter.waitCounter -= 1;
                 }
-            ).promise().
-            then(function () {
-                element.style.top = oy + yUnit;
-                self.interpreter.waitCounter -= 1;
-            });
+            );
         }
         
         this.bus.trigger("wse.assets.mixins.shake", this);
@@ -13129,10 +13839,10 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         interpreter = args.interpreter || this.interpreter;
         bus = args.bus || this.bus;
         stage = args.stage || this.stage;
-        easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
+        easingType = parse(command, "easing", this.interpreter, "sineOut");
         easingFn = (typeof easing[easingType] !== null) ? 
             easing[easingType] : 
-            easing.sineEaseOut;
+            easing.sineOut;
         isAnimation = args.animation === true ? true : false;
         
         if (effect === "slide") {
@@ -13199,21 +13909,21 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             }
             
             transform(
+                (prop === "left" ? startX : startY), 
+                (prop === "left" ? ox : oy),
                 function (v) {
                     element.style[prop] = v + (prop === 'left' ? xUnit : yUnit);
                 }, 
-                (prop === "left" ? startX : startY), 
-                (prop === "left" ? ox : oy),
                 {
                     duration: duration,
                     easing: easingFn
+                },
+                function () {
+                    if (!isAnimation) {
+                        interpreter.waitCounter -= 1;
+                    }
                 }
-            ).promise().
-            then(function () {
-                if (!isAnimation) {
-                    interpreter.waitCounter -= 1;
-                }
-            });
+            );
         }
         else {
             
@@ -13222,21 +13932,21 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             }
             
             transform(
+                0,
+                1,
                 function (v) {
                     element.style.opacity = v;
                 },
-                0,
-                1,
                 {
                     duration: duration,
                     easing: easingFn
+                },
+                function () {
+                    if (!isAnimation) {
+                        interpreter.waitCounter -= 1;
+                    }
                 }
-            ).promise().
-            then(function () {
-                if (!isAnimation) {
-                    interpreter.waitCounter -= 1;
-                }
-            });
+            );
         }
         
         return {
@@ -13252,8 +13962,8 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
 /* global using */
 
 using(
-    "MO5.transform",
-    "MO5.easing",
+    "transform::transform",
+    "eases",
     "MO5.Animation",
     "MO5.CoreObject",
     "MO5.TimerWatcher",
@@ -13303,10 +14013,10 @@ define("WSE.assets.Animation", function (
         }
         
         function createTransformFn (as, f, t, pn, u, opt) {
-            return transform(function (v) {
+            return transform(f, t, function (v) {
                 as.style[pn] = v + u;
-            }, f, t, opt);
-        };
+            }, opt);
+        }
         
         function runDoCommandFn (del, watcher) {
             
@@ -13913,8 +14623,8 @@ define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
 /* global using */
 
 using(
-    "MO5.transform",
-    "MO5.easing",
+    "transform::transform",
+    "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
     "WSE.tools::attachEventListener",
@@ -14144,11 +14854,10 @@ define("WSE.assets.Imagepack", function (
             
             options = {
                 duration: duration,
-                easing: easing.easeOutCubic
+                easing: easing.cubicOut
             };
             
-            transform(valFn, 0, 1, options).promise().
-            then(finishFn);
+            transform(0, 1, valFn, options, finishFn);
         }());
         
         if (this.current !== null) {
@@ -14180,11 +14889,10 @@ define("WSE.assets.Imagepack", function (
                     
                     options = {
                         duration: duration,
-                        easing: easing.easeInCubic
+                        easing: easing.cubicIn
                     };
                     
-                    transform(valFn, 1, 0, options).promise().
-                    then(finishFn);
+                    transform(1, 0, valFn, options, finishFn);
                 };
                 
                 timeoutFn();
@@ -14266,7 +14974,7 @@ define("WSE.assets.Imagepack", function (
 /* global using */
 
 using(
-    "MO5.transform",
+    "transform::transform",
     "WSE.tools.reveal",
     "MO5.dom.Element",
     "WSE.DisplayObject",
@@ -14463,8 +15171,7 @@ define("WSE.assets.Textbox", function (
                         duration: self.fadeDuration
                     };
                     
-                    transform(valFn, 1, 0, options).promise().
-                    then(finishFn);
+                    transform(1, 0, valFn, options, finishFn);
                 }());
             }
             else {
@@ -14515,11 +15222,11 @@ define("WSE.assets.Textbox", function (
                     }
                     
                     transform(
+                        0,
+                        1,
                         function (v) {
                             textElement.style.opacity = v;
                         },
-                        0,
-                        1,
                         {
                             duration: self.fadeDuration,
                             onFinish: function () {
@@ -14678,8 +15385,8 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
 /* global using */
 
 using(
-    "MO5.transform",
-    "MO5.easing",
+    "transform::transform",
+    "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
     "WSE.tools::attachEventListener",
@@ -14923,11 +15630,10 @@ define("WSE.assets.Composite", function (
             
             options = {
                 duration: duration,
-                easing: easing.easeOutCubic
+                easing: easing.cubicOut
             };
             
-            transform(valFn, 0, 1, options).promise().
-            then(finishFn);
+            transform(0, 1, valFn, options, finishFn);
         }());
         
         if (this.current !== null) {
@@ -14956,11 +15662,10 @@ define("WSE.assets.Composite", function (
                     
                     options = {
                         duration: duration,
-                        easing: easing.easeInCubic
+                        easing: easing.cubicIn
                     };
                     
-                    transform(valFn, 1, 0, options).promise().
-                    then(finishFn);
+                    transform(1, 0, valFn, options, finishFn);
                 }
                 
                 timeoutFn();

@@ -1,8 +1,8 @@
 /* global using */
 
 using(
-    "MO5.transform",
-    "MO5.easing",
+    "transform::transform",
+    "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
     "WSE.tools::attachEventListener",
@@ -232,11 +232,10 @@ define("WSE.assets.Imagepack", function (
             
             options = {
                 duration: duration,
-                easing: easing.easeOutCubic
+                easing: easing.cubicOut
             };
             
-            transform(valFn, 0, 1, options).promise().
-            then(finishFn);
+            transform(0, 1, valFn, options, finishFn);
         }());
         
         if (this.current !== null) {
@@ -268,11 +267,10 @@ define("WSE.assets.Imagepack", function (
                     
                     options = {
                         duration: duration,
-                        easing: easing.easeInCubic
+                        easing: easing.cubicIn
                     };
                     
-                    transform(valFn, 1, 0, options).promise().
-                    then(finishFn);
+                    transform(1, 0, valFn, options, finishFn);
                 };
                 
                 timeoutFn();

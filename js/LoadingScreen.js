@@ -1,6 +1,6 @@
 /* global using */
 
-using("MO5.transform", "MO5.CoreObject").
+using("transform::transform", "MO5.CoreObject").
 define("WSE.LoadingScreen", function (transform, CoreObject) {
     
     function LoadingScreen () {
@@ -126,7 +126,7 @@ define("WSE.LoadingScreen", function (transform, CoreObject) {
             self._container.parentNode.removeChild(self._container);
         }
         
-        transform(valFn, 1, 0, {
+        transform(1, 0, valFn, {
             duration: 500,
             onFinish: finishFn
         });
