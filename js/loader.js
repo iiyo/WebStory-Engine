@@ -54,6 +54,10 @@ define("WSE.loader", function (ajax, compile) {
                 }
             });
         });
+        
+        if (count < 1) {
+            then(files);
+        }
     }
     
     function compileFile (path, then) {
