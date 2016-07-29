@@ -2,8 +2,6 @@
     "files": {
         
         "howler": "libs/howler/howler.js",
-        "xmugly": "node_modules/xmugly/src/xmugly.js",
-        "move": "libs/move/move.js",
         
         "MO5.ajax": "libs/MO5/js/ajax.js",
         "MO5.Animation": "libs/MO5/js/Animation.js",

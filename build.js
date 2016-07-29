@@ -1,12 +1,29 @@
 /* global require, console */
 
-var fs, mkdirSync, processScriptsFileFn, concatJsFiles, scriptsFilePath;
+var processScriptsFileFn, concatJsFiles, scriptsFilePath;
+var browserify = require("browserify");
+var fs = require("fs");
 var minify = require("minify");
 
-fs = require('fs');
+mkdirSync('./build');
+
+var outputFile = fs.createWriteStream("build/dependencies.js");
+var bundle = browserify("browserifyToUsing.js").bundle();
+var info = JSON.parse("" + fs.readFileSync("package.json"));
+
 scriptsFilePath = 'scripts.json';
 
-mkdirSync = function (path)
+outputFile.write(
+    "/*\n" +
+    "    WebStory Engine dependencies (v" + info.version + ")\n" +
+    "    Build time: " + (new Date().toUTCString()) + 
+    "\n*/\n"
+);
+
+bundle.pipe(outputFile);
+
+
+function mkdirSync (path)
 {
     try
     {
@@ -18,7 +35,7 @@ mkdirSync = function (path)
             throw e;
         }
     }
-};
+}
 
 processScriptsFileFn = function (data)
 {
@@ -66,6 +83,7 @@ concatJsFiles = function (files)
     }
     
     fn("libs/MO5/libs/using.js/using.js");
+    fn("build/dependencies.js");
     fn("libs/MO5/js/MO5.js");
     
     concatFile += moduleString;
@@ -88,12 +106,11 @@ function writeFileFn (concatFile)
                 console.log(err);
                 return;
             }
-
+            
             console.log(successText);
         };
     }
     
-    mkdirSync('./build');
     fs.writeFileSync('./build/WebStoryEngine.js', concatFile);
     makeErrorFn('WebStory Engine file created.')();
     
@@ -115,4 +132,6 @@ function removeUnwantedSections (fileContents) {
     return fileContents;
 }
 
-processScriptsFileFn(fs.readFileSync(scriptsFilePath, 'utf-8'));
+setTimeout(function () {
+    processScriptsFileFn(fs.readFileSync(scriptsFilePath, 'utf-8'));
+}, 2000);
