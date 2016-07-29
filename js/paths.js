@@ -48,6 +48,7 @@
     
     using.modules["WSE.Keys"] = base + "js/Keys.js";
     
+    using.modules["WSE.loader"] = base + "js/loader.js";
     using.modules["WSE.DisplayObject"] = base + "js/DisplayObject.js";
     using.modules["WSE.Game"] = base + "js/Game.js";
     using.modules["WSE.Interpreter"] = base + "js/Interpreter.js";

@@ -7,9 +7,9 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.tools.compile::compile"
+    "WSE.loader"
 ).
-define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compile) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader) {
     
     "use strict";
     
@@ -45,32 +45,17 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
         this.host = host;
         
         if (this.gameId) {
-            
-            this.ws = new DOMParser().parseFromString(
-                compile(document.getElementById(this.gameId).innerHTML), "application/xml"
+            loader.generateFromString(
+                document.getElementById(this.gameId).innerHTML,
+                this.load.bind(this)
             );
-            
-            console.log("this.ws:", this.ws);
-            
-            this.init();
         }
         else {
             if (host) {
-                
-                this.ws = (function (url) {
-                    
-                    var xml, parser;
-                    
-                    parser = new DOMParser();
-                    xml = host.get(url);
-                        
-                    return parser.parseFromString(compile(xml), "application/xml");
-                }(this.url));
-                
-                this.init();
+                loader.generateFromString(host.get(url), this.load.bind(this));
             }
             else {
-                this.load();
+                loader.generateGameFile(this.url, this.load.bind(this));
             }
         }
         
@@ -105,21 +90,10 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
      * Loads the WebStory file using the AJAX function and triggers
      * the game initialization.
      */
-    Game.prototype.load = function () {
-        
-        //console.log("Loading game file...");
-        var fn, self;
-        
-        self = this;
-        
-        fn = function (obj) {
-            self.ws = new DOMParser().parseFromString(
-                compile(obj.responseText), "application/xml"
-            );
-            self.init();
-        };
-        
-        ajax("GET", this.url, null, fn);
+    Game.prototype.load = function (gameDocument) {
+        this.ws = gameDocument;
+        console.log("gameFile:", new XMLSerializer().serializeToString(gameDocument));
+        this.init();
     };
     
     Game.prototype.loadFromUrl = function (url) {

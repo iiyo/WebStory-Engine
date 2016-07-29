@@ -39,6 +39,7 @@
         "WSE": "js/WSE.js",
         "WSE.Keys": "js/Keys.js",
         "WSE.tools": "js/tools/tools.js",
+        "WSE.loader": "js/loader.js",
         "WSE.dataSources.LocalStorage": "js/dataSources/LocalStorage.js",
         "WSE.Trigger": "js/Trigger.js",
         "WSE.Game": "js/Game.js",

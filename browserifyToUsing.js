@@ -5,6 +5,7 @@ var transform = require("transform-js");
 var databus = require("databus");
 var xmugly = require("xmugly");
 var eases = require("eases");
+var ajax = require("easy-ajax");
 
 using().define("move", function () {
     return move;
@@ -24,4 +25,8 @@ using().define("xmugly", function () {
 
 using().define("eases", function () {
     return eases;
+});
+
+using().define("easy-ajax", function () {
+    return ajax;
 });

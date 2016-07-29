@@ -421,7 +421,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.0)
-    Build time: Fri, 29 Jul 2016 15:16:47 GMT
+    Build time: Fri, 29 Jul 2016 17:33:42 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -431,6 +431,7 @@ var transform = require("transform-js");
 var databus = require("databus");
 var xmugly = require("xmugly");
 var eases = require("eases");
+var ajax = require("easy-ajax");
 
 using().define("move", function () {
     return move;
@@ -452,7 +453,11 @@ using().define("eases", function () {
     return eases;
 });
 
-},{"databus":2,"eases":22,"move-js":36,"transform-js":46,"xmugly":79}],2:[function(require,module,exports){
+using().define("easy-ajax", function () {
+    return ajax;
+});
+
+},{"databus":2,"eases":22,"easy-ajax":37,"move-js":38,"transform-js":48,"xmugly":81}],2:[function(require,module,exports){
 /* global require, module */
 
 module.exports = require("./src/databus");
@@ -1078,6 +1083,129 @@ function sineOut(t) {
 
 module.exports = sineOut
 },{}],36:[function(require,module,exports){
+
+(function () {
+    
+    var HTTP_STATUS_OK = 200;
+    var READY_STATE_UNSENT = 0;
+    var READY_STATE_OPENED = 1;
+    var READY_STATE_HEADERS_RECEIVED = 2;
+    var READY_STATE_LOADING = 3;
+    var READY_STATE_DONE = 4;
+    
+    function ajax (method, url, options, then) {
+        
+        var timeout, data;
+        
+        var requestObject = XMLHttpRequest ?
+            new XMLHttpRequest() :
+            new ActiveXObject("Microsoft.XMLHTTP");
+        
+        options = options || {};
+        
+        if (typeof options === "function" && !then) {
+            then = options;
+            options = {};
+        }
+        
+        then = then || function () {};
+        data = ("data" in options) ? options.data : undefined;
+        timeout = options.timeout;
+        url += options.randomize ? "?random=" + Math.random() : "";
+        
+        requestObject.open(method, url, true);
+        
+        if (timeout) {
+            
+            requestObject.timeout = timeout;
+            
+            requestObject.ontimeout = function () {
+                
+                requestObject.abort();
+                
+                then(new Error("Connection reached timeout of " + timeout + " ms."), requestObject);
+            };
+        }
+        
+        requestObject.onreadystatechange = function() {
+            
+            var done, statusOk;
+            
+            done = requestObject.readyState === READY_STATE_DONE;
+            
+            if (done) {
+                
+                try {
+                    statusOk = requestObject.status === HTTP_STATUS_OK;
+                }
+                catch (error) {
+                    console.error(error);
+                    statusOk = false;
+                }
+                
+                if (statusOk) {
+                    then(null, requestObject);
+                }
+                else {
+                    then(new Error("AJAX request wasn't successful."), requestObject);
+                }
+            }
+        };
+        
+        if (data) {
+            requestObject.send(data);
+        }
+        else {
+            requestObject.send();
+        }
+        
+        return requestObject;
+    }
+    
+    ajax.HTTP_STATUS_OK = HTTP_STATUS_OK;
+    
+    ajax.READY_STATE_UNSENT = READY_STATE_UNSENT;
+    ajax.READY_STATE_OPENED = READY_STATE_OPENED;
+    ajax.READY_STATE_HEADERS_RECEIVED = READY_STATE_HEADERS_RECEIVED;
+    ajax.READY_STATE_LOADING = READY_STATE_LOADING;
+    ajax.READY_STATE_DONE = READY_STATE_DONE;
+    
+    ajax.HTTP_METHOD_GET = "GET";
+    ajax.HTTP_METHOD_POST = "POST";
+    ajax.HTTP_METHOD_PUT = "PUT";
+    ajax.HTTP_METHOD_DELETE = "DELETE";
+    ajax.HTTP_METHOD_HEAD = "HEAD";
+    
+    ajax.get = function (url, options, then) {
+        return ajax(ajax.HTTP_METHOD_GET, url, options, then);
+    };
+    
+    ajax.post = function (url, data, options, then) {
+        
+        if (typeof options === "function" && !then) {
+            then = options;
+            options = {};
+        }
+        
+        options.data = data;
+        
+        return ajax(ajax.HTTP_METHOD_POST, url, options, then);
+    };
+    
+    if (typeof require === "function") {
+        module.exports = ajax;
+    }
+    else {
+        window.ajax = ajax;
+    }
+    
+}());
+
+},{}],37:[function(require,module,exports){
+
+module.exports = require("./easy-ajax.js");
+
+},{"./easy-ajax.js":36}],38:[function(require,module,exports){
 // Patch IE9 and below
 try {
   document.createElement('DIV').style.setProperty('opacity', 0, '');
@@ -1677,7 +1805,7 @@ function fixUnits(val) {
   return 'string' === typeof val && isNaN(+val) ? val : val + 'px';
 }
 
-},{"after-transition":37,"component-emitter":41,"component-query":42,"css-ease":43,"has-translate3d":44}],37:[function(require,module,exports){
+},{"after-transition":39,"component-emitter":43,"component-query":44,"css-ease":45,"has-translate3d":46}],39:[function(require,module,exports){
 var hasTransitions = require('has-transitions');
 var emitter = require('css-emitter');
 
@@ -1696,7 +1824,7 @@ afterTransition.once = function(el, callback) {
 };
 
 module.exports = afterTransition;
-},{"css-emitter":38,"has-transitions":40}],38:[function(require,module,exports){
+},{"css-emitter":40,"has-transitions":42}],40:[function(require,module,exports){
 /**
  * Module Dependencies
  */
@@ -1775,7 +1903,7 @@ CssEmitter.prototype.once = function(fn){
 };
 
 
-},{"event":39}],39:[function(require,module,exports){
+},{"event":41}],41:[function(require,module,exports){
 
 /**
  * Bind `el` event `type` to `fn`.
@@ -1817,7 +1945,7 @@ exports.unbind = function(el, type, fn, capture){
   return fn;
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /**
  * This will store the property that the current
  * browser uses for transitionDuration
@@ -1866,7 +1994,7 @@ function hasTransitions(el){
 }
 
 module.exports = hasTransitions;
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -2031,7 +2159,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 function one(selector, el) {
   return el.querySelector(selector);
 }
@@ -2054,7 +2182,7 @@ exports.engine = function(obj){
   return exports;
 };
 
-},{}],43:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 
 /**
  * CSS Easing functions
@@ -2092,7 +2220,7 @@ module.exports = {
   , 'ease-in-out-back':  'cubic-bezier(0.680, -0.550, 0.265, 1.550)'
 };
 
-},{}],44:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 
 var prop = require('transform-property');
 
@@ -2118,7 +2246,7 @@ if (!prop || !window.getComputedStyle) {
   module.exports = null != val && val.length && 'none' != val;
 }
 
-},{"transform-property":45}],45:[function(require,module,exports){
+},{"transform-property":47}],47:[function(require,module,exports){
 
 var styles = [
   'webkitTransform',
@@ -2139,7 +2267,7 @@ for (var i = 0; i < styles.length; i++) {
   }
 }
 
-},{}],46:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /* global requestAnimationFrame */
 
 var eases = require("eases");
@@ -2334,76 +2462,76 @@ module.exports = {
     transform: transform
 };
 
-},{"eases":65}],47:[function(require,module,exports){
+},{"eases":67}],49:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"dup":4}],48:[function(require,module,exports){
+},{"dup":4}],50:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],49:[function(require,module,exports){
+},{"dup":5}],51:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],50:[function(require,module,exports){
+},{"dup":6}],52:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"./bounce-out":52,"dup":7}],51:[function(require,module,exports){
+},{"./bounce-out":54,"dup":7}],53:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"./bounce-out":52,"dup":8}],52:[function(require,module,exports){
+},{"./bounce-out":54,"dup":8}],54:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],53:[function(require,module,exports){
+},{"dup":9}],55:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],54:[function(require,module,exports){
+},{"dup":10}],56:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11}],55:[function(require,module,exports){
+},{"dup":11}],57:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],56:[function(require,module,exports){
+},{"dup":12}],58:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"dup":13}],57:[function(require,module,exports){
+},{"dup":13}],59:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],58:[function(require,module,exports){
+},{"dup":14}],60:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],59:[function(require,module,exports){
+},{"dup":15}],61:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],60:[function(require,module,exports){
+},{"dup":16}],62:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],61:[function(require,module,exports){
+},{"dup":17}],63:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],62:[function(require,module,exports){
+},{"dup":18}],64:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],63:[function(require,module,exports){
+},{"dup":19}],65:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],64:[function(require,module,exports){
+},{"dup":20}],66:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],65:[function(require,module,exports){
+},{"dup":21}],67:[function(require,module,exports){
 arguments[4][22][0].apply(exports,arguments)
-},{"./back-in":48,"./back-in-out":47,"./back-out":49,"./bounce-in":51,"./bounce-in-out":50,"./bounce-out":52,"./circ-in":54,"./circ-in-out":53,"./circ-out":55,"./cubic-in":57,"./cubic-in-out":56,"./cubic-out":58,"./elastic-in":60,"./elastic-in-out":59,"./elastic-out":61,"./expo-in":63,"./expo-in-out":62,"./expo-out":64,"./linear":66,"./quad-in":68,"./quad-in-out":67,"./quad-out":69,"./quart-in":71,"./quart-in-out":70,"./quart-out":72,"./quint-in":74,"./quint-in-out":73,"./quint-out":75,"./sine-in":77,"./sine-in-out":76,"./sine-out":78,"dup":22}],66:[function(require,module,exports){
+},{"./back-in":50,"./back-in-out":49,"./back-out":51,"./bounce-in":53,"./bounce-in-out":52,"./bounce-out":54,"./circ-in":56,"./circ-in-out":55,"./circ-out":57,"./cubic-in":59,"./cubic-in-out":58,"./cubic-out":60,"./elastic-in":62,"./elastic-in-out":61,"./elastic-out":63,"./expo-in":65,"./expo-in-out":64,"./expo-out":66,"./linear":68,"./quad-in":70,"./quad-in-out":69,"./quad-out":71,"./quart-in":73,"./quart-in-out":72,"./quart-out":74,"./quint-in":76,"./quint-in-out":75,"./quint-out":77,"./sine-in":79,"./sine-in-out":78,"./sine-out":80,"dup":22}],68:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],67:[function(require,module,exports){
+},{"dup":23}],69:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],68:[function(require,module,exports){
+},{"dup":24}],70:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],69:[function(require,module,exports){
+},{"dup":25}],71:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],70:[function(require,module,exports){
+},{"dup":26}],72:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"dup":27}],71:[function(require,module,exports){
+},{"dup":27}],73:[function(require,module,exports){
 arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],72:[function(require,module,exports){
+},{"dup":28}],74:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],73:[function(require,module,exports){
+},{"dup":29}],75:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],74:[function(require,module,exports){
+},{"dup":30}],76:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],75:[function(require,module,exports){
+},{"dup":31}],77:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],76:[function(require,module,exports){
+},{"dup":32}],78:[function(require,module,exports){
 arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],77:[function(require,module,exports){
+},{"dup":33}],79:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],78:[function(require,module,exports){
+},{"dup":34}],80:[function(require,module,exports){
 arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],79:[function(require,module,exports){
+},{"dup":35}],81:[function(require,module,exports){
 /* global module, require */
 
 module.exports = require("./src/xmugly.js");
 
-},{"./src/xmugly.js":80}],80:[function(require,module,exports){
+},{"./src/xmugly.js":82}],82:[function(require,module,exports){
 /* global module */
 
 (function () {
@@ -2868,6 +2996,7 @@ using.modules['WSE.dataSources'] = WSEPath;
 using.modules['WSE'] = WSEPath;
 using.modules['WSE.Keys'] = WSEPath;
 using.modules['WSE.tools'] = WSEPath;
+using.modules['WSE.loader'] = WSEPath;
 using.modules['WSE.dataSources.LocalStorage'] = WSEPath;
 using.modules['WSE.Trigger'] = WSEPath;
 using.modules['WSE.Game'] = WSEPath;
@@ -10260,6 +10389,100 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
 
 /* global using */
 
+using("easy-ajax", "WSE.tools.compile::compile").
+define("WSE.loader", function (ajax, compile) {
+    
+    function generateGameFile (mainFilePath, then) {
+        compileFile(mainFilePath, function (mainFile) {
+            generateGameFileFromString(mainFile, then);
+        });
+    }
+    
+    function generateGameFileFromString (text, then) {
+        
+        var gameDocument = parseXml(text);
+        var fileDefinitions = getFileDefinitions(gameDocument);
+        
+        compileFiles(fileDefinitions, function (files) {
+            files.forEach(function (file, i) {
+                
+                var type = fileDefinitions[i].type;
+                var parent = gameDocument.getElementsByTagName(type)[0];
+                
+                if (!parent) {
+                    parent = gameDocument.createElement(type);
+                    gameDocument.documentElement.appendChild(parent);
+                }
+                
+                parent.innerHTML += "\n" + file + "\n";
+            });
+            
+            then(gameDocument);
+        });
+    }
+    
+    function generateFromString (text, then) {
+        generateGameFileFromString(compile(text), then);
+    }
+    
+    function compileFiles (fileDefinitions, then) {
+        
+        var loaded = 0;
+        var count = fileDefinitions.length;
+        var files = [];
+        
+        fileDefinitions.forEach(function (definition, i) {
+            
+            compileFile(definition.url, function (file) {
+                
+                files[i] = file;
+                loaded += 1;
+                
+                if (loaded >= count) {
+                    then(files);
+                }
+            });
+        });
+    }
+    
+    function compileFile (path, then) {
+        ajax.get(path, function (error, obj) {
+            
+            if (error) {
+                console.error(error);
+                return;
+            }
+            
+            then(compile(obj.responseText));
+        });
+    }
+    
+    function parseXml (text) {
+        return new DOMParser().parseFromString(text, "application/xml");
+    }
+    
+    function getFileDefinitions (xml) {
+        
+        var elements = xml.getElementsByTagName("file");
+        
+        return [].map.call(elements, function (element) {
+            return {
+                type: element.getAttribute("type"),
+                url: element.getAttribute("url")
+            }
+        });
+    }
+    
+    return {
+        generateGameFile: generateGameFile,
+        generateFromString: generateFromString
+    };
+    
+});
+
+
+/* global using */
+
 using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
     
     "use strict";
@@ -10497,9 +10720,9 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.tools.compile::compile"
+    "WSE.loader"
 ).
-define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compile) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader) {
     
     "use strict";
     
@@ -10535,32 +10758,17 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
         this.host = host;
         
         if (this.gameId) {
-            
-            this.ws = new DOMParser().parseFromString(
-                compile(document.getElementById(this.gameId).innerHTML), "application/xml"
+            loader.generateFromString(
+                document.getElementById(this.gameId).innerHTML,
+                this.load.bind(this)
             );
-            
-            console.log("this.ws:", this.ws);
-            
-            this.init();
         }
         else {
             if (host) {
-                
-                this.ws = (function (url) {
-                    
-                    var xml, parser;
-                    
-                    parser = new DOMParser();
-                    xml = host.get(url);
-                        
-                    return parser.parseFromString(compile(xml), "application/xml");
-                }(this.url));
-                
-                this.init();
+                loader.generateFromString(host.get(url), this.load.bind(this));
             }
             else {
-                this.load();
+                loader.generateGameFile(this.url, this.load.bind(this));
             }
         }
         
@@ -10595,21 +10803,10 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
      * Loads the WebStory file using the AJAX function and triggers
      * the game initialization.
      */
-    Game.prototype.load = function () {
-        
-        //console.log("Loading game file...");
-        var fn, self;
-        
-        self = this;
-        
-        fn = function (obj) {
-            self.ws = new DOMParser().parseFromString(
-                compile(obj.responseText), "application/xml"
-            );
-            self.init();
-        };
-        
-        ajax("GET", this.url, null, fn);
+    Game.prototype.load = function (gameDocument) {
+        this.ws = gameDocument;
+        console.log("gameFile:", new XMLSerializer().serializeToString(gameDocument));
+        this.init();
     };
     
     Game.prototype.loadFromUrl = function (url) {
@@ -10858,7 +11055,6 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
 /* global using */
 
 using(
-    "MO5.transform",
     "WSE.dataSources.LocalStorage",
     "WSE.Trigger",
     "WSE.tools",
@@ -10870,7 +11066,6 @@ using(
     "WSE.tools::getSerializedNodes"
 ).
 define("WSE.Interpreter", function (
-    transform,
     LocalStorageSource,
     Trigger,
     tools,
@@ -12385,12 +12580,10 @@ define("WSE.Interpreter", function (
 
 /* global using */
 
-using("transform::transform", "MO5.CoreObject").
-define("WSE.LoadingScreen", function (transform, CoreObject) {
+using("transform::transform").
+define("WSE.LoadingScreen", function (transform) {
     
     function LoadingScreen () {
-        
-        CoreObject.call(this);
         
         this._loading = 0;
         this._loaded = 0;
@@ -12421,8 +12614,6 @@ define("WSE.LoadingScreen", function (transform, CoreObject) {
         this._container.style.height = "100%";
         
     }
-    
-    LoadingScreen.prototype = new CoreObject();
     
     LoadingScreen.prototype.setTemplate = function (template) {
         this._template = template;
@@ -13965,7 +14156,6 @@ using(
     "transform::transform",
     "eases",
     "MO5.Animation",
-    "MO5.CoreObject",
     "MO5.TimerWatcher",
     "WSE.commands",
     "WSE.tools::createTimer",
@@ -13975,7 +14165,6 @@ define("WSE.assets.Animation", function (
     transform,
     easing,
     MO5Animation,
-    CoreObject,
     TimerWatcher,
     commands,
     createTimer,
@@ -13988,8 +14177,6 @@ define("WSE.assets.Animation", function (
         
         var groups, i, len, current, transformations, jlen;
         var self, doElements;
-        
-        CoreObject.call(this);
         
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
@@ -14032,7 +14219,7 @@ define("WSE.assets.Animation", function (
             if (curDur !== null) {
                 watcher.addTimer(createTimer(curDur));
             }
-        };
+        }
         
         function loopFn (transf, doEls) {
             
@@ -14089,7 +14276,7 @@ define("WSE.assets.Animation", function (
                 
                 return watcher;
             });
-        };
+        }
         
         for (i = 0; i < len; i += 1) {
             
@@ -14112,16 +14299,14 @@ define("WSE.assets.Animation", function (
             
             function fn () {
                 self.stop();
-            };
+            }
             
             self.bus.subscribe(fn, "wse.interpreter.restart");
             self.bus.subscribe(fn, "wse.interpreter.end");
             self.bus.subscribe(fn, "wse.interpreter.load.before");
         }());
         
-    };
-    
-    Animation.prototype = new CoreObject();
+    }
     
     Animation.prototype.start = function () {
         this.anim.start();
