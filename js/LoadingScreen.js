@@ -1,11 +1,9 @@
 /* global using */
 
-using("transform::transform", "MO5.CoreObject").
-define("WSE.LoadingScreen", function (transform, CoreObject) {
+using("transform::transform").
+define("WSE.LoadingScreen", function (transform) {
     
     function LoadingScreen () {
-        
-        CoreObject.call(this);
         
         this._loading = 0;
         this._loaded = 0;
@@ -36,8 +34,6 @@ define("WSE.LoadingScreen", function (transform, CoreObject) {
         this._container.style.height = "100%";
         
     }
-    
-    LoadingScreen.prototype = new CoreObject();
     
     LoadingScreen.prototype.setTemplate = function (template) {
         this._template = template;

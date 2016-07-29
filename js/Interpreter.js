@@ -1,7 +1,6 @@
 /* global using */
 
 using(
-    "MO5.transform",
     "WSE.dataSources.LocalStorage",
     "WSE.Trigger",
     "WSE.tools",
@@ -13,7 +12,6 @@ using(
     "WSE.tools::getSerializedNodes"
 ).
 define("WSE.Interpreter", function (
-    transform,
     LocalStorageSource,
     Trigger,
     tools,

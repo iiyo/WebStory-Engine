@@ -4,7 +4,6 @@ using(
     "transform::transform",
     "eases",
     "MO5.Animation",
-    "MO5.CoreObject",
     "MO5.TimerWatcher",
     "WSE.commands",
     "WSE.tools::createTimer",
@@ -14,7 +13,6 @@ define("WSE.assets.Animation", function (
     transform,
     easing,
     MO5Animation,
-    CoreObject,
     TimerWatcher,
     commands,
     createTimer,
@@ -27,8 +25,6 @@ define("WSE.assets.Animation", function (
         
         var groups, i, len, current, transformations, jlen;
         var self, doElements;
-        
-        CoreObject.call(this);
         
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
@@ -71,7 +67,7 @@ define("WSE.assets.Animation", function (
             if (curDur !== null) {
                 watcher.addTimer(createTimer(curDur));
             }
-        };
+        }
         
         function loopFn (transf, doEls) {
             
@@ -128,7 +124,7 @@ define("WSE.assets.Animation", function (
                 
                 return watcher;
             });
-        };
+        }
         
         for (i = 0; i < len; i += 1) {
             
@@ -151,16 +147,14 @@ define("WSE.assets.Animation", function (
             
             function fn () {
                 self.stop();
-            };
+            }
             
             self.bus.subscribe(fn, "wse.interpreter.restart");
             self.bus.subscribe(fn, "wse.interpreter.end");
             self.bus.subscribe(fn, "wse.interpreter.load.before");
         }());
         
-    };
-    
-    Animation.prototype = new CoreObject();
+    }
     
     Animation.prototype.start = function () {
         this.anim.start();
