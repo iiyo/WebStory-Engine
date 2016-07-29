@@ -1,0 +1,3 @@
+. scene #scene2 :
+    (( n: This is scene 2. ))
+--

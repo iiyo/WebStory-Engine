@@ -1,0 +1,4 @@
+. stage width 1366px, height 768px, +create, +center, +resize
+. triggers :
+    . trigger name game_menu_key_trigger, event keyup, key ESCAPE, function savegames
+--

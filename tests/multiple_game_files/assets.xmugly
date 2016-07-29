@@ -1,0 +1,2 @@
+. textbox name tb, cssid tb
+. character name n, textbox tb

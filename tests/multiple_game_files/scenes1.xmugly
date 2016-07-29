@@ -1,0 +1,5 @@
+. scene #start :
+    . show @tb
+    (( n: This is scene 1. ))
+    . goto scene scene2
+--
