@@ -34,7 +34,7 @@
 
 /* global using, setTimeout */
 
-using().define("WSE.tools.reveal", function () {
+using("move").define("WSE.tools.reveal", function (move) {
     
     function reveal (element, args) {
         
