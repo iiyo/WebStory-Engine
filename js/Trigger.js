@@ -133,7 +133,7 @@ define("WSE.Trigger", function (commands, functions, warn) {
             default:
                 this.fn = fn;
         }
-    };
+    }
     
     Trigger.prototype.activate = function () {
         
