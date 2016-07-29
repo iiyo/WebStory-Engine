@@ -421,7 +421,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.0)
-    Build time: Fri, 29 Jul 2016 15:16:47 GMT
+    Build time: Fri, 29 Jul 2016 17:41:08 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -10858,7 +10858,6 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, compi
 /* global using */
 
 using(
-    "MO5.transform",
     "WSE.dataSources.LocalStorage",
     "WSE.Trigger",
     "WSE.tools",
@@ -10870,7 +10869,6 @@ using(
     "WSE.tools::getSerializedNodes"
 ).
 define("WSE.Interpreter", function (
-    transform,
     LocalStorageSource,
     Trigger,
     tools,
@@ -12385,12 +12383,12 @@ define("WSE.Interpreter", function (
 
 /* global using */
 
-using("transform::transform", "MO5.CoreObject").
-define("WSE.LoadingScreen", function (transform, CoreObject) {
+using("transform::transform", "databus").
+define("WSE.LoadingScreen", function (transform, DataBus) {
     
     function LoadingScreen () {
         
-        CoreObject.call(this);
+        DataBus.inject(this);
         
         this._loading = 0;
         this._loaded = 0;
@@ -12421,8 +12419,6 @@ define("WSE.LoadingScreen", function (transform, CoreObject) {
         this._container.style.height = "100%";
         
     }
-    
-    LoadingScreen.prototype = new CoreObject();
     
     LoadingScreen.prototype.setTemplate = function (template) {
         this._template = template;
@@ -13965,7 +13961,6 @@ using(
     "transform::transform",
     "eases",
     "MO5.Animation",
-    "MO5.CoreObject",
     "MO5.TimerWatcher",
     "WSE.commands",
     "WSE.tools::createTimer",
@@ -13975,7 +13970,6 @@ define("WSE.assets.Animation", function (
     transform,
     easing,
     MO5Animation,
-    CoreObject,
     TimerWatcher,
     commands,
     createTimer,
@@ -13988,8 +13982,6 @@ define("WSE.assets.Animation", function (
         
         var groups, i, len, current, transformations, jlen;
         var self, doElements;
-        
-        CoreObject.call(this);
         
         this.stage = interpreter.stage;
         this.bus = interpreter.bus;
@@ -14032,7 +14024,7 @@ define("WSE.assets.Animation", function (
             if (curDur !== null) {
                 watcher.addTimer(createTimer(curDur));
             }
-        };
+        }
         
         function loopFn (transf, doEls) {
             
@@ -14089,7 +14081,7 @@ define("WSE.assets.Animation", function (
                 
                 return watcher;
             });
-        };
+        }
         
         for (i = 0; i < len; i += 1) {
             
@@ -14112,16 +14104,14 @@ define("WSE.assets.Animation", function (
             
             function fn () {
                 self.stop();
-            };
+            }
             
             self.bus.subscribe(fn, "wse.interpreter.restart");
             self.bus.subscribe(fn, "wse.interpreter.end");
             self.bus.subscribe(fn, "wse.interpreter.load.before");
         }());
         
-    };
-    
-    Animation.prototype = new CoreObject();
+    }
     
     Animation.prototype.start = function () {
         this.anim.start();

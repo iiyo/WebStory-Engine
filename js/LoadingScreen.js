@@ -1,9 +1,11 @@
 /* global using */
 
-using("transform::transform").
-define("WSE.LoadingScreen", function (transform) {
+using("transform::transform", "databus").
+define("WSE.LoadingScreen", function (transform, DataBus) {
     
     function LoadingScreen () {
+        
+        DataBus.inject(this);
         
         this._loading = 0;
         this._loaded = 0;
