@@ -63,11 +63,11 @@
         
         <scene id="change_easing_scene">
             <with var="easing">
-                <when is="sineEaseOut">
-                    <var name="easing" value="easeOutBounce" />
+                <when is="sineOut">
+                    <var name="easing" value="bounceOut" />
                 </when>
-                <when is="easeOutBounce">
-                    <var name="easing" value="sineEaseOut" />
+                <when is="bounceOut">
+                    <var name="easing" value="sineOut" />
                 </when>
             </with>
         </scene>
@@ -81,7 +81,7 @@
             
             <set_vars
                 names="x, y, xAnchor, yAnchor, effect, duration, direction, easing"
-                values="50%, 100%, 50%, 100%, fade, 1000, left, sineEaseOut" />
+                values="50%, 100%, 50%, 100%, fade, 1000, left, sineOut" />
             
             <set asset="cecile" image="smile" />
             
