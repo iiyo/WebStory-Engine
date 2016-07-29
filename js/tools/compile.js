@@ -5,7 +5,7 @@
 
 /* global using */
 
-using().define("WSE.tools.compile", function () {
+using("xmugly").define("WSE.tools.compile", function (xmugly) {
     
 //
 // Compiles the new WSE command language to XML elements.
