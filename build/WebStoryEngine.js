@@ -43,6 +43,16 @@ var using = (function () {
     var modules = {}, loadedScripts = {}, dependencies = {}, definitions = {}, dependingOn = {};
     var runners = [], selectors = {}, runnersCheckInProgress = false;
     
+    var getAbsoluteUrl = (function () {
+        
+        var a = document.createElement('a');
+        
+        return function (url) {
+            a.href = url;
+            return a.href;
+        };
+    }());
+    
     function updateModule (moduleName) {
         
         var deps = [], depNames = dependencies[moduleName], moduleResult;
@@ -257,7 +267,8 @@ var using = (function () {
         function define (moduleName, callback) {
             
             if (exists(moduleName)) {
-                throw new Error("Module '" + moduleName + "' is already defined.");
+                console.warn("Module '" + moduleName + "' is already defined.");
+                return capabilityObject;
             }
             
             definitions[moduleName] = callback;
@@ -312,19 +323,38 @@ var using = (function () {
     
     using.loadScript = function (url) {
         
-        var script = document.createElement("script");
-        var scriptId = "using_script_" + url;
+        url = getAbsoluteUrl(url);
         
-        if (loadedScripts[url] || document.getElementById(scriptId)) {
+        var script = document.createElement("script");
+        
+        if (loadedScripts[url] || scriptExists(url)) {
             return;
         }
         
-        script.setAttribute("id", scriptId);
+        script.setAttribute("data-inserted-by", "using.js");
         
         script.src = url;
+        loadedScripts[url] = true;
         
         document.body.appendChild(script);
     };
+    
+    function scriptExists (url) {
+        
+        var exists = false;
+        var scripts = document.getElementsByTagName("script");
+        
+        [].forEach.call(scripts, function (script) {
+            
+            var src = script.getAttribute("src");
+            
+            if (src && getAbsoluteUrl(src) === url) {
+                exists = true;
+            }
+        });
+        
+        return exists;
+    }
     
     return using;
     
@@ -420,8 +450,8 @@ using.ajax = (function () {
 
 
 /*
-    WebStory Engine dependencies (v2016.7.0-final.1607292134)
-    Build time: Fri, 29 Jul 2016 22:08:47 GMT
+    WebStory Engine dependencies (v2016.7.0-final.1607301311)
+    Build time: Sat, 30 Jul 2016 11:11:58 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -9638,7 +9668,7 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2016.7.0-final.1607292134";
+    var WSE = {}, version = "2016.7.0-final.1607301311";
     
     DataBus.inject(WSE);
     
