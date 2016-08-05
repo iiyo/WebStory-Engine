@@ -34,7 +34,7 @@
 
 /* global using, setTimeout */
 
-using("move").define("WSE.tools.reveal", function (move) {
+using("transform::transform").define("WSE.tools.reveal", function (transform) {
     
     function reveal (element, args) {
         
@@ -72,9 +72,13 @@ using("move").define("WSE.tools.reveal", function (move) {
                     return;
                 }
                 
-                move(char).set("opacity", 1).duration(duration).end(end);
+                transform(0, 1, setOpacity, {duration: duration}, end);
                 
                 setTimeout(end, duration + 2000);
+                
+                function setOpacity (v) {
+                    char.style.opacity = v;
+                }
                 
                 function end () {
                     
