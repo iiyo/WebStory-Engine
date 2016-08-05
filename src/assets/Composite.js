@@ -29,37 +29,21 @@ define("WSE.assets.Composite", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Composite (asset, interpreter)
+    function Composite (asset)
     {
-        var element, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn, width, height, x, y, xUnit, yUnit;
+        var element, children;
+        var self, triggerDecreaseFn, width, height;
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
-        this.name = asset.getAttribute("name");
-        this.cssid = asset.getAttribute("cssid") || "wse_composite_" + this.name;
-        this.interpreter = interpreter;
-        this.xAnchor = asset.getAttribute("xAnchor");
-        this.yAnchor = asset.getAttribute("yAnchor");
-        this.width = parseInt(asset.getAttribute("width"), 10) || 100;
-        this.height = parseInt(asset.getAttribute("height"), 10) || 100;
-        
-        applyUnits(this, asset);
+        this.cssid = this.cssid || "wse_composite_" + this.name;
         
         self = this;
-        element = document.createElement("div");
-        width = asset.getAttribute('width');
-        height = asset.getAttribute('height');
+        element = this.element;
+        width = this.width;
+        height = this.height;
         
-        element.style.opacity = 0;
-        element.draggable = false;
-        
-        element.setAttribute("class", "composite");
-        element.setAttribute("id", this.cssid);
-        
-        element.setAttribute("data-wse-asset-name", this.name);
+        element.setAttribute("class", "asset composite");
         
         children = asset.getElementsByTagName("image");
         triggerDecreaseFn =
@@ -106,48 +90,14 @@ define("WSE.assets.Composite", function (
             
         });
         
-        element.style.position = "absolute";
-        element.style.zIndex = asset.getAttribute("z") || 0;
-        
-        this.stage.appendChild(element);
-        
-        x = parseInt(asset.getAttribute("x") || 0, 10);
-        y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = extractUnit(asset.getAttribute("y")) || "px";
-        
-        if (xUnit === "%") {
-            x = (this.stage.offsetWidth / 100) * x;
-        }
-        
-        if (yUnit === "%") {
-            y = (this.stage.offsetHeight / 100) * y;
-        }
-        
-        x = anchoredValue(x, this.xAnchor, this.width);
-        y = anchoredValue(y, this.yAnchor, this.height);
-        
-        if (xUnit === "%") {
-            x = x / (this.stage.offsetWidth / 100);
-        }
-        
-        if (yUnit === "%") {
-            y = y / (this.stage.offsetHeight / 100);
-        }
-        
-        element.style.left = "" + x + xUnit;
-        element.style.top = "" + y + yUnit;
-        
         this.current = [];
-        this.element = element;
-        
     }
     
-    Composite.prototype = new DisplayObject();
+    Composite.prototype = Object.create(DisplayObject.prototype);
     
     Composite.prototype.tag = function (command, args) {
         
-        var images, self, old, duration, isAnimation, bus = this.bus, element;
+        var self, old, duration, isAnimation, bus = this.bus, element;
         var toAdd, toRemove, imagesByTags, oldImages, newImages;
         
         args = args || {};
@@ -288,8 +238,6 @@ define("WSE.assets.Composite", function (
             }());
         }
         
-        console.log(this);
-        
         return {
             doNext: true
         };
@@ -297,7 +245,7 @@ define("WSE.assets.Composite", function (
     
     Composite.prototype.save = function () {
         
-        var cur, key, images, obj;
+        var cur, obj;
         
         cur = this.current || [];
         
@@ -330,7 +278,7 @@ define("WSE.assets.Composite", function (
         this.yAnchor = save.yAnchor;
         
         this.element = document.getElementById(this.cssid);
-        tis.element.style.zIndex = this.z;
+        this.element.style.zIndex = this.z;
         
         this.bus.trigger(
             "wse.assets.composite.restore",

@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.0-final.1607301311)
-    Build time: Sat, 30 Jul 2016 11:11:58 GMT
+    Build time: Fri, 05 Aug 2016 19:57:16 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -13437,20 +13437,54 @@ using("xmugly").define("WSE.tools.compile", function (xmugly) {
 
 /* global using */
 
-using("transform::transform", "eases", "WSE.tools", "WSE.tools::warn").
-define("WSE.DisplayObject", function (transform, easing, tools, warn) {
+using(
+    "transform::transform",
+    "eases",
+    "WSE.tools",
+    "WSE.tools::warn",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::extractUnit",
+    "WSE.tools::calculateValueWithAnchor"
+).
+define("WSE.DisplayObject", function (
+    transform,
+    easing,
+    tools,
+    warn,
+    applyUnits,
+    extractUnit,
+    anchoredValue
+) {
     
-    function DisplayObject () {
+    function DisplayObject (asset, interpreter) {
+        
+        this.stage = interpreter.stage;
+        this.bus = interpreter.bus;
+        this.name = asset.getAttribute("name");
+        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
+        this.interpreter = interpreter;
+        this.x = asset.getAttribute("x") || 0;
+        this.y = asset.getAttribute("y") || 0;
+        this.z = asset.getAttribute("z") || this.z || 0;
+        this.xAnchor = asset.getAttribute("xAnchor");
+        this.yAnchor = asset.getAttribute("yAnchor");
+        this.width = asset.getAttribute("width") || this.width;
+        this.height = asset.getAttribute("height") || this.height;
+        
+        this._createElement();
+        this._moveToPosition();
+        
+        applyUnits(this, asset);
+        
     }
     
     DisplayObject.prototype.flash = function flash (command, args) {
         
-        var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
+        var self, duration, element, isAnimation, maxOpacity;
         var visible, parse = tools.getParsedAttribute;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = +parse(command, "duration", this.interpreter, 500);
         maxOpacity = +parse(command, "opacity", this.interpreter, 1);
         element = args.element || document.getElementById(this.cssid);
@@ -13459,9 +13493,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
-    
-        bus = args.bus || this.bus;
-        stage = args.stage || this.stage;
+        
         isAnimation = args.animation === true ? true : false;
         visible = (+(element.style.opacity.replace(/[^0-9\.]/, ""))) > 0 ? true : false;
         
@@ -13517,7 +13549,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.flicker = function (command, args) {
         
-        var self, duration, bus, stage, times, step, element;
+        var self, duration, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
         
         args = args || {};
@@ -13547,8 +13579,6 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             dur1 = dur2 * 2;
         }
         
-        bus = args.bus || this.bus;
-        stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
         
         if (!isAnimation) {
@@ -13606,21 +13636,20 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.hide = function (command, args) {
         
-        var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
+        var self, duration, effect, direction, offsetWidth, offsetHeight;
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = parse(command, "duration", this.interpreter, 500);
         effect = parse(command, "effect", this.interpreter, "fade");
         direction = parse(command, "direction", this.interpreter, "left");
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
         easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         stage = this.stage;
@@ -13757,8 +13786,8 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.move = function (command, args) {
         
-        var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
-        var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
+        var x, y, z, element, self, xUnit, yUnit, duration, easingType;
+        var easingFn, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
         var offsetLeft, offsetTop, oldElementDisplayStyle;
         
@@ -13790,7 +13819,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         duration = tools.getParsedAttribute(command, "duration", interpreter, 500);
         easingType = tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
         
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         
@@ -13827,11 +13856,6 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         y = tools.calculateValueWithAnchor(y, yAnchor, element.offsetHeight);
         
         element.style.display = oldElementDisplayStyle;
-        
-        wait = tools.getParsedAttribute(command, "wait", interpreter) === "yes" ? true : false;
-        waitX = false;
-        waitY = false;
-        waitZ = false;
         
         if (x === null && y === null && z === null) {
             warn(this.bus, "Can't apply command 'move' to asset '" + 
@@ -13932,19 +13956,17 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         };
     };
     
-    DisplayObject.prototype.shake = function (command, args) {
+    DisplayObject.prototype.shake = function (command) {
         
         var dx, dy, element, self, xUnit, yUnit, duration, period;
-        var isAnimation, ox, oy, stage;
-
-        args = args || {};
+        var ox, oy, stage;
+        
         self = this;
         element = document.getElementById(this.cssid);
         dx = command.getAttribute("dx");
         dy = command.getAttribute("dy");
         period = command.getAttribute("period") || 50;
         duration = command.getAttribute("duration") || 275;
-        isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
         
         if (dx === null && dy === null) {
@@ -14042,14 +14064,12 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.show = function (command, args) {
         
-        var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
-        var bus, stage, element, isAnimation, easingFn, easingType, interpreter;
+        var duration, effect, direction, ox, oy, prop, xUnit, yUnit;
+        var stage, element, isAnimation, easingFn, easingType, interpreter;
         var offsetWidth, offsetHeight, startX, startY;
         var parse = tools.getParsedAttribute;
         
         args = args || {};
-        self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = parse(command, "duration", this.interpreter, 500);
         effect = parse(command, "effect", this.interpreter, "fade");
         direction = parse(command, "direction", this.interpreter, "right");
@@ -14063,10 +14083,9 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         }
         
         interpreter = args.interpreter || this.interpreter;
-        bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         easingType = parse(command, "easing", this.interpreter, "sineOut");
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         isAnimation = args.animation === true ? true : false;
@@ -14178,6 +14197,58 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         return {
             doNext: true
         };
+    };
+    
+    DisplayObject.prototype._createElement = function () {
+        
+        this.element = document.createElement(this.elementType || "div");
+        
+        this.element.style.opacity = 0;
+        this.element.draggable = false;
+        
+        this.element.setAttribute("class", "asset");
+        this.element.setAttribute("id", this.cssid);
+        this.element.setAttribute("data-wse-asset-name", this.name);
+        
+        this.element.style.position = "absolute";
+        this.element.style.zIndex = this.z;
+        this.element.style.width = this.width;
+        this.element.style.height = this.height;
+        
+        this.stage.appendChild(this.element);
+    };
+    
+    DisplayObject.prototype._moveToPosition = function () {
+        
+        var x, y, xUnit, yUnit;
+        var element = this.element;
+        
+        x = parseInt(this.x, 10);
+        y = parseInt(this.y, 10);
+        xUnit = extractUnit(this.x) || "px";
+        yUnit = extractUnit(this.y) || "px";
+        
+        if (xUnit === "%") {
+            x = (this.stage.offsetWidth / 100) * x;
+        }
+        
+        if (yUnit === "%") {
+            y = (this.stage.offsetHeight / 100) * y;
+        }
+        
+        x = anchoredValue(x, this.xAnchor, this.width);
+        y = anchoredValue(y, this.yAnchor, this.height);
+        
+        if (xUnit === "%") {
+            x = x / (this.stage.offsetWidth / 100);
+        }
+        
+        if (yUnit === "%") {
+            y = y / (this.stage.offsetHeight / 100);
+        }
+        
+        element.style.left = "" + x + xUnit;
+        element.style.top = "" + y + yUnit;
     };
     
     return DisplayObject;
@@ -14768,42 +14839,30 @@ using().define("WSE.assets.Character", function () {
 
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools::applyAssetUnits", "WSE.tools::warn").
-define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
+using("WSE.DisplayObject", "WSE.tools::warn").
+define("WSE.assets.Curtain", function (DisplayObject, warn) {
     
     "use strict";
     
-    function Curtain (asset, interpreter) {
+    function Curtain (asset) {
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
         this.asset = asset;
-        this.interpreter = interpreter;
-        this.bus = interpreter.bus;
-        this.stage = interpreter.stage;
         this.color = asset.getAttribute("color") || "black";
         this.z = asset.getAttribute("z") || 20000;
-        this.cssid = "WSECurtain_" + this.id;
-        this.element = document.createElement("div");
-        this.name = asset.getAttribute('name');
-
-        this.element.setAttribute("id", this.cssid);
-        this.element.setAttribute("class", "WSECurtain");
-        this.element.style.position = "absolute";
+        this.cssid = this.cssid || "WSECurtain_" + this.id;
+        
+        this.element.setAttribute("class", "asset WSECurtain");
         this.element.style.left = 0;
         this.element.style.top = 0;
         this.element.style.width = this.stage.offsetWidth + "px";
         this.element.style.height = this.stage.offsetHeight + "px";
         this.element.style.opacity = 0;
         this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
-        
-        applyUnits(this, asset);
-        
-        this.stage.appendChild(this.element);
-    };
+    }
     
-    Curtain.prototype = new DisplayObject();
+    Curtain.prototype = Object.create(DisplayObject.prototype);
     
     Curtain.prototype.set = function (asset) {
         this.color = asset.getAttribute("color") || "black";
@@ -14840,7 +14899,7 @@ define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
     
 });
 
-/* global using */
+/* global using, console */
 
 using(
     "transform::transform",
@@ -14871,38 +14930,21 @@ define("WSE.assets.Imagepack", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Imagepack (asset, interpreter)
+    function Imagepack (asset)
     {
-        var element, images, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn, width, height, x, y, xUnit, yUnit;
+        var images, children, i, len, current, name;
+        var src, image, self, triggerDecreaseFn, width, height;
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
-        this.name = asset.getAttribute("name");
-        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
-        this.interpreter = interpreter;
-        this.xAnchor = asset.getAttribute("xAnchor");
-        this.yAnchor = asset.getAttribute("yAnchor");
-        this.width = parseInt(asset.getAttribute("width"), 10) || 100;
-        this.height = parseInt(asset.getAttribute("height"), 10) || 100;
-        
-        applyUnits(this, asset);
+        this.cssid = this.cssid || "wse_imagepack_" + this.name;
         
         self = this;
         images = {};
-        element = document.createElement("div");
         width = asset.getAttribute('width');
         height = asset.getAttribute('height');
         
-        element.style.opacity = 0;
-        element.draggable = false;
-        
-        element.setAttribute("class", "imagepack");
-        element.setAttribute("id", this.cssid);
-        
-        element.setAttribute("data-wse-asset-name", this.name);
+        this.element.setAttribute("class", "asset imagepack");
         
         children = asset.getElementsByTagName("image");
         triggerDecreaseFn =
@@ -14947,47 +14989,15 @@ define("WSE.assets.Imagepack", function (
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
             
-            element.appendChild(image);
+            this.element.appendChild(image);
         }
-        
-        element.style.position = "absolute";
-        element.style.zIndex = asset.getAttribute("z") || 0;
-        
-        this.stage.appendChild(element);
-        
-        x = parseInt(asset.getAttribute("x") || 0, 10);
-        y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = extractUnit(asset.getAttribute("y")) || "px";
-        
-        if (xUnit === "%") {
-            x = (this.stage.offsetWidth / 100) * x;
-        }
-        
-        if (yUnit === "%") {
-            y = (this.stage.offsetHeight / 100) * y;
-        }
-        
-        x = anchoredValue(x, this.xAnchor, this.width);
-        y = anchoredValue(y, this.yAnchor, this.height);
-        
-        if (xUnit === "%") {
-            x = x / (this.stage.offsetWidth / 100);
-        }
-        
-        if (yUnit === "%") {
-            y = y / (this.stage.offsetHeight / 100);
-        }
-        
-        element.style.left = "" + x + xUnit;
-        element.style.top = "" + y + yUnit;
         
         this.images = images;
         this.current = null;
         
     }
     
-    Imagepack.prototype = new DisplayObject();
+    Imagepack.prototype = Object.create(DisplayObject.prototype);
     
     Imagepack.prototype.set = function (command, args) {
         
@@ -15128,21 +15138,10 @@ define("WSE.assets.Imagepack", function (
     
     Imagepack.prototype.save = function () {
         
-        var cur, key, images, name, obj;
+        var cur, images, obj;
         
         images = this.images;
         cur = this.current || null;
-        name = null;
-        
-        for (key in images) {
-            
-            if (images.hasOwnProperty(key)) {
-                
-                if (images[key] === cur) {
-                    name = key;
-                }
-            }
-        }
         
         obj = {
             assetType: "Imagepack",
@@ -15212,27 +15211,22 @@ define("WSE.assets.Textbox", function (
     
     "use strict";
     
-    function Textbox (asset, interpreter) {
+    function Textbox (asset) {
         
-        DisplayObject.call(this);
+        this.z = 1000;
         
-        var element, nameElement, textElement, cssid, x, y, width, height;
+        DisplayObject.apply(this, arguments);
         
-        this.interpreter = interpreter;
-        this.name = asset.getAttribute("name");
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
+        var element, nameElement, textElement;
+        
         this.type = asset.getAttribute("behaviour") || "adv";
-        this.z = asset.getAttribute("z") || 5000;
         this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
-        this.cssid = "wse_textbox_" + this.name;
+        this.cssid = this.cssid || "wse_textbox_" + this.name;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
         this.speed = parseInt(this.speed, 10);
         this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
-        
-        applyUnits(this, asset);
         
         (function (ctx) {
             
@@ -15265,45 +15259,16 @@ define("WSE.assets.Textbox", function (
             this.showNames = false;
         }
         
-        element = document.createElement("div");
+        element = this.element;
         nameElement = document.createElement("div");
         textElement = document.createElement("div");
         
-        element.setAttribute("class", "textbox");
+        element.setAttribute("class", "asset textbox");
         textElement.setAttribute("class", "text");
         nameElement.setAttribute("class", "name");
         
-        cssid = asset.getAttribute("cssid") || this.cssid;
-        element.setAttribute("id", cssid);
-        this.cssid = cssid;
-        
-        x = asset.getAttribute("x");
-        
-        if (x) {
-            element.style.left = x;
-        }
-        
-        y = asset.getAttribute("y");
-        
-        if (y) {
-            element.style.top = y;
-        }
-        
-        element.style.zIndex = this.z;
-        width = asset.getAttribute("width");
-        height = asset.getAttribute("height");
-        
-        if (width) {
-            element.style.width = width;
-        }
-        
-        if (height) {
-            element.style.height = height;
-        }
-        
         element.appendChild(nameElement);
         element.appendChild(textElement);
-        this.stage.appendChild(element);
         
         if (this.showNames === false) {
             nameElement.style.display = "none";
@@ -15320,7 +15285,7 @@ define("WSE.assets.Textbox", function (
         this.bus.trigger("wse.assets.textbox.constructor", this);
     }
     
-    Textbox.prototype = new DisplayObject();
+    Textbox.prototype = Object.create(DisplayObject.prototype);
     
     Textbox.prototype.put = function (text, name, speakerId) {
         
@@ -15545,37 +15510,32 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
         s.zIndex = self.z;
     }
     
-    function Background (asset, interpreter) {
+    function Background (asset) {
         
-        DisplayObject.call(this);
+        this.elementType = "img";
+        
+        DisplayObject.apply(this, arguments);
         
         var self = this;
         
         this.asset = asset;
-        this.interpreter = interpreter;
-        this.bus = interpreter.bus;
-        this.stage = interpreter.stage;
-        this.z = asset.getAttribute("z") || 10;
-        this.cssid = "WSEBackground_" + this.id;
-        this.element = document.createElement("img");
+        this.cssid = this.cssid || "WSEBackground_" + this.id;
         this.src = asset.getAttribute('src');
-        this.name = asset.getAttribute('name');
         
         if (!this.src) {
             warn(this.bus, 'No source defined on background asset.', asset);
             return;
         }
         
-        applyUnits(this, asset);
         this.element.setAttribute('src', this.src);
+        
         styleElement(this);
         resize(this);
-        window.addEventListener('resize', function () { resize(self); });
         
-        this.stage.appendChild(this.element);
+        window.addEventListener('resize', function () { resize(self); });
     }
     
-    Background.prototype = new DisplayObject();
+    Background.prototype = Object.create(DisplayObject.prototype);
     
     Background.prototype.save = function () {
         return {
@@ -15633,37 +15593,21 @@ define("WSE.assets.Composite", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Composite (asset, interpreter)
+    function Composite (asset)
     {
-        var element, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn, width, height, x, y, xUnit, yUnit;
+        var element, children;
+        var self, triggerDecreaseFn, width, height;
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
-        this.name = asset.getAttribute("name");
-        this.cssid = asset.getAttribute("cssid") || "wse_composite_" + this.name;
-        this.interpreter = interpreter;
-        this.xAnchor = asset.getAttribute("xAnchor");
-        this.yAnchor = asset.getAttribute("yAnchor");
-        this.width = parseInt(asset.getAttribute("width"), 10) || 100;
-        this.height = parseInt(asset.getAttribute("height"), 10) || 100;
-        
-        applyUnits(this, asset);
+        this.cssid = this.cssid || "wse_composite_" + this.name;
         
         self = this;
-        element = document.createElement("div");
-        width = asset.getAttribute('width');
-        height = asset.getAttribute('height');
+        element = this.element;
+        width = this.width;
+        height = this.height;
         
-        element.style.opacity = 0;
-        element.draggable = false;
-        
-        element.setAttribute("class", "composite");
-        element.setAttribute("id", this.cssid);
-        
-        element.setAttribute("data-wse-asset-name", this.name);
+        element.setAttribute("class", "asset composite");
         
         children = asset.getElementsByTagName("image");
         triggerDecreaseFn =
@@ -15710,48 +15654,14 @@ define("WSE.assets.Composite", function (
             
         });
         
-        element.style.position = "absolute";
-        element.style.zIndex = asset.getAttribute("z") || 0;
-        
-        this.stage.appendChild(element);
-        
-        x = parseInt(asset.getAttribute("x") || 0, 10);
-        y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = extractUnit(asset.getAttribute("y")) || "px";
-        
-        if (xUnit === "%") {
-            x = (this.stage.offsetWidth / 100) * x;
-        }
-        
-        if (yUnit === "%") {
-            y = (this.stage.offsetHeight / 100) * y;
-        }
-        
-        x = anchoredValue(x, this.xAnchor, this.width);
-        y = anchoredValue(y, this.yAnchor, this.height);
-        
-        if (xUnit === "%") {
-            x = x / (this.stage.offsetWidth / 100);
-        }
-        
-        if (yUnit === "%") {
-            y = y / (this.stage.offsetHeight / 100);
-        }
-        
-        element.style.left = "" + x + xUnit;
-        element.style.top = "" + y + yUnit;
-        
         this.current = [];
-        this.element = element;
-        
     }
     
-    Composite.prototype = new DisplayObject();
+    Composite.prototype = Object.create(DisplayObject.prototype);
     
     Composite.prototype.tag = function (command, args) {
         
-        var images, self, old, duration, isAnimation, bus = this.bus, element;
+        var self, old, duration, isAnimation, bus = this.bus, element;
         var toAdd, toRemove, imagesByTags, oldImages, newImages;
         
         args = args || {};
@@ -15892,8 +15802,6 @@ define("WSE.assets.Composite", function (
             }());
         }
         
-        console.log(this);
-        
         return {
             doNext: true
         };
@@ -15901,7 +15809,7 @@ define("WSE.assets.Composite", function (
     
     Composite.prototype.save = function () {
         
-        var cur, key, images, obj;
+        var cur, obj;
         
         cur = this.current || [];
         
@@ -15934,7 +15842,7 @@ define("WSE.assets.Composite", function (
         this.yAnchor = save.yAnchor;
         
         this.element = document.getElementById(this.cssid);
-        tis.element.style.zIndex = this.z;
+        this.element.style.zIndex = this.z;
         
         this.bus.trigger(
             "wse.assets.composite.restore",

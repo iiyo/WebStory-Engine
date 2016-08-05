@@ -9,7 +9,7 @@
         </triggers>
     </settings>
     <assets>
-        <textbox name="tb" cssid="tb" namebox="yes" />
+        <textbox name="tb" cssid="tb" namebox="yes" width="98%" height="100px" y="50%" yAnchor="50%"/>
         <character name="n" textbox="tb"></character>
         <character name="s" textbox="tb">
             <displayname>Sara</displayname>

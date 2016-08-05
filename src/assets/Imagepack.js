@@ -1,4 +1,4 @@
-/* global using */
+/* global using, console */
 
 using(
     "transform::transform",
@@ -29,38 +29,21 @@ define("WSE.assets.Imagepack", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Imagepack (asset, interpreter)
+    function Imagepack (asset)
     {
-        var element, images, children, i, len, current, name;
-        var src, image, self, triggerDecreaseFn, width, height, x, y, xUnit, yUnit;
+        var images, children, i, len, current, name;
+        var src, image, self, triggerDecreaseFn, width, height;
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
-        this.name = asset.getAttribute("name");
-        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
-        this.interpreter = interpreter;
-        this.xAnchor = asset.getAttribute("xAnchor");
-        this.yAnchor = asset.getAttribute("yAnchor");
-        this.width = parseInt(asset.getAttribute("width"), 10) || 100;
-        this.height = parseInt(asset.getAttribute("height"), 10) || 100;
-        
-        applyUnits(this, asset);
+        this.cssid = this.cssid || "wse_imagepack_" + this.name;
         
         self = this;
         images = {};
-        element = document.createElement("div");
         width = asset.getAttribute('width');
         height = asset.getAttribute('height');
         
-        element.style.opacity = 0;
-        element.draggable = false;
-        
-        element.setAttribute("class", "imagepack");
-        element.setAttribute("id", this.cssid);
-        
-        element.setAttribute("data-wse-asset-name", this.name);
+        this.element.setAttribute("class", "asset imagepack");
         
         children = asset.getElementsByTagName("image");
         triggerDecreaseFn =
@@ -105,47 +88,15 @@ define("WSE.assets.Imagepack", function (
             images[name] = this.cssid + "_" + name;
             image.setAttribute("id", images[name]);
             
-            element.appendChild(image);
+            this.element.appendChild(image);
         }
-        
-        element.style.position = "absolute";
-        element.style.zIndex = asset.getAttribute("z") || 0;
-        
-        this.stage.appendChild(element);
-        
-        x = parseInt(asset.getAttribute("x") || 0, 10);
-        y = parseInt(asset.getAttribute("y") || 0, 10);
-        xUnit = extractUnit(asset.getAttribute("x")) || "px";
-        yUnit = extractUnit(asset.getAttribute("y")) || "px";
-        
-        if (xUnit === "%") {
-            x = (this.stage.offsetWidth / 100) * x;
-        }
-        
-        if (yUnit === "%") {
-            y = (this.stage.offsetHeight / 100) * y;
-        }
-        
-        x = anchoredValue(x, this.xAnchor, this.width);
-        y = anchoredValue(y, this.yAnchor, this.height);
-        
-        if (xUnit === "%") {
-            x = x / (this.stage.offsetWidth / 100);
-        }
-        
-        if (yUnit === "%") {
-            y = y / (this.stage.offsetHeight / 100);
-        }
-        
-        element.style.left = "" + x + xUnit;
-        element.style.top = "" + y + yUnit;
         
         this.images = images;
         this.current = null;
         
     }
     
-    Imagepack.prototype = new DisplayObject();
+    Imagepack.prototype = Object.create(DisplayObject.prototype);
     
     Imagepack.prototype.set = function (command, args) {
         
@@ -286,21 +237,10 @@ define("WSE.assets.Imagepack", function (
     
     Imagepack.prototype.save = function () {
         
-        var cur, key, images, name, obj;
+        var cur, images, obj;
         
         images = this.images;
         cur = this.current || null;
-        name = null;
-        
-        for (key in images) {
-            
-            if (images.hasOwnProperty(key)) {
-                
-                if (images[key] === cur) {
-                    name = key;
-                }
-            }
-        }
         
         obj = {
             assetType: "Imagepack",

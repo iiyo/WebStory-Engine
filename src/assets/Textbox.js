@@ -19,27 +19,22 @@ define("WSE.assets.Textbox", function (
     
     "use strict";
     
-    function Textbox (asset, interpreter) {
+    function Textbox (asset) {
         
-        DisplayObject.call(this);
+        this.z = 1000;
         
-        var element, nameElement, textElement, cssid, x, y, width, height;
+        DisplayObject.apply(this, arguments);
         
-        this.interpreter = interpreter;
-        this.name = asset.getAttribute("name");
-        this.stage = interpreter.stage;
-        this.bus = interpreter.bus;
+        var element, nameElement, textElement;
+        
         this.type = asset.getAttribute("behaviour") || "adv";
-        this.z = asset.getAttribute("z") || 5000;
         this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
         this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
-        this.cssid = "wse_textbox_" + this.name;
+        this.cssid = this.cssid || "wse_textbox_" + this.name;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
         this.speed = parseInt(this.speed, 10);
         this.fadeDuration = asset.getAttribute("fadeDuration") || 0;
-        
-        applyUnits(this, asset);
         
         (function (ctx) {
             
@@ -72,45 +67,16 @@ define("WSE.assets.Textbox", function (
             this.showNames = false;
         }
         
-        element = document.createElement("div");
+        element = this.element;
         nameElement = document.createElement("div");
         textElement = document.createElement("div");
         
-        element.setAttribute("class", "textbox");
+        element.setAttribute("class", "asset textbox");
         textElement.setAttribute("class", "text");
         nameElement.setAttribute("class", "name");
         
-        cssid = asset.getAttribute("cssid") || this.cssid;
-        element.setAttribute("id", cssid);
-        this.cssid = cssid;
-        
-        x = asset.getAttribute("x");
-        
-        if (x) {
-            element.style.left = x;
-        }
-        
-        y = asset.getAttribute("y");
-        
-        if (y) {
-            element.style.top = y;
-        }
-        
-        element.style.zIndex = this.z;
-        width = asset.getAttribute("width");
-        height = asset.getAttribute("height");
-        
-        if (width) {
-            element.style.width = width;
-        }
-        
-        if (height) {
-            element.style.height = height;
-        }
-        
         element.appendChild(nameElement);
         element.appendChild(textElement);
-        this.stage.appendChild(element);
         
         if (this.showNames === false) {
             nameElement.style.display = "none";
@@ -127,7 +93,7 @@ define("WSE.assets.Textbox", function (
         this.bus.trigger("wse.assets.textbox.constructor", this);
     }
     
-    Textbox.prototype = new DisplayObject();
+    Textbox.prototype = Object.create(DisplayObject.prototype);
     
     Textbox.prototype.put = function (text, name, speakerId) {
         

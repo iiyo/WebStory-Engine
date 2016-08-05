@@ -8,7 +8,7 @@
     </settings>
     <assets>
         
-        <composite name="colors" x="0" y="0" z="1000">
+        <composite name="colors" x="0" y="0" z="1000" width="500px" height="500px">
             <image src="bg.png" tags="bg" />
             <image src="brown.png" tags="brown,horizontal" />
             <image src="pink.png" tags="pink,vertical" />
