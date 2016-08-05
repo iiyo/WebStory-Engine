@@ -799,8 +799,8 @@ define("WSE.DisplayObject", function (
             y = (this.stage.offsetHeight / 100) * y;
         }
         
-        x = anchoredValue(x, this.xAnchor, this.width);
-        y = anchoredValue(y, this.yAnchor, this.height);
+        x = anchoredValue(x, this.xAnchor, this.element.offsetWidth);
+        y = anchoredValue(y, this.yAnchor, this.element.offsetHeight);
         
         if (xUnit === "%") {
             x = x / (this.stage.offsetWidth / 100);
