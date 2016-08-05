@@ -9,7 +9,7 @@
         </triggers>
     </settings>
     <assets>
-        <textbox name="tb" cssid="tb" />
+        <textbox name="tb" cssid="tb" width="100%" />
         <character name="n" textbox="tb"></character>
     </assets>
     <scenes>

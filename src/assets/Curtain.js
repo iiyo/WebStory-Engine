@@ -1,41 +1,29 @@
 /* global using */
 
-using("WSE.DisplayObject", "WSE.tools::applyAssetUnits", "WSE.tools::warn").
-define("WSE.assets.Curtain", function (DisplayObject, applyUnits, warn) {
+using("WSE.DisplayObject", "WSE.tools::warn").
+define("WSE.assets.Curtain", function (DisplayObject, warn) {
     
     "use strict";
     
-    function Curtain (asset, interpreter) {
+    function Curtain (asset) {
         
-        DisplayObject.call(this);
+        DisplayObject.apply(this, arguments);
         
         this.asset = asset;
-        this.interpreter = interpreter;
-        this.bus = interpreter.bus;
-        this.stage = interpreter.stage;
         this.color = asset.getAttribute("color") || "black";
         this.z = asset.getAttribute("z") || 20000;
-        this.cssid = "WSECurtain_" + this.id;
-        this.element = document.createElement("div");
-        this.name = asset.getAttribute('name');
-
-        this.element.setAttribute("id", this.cssid);
-        this.element.setAttribute("class", "WSECurtain");
-        this.element.style.position = "absolute";
+        this.cssid = this.cssid || "WSECurtain_" + this.id;
+        
+        this.element.setAttribute("class", "asset WSECurtain");
         this.element.style.left = 0;
         this.element.style.top = 0;
         this.element.style.width = this.stage.offsetWidth + "px";
         this.element.style.height = this.stage.offsetHeight + "px";
         this.element.style.opacity = 0;
         this.element.style.backgroundColor = this.color;
-        this.element.style.zIndex = this.z;
-        
-        applyUnits(this, asset);
-        
-        this.stage.appendChild(this.element);
-    };
+    }
     
-    Curtain.prototype = new DisplayObject();
+    Curtain.prototype = Object.create(DisplayObject.prototype);
     
     Curtain.prototype.set = function (asset) {
         this.color = asset.getAttribute("color") || "black";

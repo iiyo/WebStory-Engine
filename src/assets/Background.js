@@ -24,37 +24,32 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
         s.zIndex = self.z;
     }
     
-    function Background (asset, interpreter) {
+    function Background (asset) {
         
-        DisplayObject.call(this);
+        this.elementType = "img";
+        
+        DisplayObject.apply(this, arguments);
         
         var self = this;
         
         this.asset = asset;
-        this.interpreter = interpreter;
-        this.bus = interpreter.bus;
-        this.stage = interpreter.stage;
-        this.z = asset.getAttribute("z") || 10;
-        this.cssid = "WSEBackground_" + this.id;
-        this.element = document.createElement("img");
+        this.cssid = this.cssid || "WSEBackground_" + this.id;
         this.src = asset.getAttribute('src');
-        this.name = asset.getAttribute('name');
         
         if (!this.src) {
             warn(this.bus, 'No source defined on background asset.', asset);
             return;
         }
         
-        applyUnits(this, asset);
         this.element.setAttribute('src', this.src);
+        
         styleElement(this);
         resize(this);
-        window.addEventListener('resize', function () { resize(self); });
         
-        this.stage.appendChild(this.element);
+        window.addEventListener('resize', function () { resize(self); });
     }
     
-    Background.prototype = new DisplayObject();
+    Background.prototype = Object.create(DisplayObject.prototype);
     
     Background.prototype.save = function () {
         return {

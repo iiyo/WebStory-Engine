@@ -1,19 +1,53 @@
 /* global using */
 
-using("transform::transform", "eases", "WSE.tools", "WSE.tools::warn").
-define("WSE.DisplayObject", function (transform, easing, tools, warn) {
+using(
+    "transform::transform",
+    "eases",
+    "WSE.tools",
+    "WSE.tools::warn",
+    "WSE.tools::applyAssetUnits",
+    "WSE.tools::extractUnit",
+    "WSE.tools::calculateValueWithAnchor"
+).
+define("WSE.DisplayObject", function (
+    transform,
+    easing,
+    tools,
+    warn,
+    applyUnits,
+    extractUnit,
+    anchoredValue
+) {
     
-    function DisplayObject () {
+    function DisplayObject (asset, interpreter) {
+        
+        this.stage = interpreter.stage;
+        this.bus = interpreter.bus;
+        this.name = asset.getAttribute("name");
+        this.cssid = asset.getAttribute("cssid") || "wse_imagepack_" + this.name;
+        this.interpreter = interpreter;
+        this.x = asset.getAttribute("x") || 0;
+        this.y = asset.getAttribute("y") || 0;
+        this.z = asset.getAttribute("z") || this.z || 0;
+        this.xAnchor = asset.getAttribute("xAnchor");
+        this.yAnchor = asset.getAttribute("yAnchor");
+        this.width = asset.getAttribute("width") || this.width;
+        this.height = asset.getAttribute("height") || this.height;
+        
+        this._createElement();
+        this._moveToPosition();
+        
+        applyUnits(this, asset);
+        
     }
     
     DisplayObject.prototype.flash = function flash (command, args) {
         
-        var self, duration, wait, bus, stage, element, isAnimation, maxOpacity;
+        var self, duration, element, isAnimation, maxOpacity;
         var visible, parse = tools.getParsedAttribute;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = +parse(command, "duration", this.interpreter, 500);
         maxOpacity = +parse(command, "opacity", this.interpreter, 1);
         element = args.element || document.getElementById(this.cssid);
@@ -22,9 +56,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             warn(this.bus, "DOM Element for asset is missing!", command);
             return;
         }
-    
-        bus = args.bus || this.bus;
-        stage = args.stage || this.stage;
+        
         isAnimation = args.animation === true ? true : false;
         visible = (+(element.style.opacity.replace(/[^0-9\.]/, ""))) > 0 ? true : false;
         
@@ -80,7 +112,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.flicker = function (command, args) {
         
-        var self, duration, bus, stage, times, step, element;
+        var self, duration, times, step, element;
         var isAnimation, fn, iteration, maxOpacity, val1, val2, dur1, dur2;
         
         args = args || {};
@@ -110,8 +142,6 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
             dur1 = dur2 * 2;
         }
         
-        bus = args.bus || this.bus;
-        stage = args.stage || this.stage;
         isAnimation = args.animation === true ? true : false;
         
         if (!isAnimation) {
@@ -169,21 +199,20 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.hide = function (command, args) {
         
-        var self, duration, wait, effect, direction, offsetWidth, offsetHeight;
+        var self, duration, effect, direction, offsetWidth, offsetHeight;
         var ox, oy, to, prop, isAnimation, element, easingType, easingFn, stage;
         var xUnit, yUnit;
         var parse = tools.getParsedAttribute;
         
         args = args || {};
         self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = parse(command, "duration", this.interpreter, 500);
         effect = parse(command, "effect", this.interpreter, "fade");
         direction = parse(command, "direction", this.interpreter, "left");
         isAnimation = args.animation === true ? true : false;
         element = document.getElementById(this.cssid);
         easingType = parse(command, "easing", this.interpreter, "sineEaseOut");
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         stage = this.stage;
@@ -320,8 +349,8 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.move = function (command, args) {
         
-        var x, y, z, element, self, wait, xUnit, yUnit, duration, easingType;
-        var easingFn, waitX, waitY, waitZ, isAnimation, ox, oy, stage;
+        var x, y, z, element, self, xUnit, yUnit, duration, easingType;
+        var easingFn, isAnimation, ox, oy, stage;
         var xAnchor, yAnchor, interpreter = this.interpreter;
         var offsetLeft, offsetTop, oldElementDisplayStyle;
         
@@ -353,7 +382,7 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         duration = tools.getParsedAttribute(command, "duration", interpreter, 500);
         easingType = tools.getParsedAttribute(command, "easing", interpreter, "sineEaseOut");
         
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         
@@ -390,11 +419,6 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         y = tools.calculateValueWithAnchor(y, yAnchor, element.offsetHeight);
         
         element.style.display = oldElementDisplayStyle;
-        
-        wait = tools.getParsedAttribute(command, "wait", interpreter) === "yes" ? true : false;
-        waitX = false;
-        waitY = false;
-        waitZ = false;
         
         if (x === null && y === null && z === null) {
             warn(this.bus, "Can't apply command 'move' to asset '" + 
@@ -495,19 +519,17 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         };
     };
     
-    DisplayObject.prototype.shake = function (command, args) {
+    DisplayObject.prototype.shake = function (command) {
         
         var dx, dy, element, self, xUnit, yUnit, duration, period;
-        var isAnimation, ox, oy, stage;
-
-        args = args || {};
+        var ox, oy, stage;
+        
         self = this;
         element = document.getElementById(this.cssid);
         dx = command.getAttribute("dx");
         dy = command.getAttribute("dy");
         period = command.getAttribute("period") || 50;
         duration = command.getAttribute("duration") || 275;
-        isAnimation = args.animation === true ? true : false;
         stage = this.interpreter.stage;
         
         if (dx === null && dy === null) {
@@ -605,14 +627,12 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
     
     DisplayObject.prototype.show = function (command, args) {
         
-        var self, duration, wait, effect, direction, ox, oy, prop, xUnit, yUnit;
-        var bus, stage, element, isAnimation, easingFn, easingType, interpreter;
+        var duration, effect, direction, ox, oy, prop, xUnit, yUnit;
+        var stage, element, isAnimation, easingFn, easingType, interpreter;
         var offsetWidth, offsetHeight, startX, startY;
         var parse = tools.getParsedAttribute;
         
         args = args || {};
-        self = this;
-        wait = parse(command, "wait", this.interpreter) === "yes" ? true : false;
         duration = parse(command, "duration", this.interpreter, 500);
         effect = parse(command, "effect", this.interpreter, "fade");
         direction = parse(command, "direction", this.interpreter, "right");
@@ -626,10 +646,9 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         }
         
         interpreter = args.interpreter || this.interpreter;
-        bus = args.bus || this.bus;
         stage = args.stage || this.stage;
         easingType = parse(command, "easing", this.interpreter, "sineOut");
-        easingFn = (typeof easing[easingType] !== null) ? 
+        easingFn = (easing[easingType]) ? 
             easing[easingType] : 
             easing.sineOut;
         isAnimation = args.animation === true ? true : false;
@@ -741,6 +760,58 @@ define("WSE.DisplayObject", function (transform, easing, tools, warn) {
         return {
             doNext: true
         };
+    };
+    
+    DisplayObject.prototype._createElement = function () {
+        
+        this.element = document.createElement(this.elementType || "div");
+        
+        this.element.style.opacity = 0;
+        this.element.draggable = false;
+        
+        this.element.setAttribute("class", "asset");
+        this.element.setAttribute("id", this.cssid);
+        this.element.setAttribute("data-wse-asset-name", this.name);
+        
+        this.element.style.position = "absolute";
+        this.element.style.zIndex = this.z;
+        this.element.style.width = this.width;
+        this.element.style.height = this.height;
+        
+        this.stage.appendChild(this.element);
+    };
+    
+    DisplayObject.prototype._moveToPosition = function () {
+        
+        var x, y, xUnit, yUnit;
+        var element = this.element;
+        
+        x = parseInt(this.x, 10);
+        y = parseInt(this.y, 10);
+        xUnit = extractUnit(this.x) || "px";
+        yUnit = extractUnit(this.y) || "px";
+        
+        if (xUnit === "%") {
+            x = (this.stage.offsetWidth / 100) * x;
+        }
+        
+        if (yUnit === "%") {
+            y = (this.stage.offsetHeight / 100) * y;
+        }
+        
+        x = anchoredValue(x, this.xAnchor, this.width);
+        y = anchoredValue(y, this.yAnchor, this.height);
+        
+        if (xUnit === "%") {
+            x = x / (this.stage.offsetWidth / 100);
+        }
+        
+        if (yUnit === "%") {
+            y = y / (this.stage.offsetHeight / 100);
+        }
+        
+        element.style.left = "" + x + xUnit;
+        element.style.top = "" + y + yUnit;
     };
     
     return DisplayObject;
