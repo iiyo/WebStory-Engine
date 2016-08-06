@@ -244,6 +244,7 @@ define("WSE.Interpreter", function (
         
         this._loadingScreen.subscribe("finished", function () {
             
+            var key;
             var time = Date.now() - startTime;
             
             if (self._assetsLoaded) {
@@ -251,6 +252,12 @@ define("WSE.Interpreter", function (
             }
             
             self._assetsLoaded = true;
+            
+            for (key in self.assets) {
+                if (typeof self.assets[key].onLoad === "function") {
+                    self.assets[key].onLoad();
+                }
+            }
             
             if (time < 1000) {
                 setTimeout(self.runStory.bind(self), 1000 - time);
