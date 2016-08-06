@@ -37,6 +37,11 @@ using("xmugly").define("WSE.tools.compile", function (xmugly) {
                 identifier: "#",
                 attribute: "id",
                 value: "_"
+            },
+            {
+                identifier: "~",
+                attribute: "name",
+                value: "_"
             }
         ]);
         
