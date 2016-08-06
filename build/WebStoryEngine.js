@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Fri, 05 Aug 2016 22:16:15 GMT
+    Build time: Sat, 06 Aug 2016 07:29:53 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -10264,6 +10264,7 @@ define("WSE.Interpreter", function (
         
         this._loadingScreen.subscribe("finished", function () {
             
+            var key;
             var time = Date.now() - startTime;
             
             if (self._assetsLoaded) {
@@ -10271,6 +10272,12 @@ define("WSE.Interpreter", function (
             }
             
             self._assetsLoaded = true;
+            
+            for (key in self.assets) {
+                if (typeof self.assets[key].onLoad === "function") {
+                    self.assets[key].onLoad();
+                }
+            }
             
             if (time < 1000) {
                 setTimeout(self.runStory.bind(self), 1000 - time);
@@ -12409,11 +12416,15 @@ define("WSE.DisplayObject", function (
         this.height = asset.getAttribute("height") || this.height;
         
         this._createElement();
-        this._moveToPosition();
         
         applyUnits(this, asset);
         
     }
+    
+    DisplayObject.prototype.onLoad = function () {
+        this._calculateBoxSize();
+        this._moveToPosition();
+    };
     
     DisplayObject.prototype.flash = function flash (command, args) {
         
@@ -13173,8 +13184,8 @@ define("WSE.DisplayObject", function (
             y = (this.stage.offsetHeight / 100) * y;
         }
         
-        x = anchoredValue(x, this.xAnchor, this.element.offsetWidth);
-        y = anchoredValue(y, this.yAnchor, this.element.offsetHeight);
+        x = anchoredValue(x, this.xAnchor, this.boxWidth || this.element.offsetWidth);
+        y = anchoredValue(y, this.yAnchor, this.boxHeight || this.element.offsetHeight);
         
         if (xUnit === "%") {
             x = x / (this.stage.offsetWidth / 100);
@@ -13186,6 +13197,35 @@ define("WSE.DisplayObject", function (
         
         element.style.left = "" + x + xUnit;
         element.style.top = "" + y + yUnit;
+    };
+    
+    DisplayObject.prototype._calculateBoxSize = function () {
+        
+        var width = 0;
+        var height = 0;
+        var element = this.element;
+        
+        if (!Array.isArray(this._boxSizeSelectors)) {
+            return;
+        }
+        
+        this._boxSizeSelectors.forEach(function (selector) {
+            
+            [].forEach.call(element.querySelectorAll(selector), function (img) {
+                
+                if (img.offsetWidth > width) {
+                    width = img.offsetWidth;
+                }
+                
+                if (img.offsetHeight > height) {
+                    height = img.offsetHeight;
+                }
+            });
+            
+        });
+        
+        this.boxWidth = width;
+        this.boxHeight = height;
     };
     
     return DisplayObject;
@@ -13872,6 +13912,8 @@ define("WSE.assets.Imagepack", function (
         var images, children, i, len, current, name;
         var src, image, self, triggerDecreaseFn, width, height;
         
+        this._boxSizeSelectors = ["img"];
+        
         DisplayObject.apply(this, arguments);
         
         this.cssid = this.cssid || "wse_imagepack_" + this.name;
@@ -14534,6 +14576,8 @@ define("WSE.assets.Composite", function (
     {
         var element, children;
         var self, triggerDecreaseFn, width, height;
+        
+        this._boxSizeSelectors = ["img"];
         
         DisplayObject.apply(this, arguments);
         

@@ -34,6 +34,8 @@ define("WSE.assets.Imagepack", function (
         var images, children, i, len, current, name;
         var src, image, self, triggerDecreaseFn, width, height;
         
+        this._boxSizeSelectors = ["img"];
+        
         DisplayObject.apply(this, arguments);
         
         this.cssid = this.cssid || "wse_imagepack_" + this.name;

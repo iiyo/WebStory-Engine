@@ -34,6 +34,8 @@ define("WSE.assets.Composite", function (
         var element, children;
         var self, triggerDecreaseFn, width, height;
         
+        this._boxSizeSelectors = ["img"];
+        
         DisplayObject.apply(this, arguments);
         
         this.cssid = this.cssid || "wse_composite_" + this.name;

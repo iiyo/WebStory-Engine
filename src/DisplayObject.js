@@ -35,11 +35,15 @@ define("WSE.DisplayObject", function (
         this.height = asset.getAttribute("height") || this.height;
         
         this._createElement();
-        this._moveToPosition();
         
         applyUnits(this, asset);
         
     }
+    
+    DisplayObject.prototype.onLoad = function () {
+        this._calculateBoxSize();
+        this._moveToPosition();
+    };
     
     DisplayObject.prototype.flash = function flash (command, args) {
         
@@ -799,8 +803,8 @@ define("WSE.DisplayObject", function (
             y = (this.stage.offsetHeight / 100) * y;
         }
         
-        x = anchoredValue(x, this.xAnchor, this.element.offsetWidth);
-        y = anchoredValue(y, this.yAnchor, this.element.offsetHeight);
+        x = anchoredValue(x, this.xAnchor, this.boxWidth || this.element.offsetWidth);
+        y = anchoredValue(y, this.yAnchor, this.boxHeight || this.element.offsetHeight);
         
         if (xUnit === "%") {
             x = x / (this.stage.offsetWidth / 100);
@@ -812,6 +816,35 @@ define("WSE.DisplayObject", function (
         
         element.style.left = "" + x + xUnit;
         element.style.top = "" + y + yUnit;
+    };
+    
+    DisplayObject.prototype._calculateBoxSize = function () {
+        
+        var width = 0;
+        var height = 0;
+        var element = this.element;
+        
+        if (!Array.isArray(this._boxSizeSelectors)) {
+            return;
+        }
+        
+        this._boxSizeSelectors.forEach(function (selector) {
+            
+            [].forEach.call(element.querySelectorAll(selector), function (img) {
+                
+                if (img.offsetWidth > width) {
+                    width = img.offsetWidth;
+                }
+                
+                if (img.offsetHeight > height) {
+                    height = img.offsetHeight;
+                }
+            });
+            
+        });
+        
+        this.boxWidth = width;
+        this.boxHeight = height;
     };
     
     return DisplayObject;
