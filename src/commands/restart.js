@@ -28,6 +28,7 @@ using().define("WSE.commands.restart", function () {
         
         interpreter.assets = {};
         interpreter.buildAssets();
+        interpreter.callOnLoad();
         
         while (interpreter.callStack.length > 0) {
             interpreter.callStack.shift();

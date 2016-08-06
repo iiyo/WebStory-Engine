@@ -244,7 +244,6 @@ define("WSE.Interpreter", function (
         
         this._loadingScreen.subscribe("finished", function () {
             
-            var key;
             var time = Date.now() - startTime;
             
             if (self._assetsLoaded) {
@@ -253,11 +252,7 @@ define("WSE.Interpreter", function (
             
             self._assetsLoaded = true;
             
-            for (key in self.assets) {
-                if (typeof self.assets[key].onLoad === "function") {
-                    self.assets[key].onLoad();
-                }
-            }
+            self.callOnLoad();
             
             if (time < 1000) {
                 setTimeout(self.runStory.bind(self), 1000 - time);
@@ -270,6 +265,14 @@ define("WSE.Interpreter", function (
         if (this._loadingScreen.count() < 1) {
             this._assetsLoaded = true;
             this.runStory();
+        }
+    };
+    
+    Interpreter.prototype.callOnLoad = function () {
+        for (var key in this.assets) {
+            if (typeof this.assets[key].onLoad === "function") {
+                this.assets[key].onLoad();
+            }
         }
     };
     

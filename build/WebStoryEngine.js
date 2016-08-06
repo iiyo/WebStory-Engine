@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Sat, 06 Aug 2016 07:29:53 GMT
+    Build time: Sat, 06 Aug 2016 18:11:03 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -8605,6 +8605,8 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     DataBus.inject(WSE);
     
+    WSE.instances = [];
+    
     WSE.dataSources = dataSources;
     WSE.assets = assets;
     WSE.commands = commands;
@@ -9712,6 +9714,8 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         
         var host;
         
+        WSE.instances.push(this);
+        
         WSE.trigger("wse.game.constructor", {args: args, game: this});
         
         args = args || {};
@@ -10264,7 +10268,6 @@ define("WSE.Interpreter", function (
         
         this._loadingScreen.subscribe("finished", function () {
             
-            var key;
             var time = Date.now() - startTime;
             
             if (self._assetsLoaded) {
@@ -10273,11 +10276,7 @@ define("WSE.Interpreter", function (
             
             self._assetsLoaded = true;
             
-            for (key in self.assets) {
-                if (typeof self.assets[key].onLoad === "function") {
-                    self.assets[key].onLoad();
-                }
-            }
+            self.callOnLoad();
             
             if (time < 1000) {
                 setTimeout(self.runStory.bind(self), 1000 - time);
@@ -10290,6 +10289,14 @@ define("WSE.Interpreter", function (
         if (this._loadingScreen.count() < 1) {
             this._assetsLoaded = true;
             this.runStory();
+        }
+    };
+    
+    Interpreter.prototype.callOnLoad = function () {
+        for (var key in this.assets) {
+            if (typeof this.assets[key].onLoad === "function") {
+                this.assets[key].onLoad();
+            }
         }
     };
     
@@ -12400,6 +12407,16 @@ define("WSE.DisplayObject", function (
     anchoredValue
 ) {
     
+    //
+    // The prototype for all displayable assets.
+    //
+    // Set ._boxSizeSelectors to an array containing CSS selectors in your
+    // asset if you want the initial position of the asset to be calculated
+    // depending on some of its element's children instead of the element's
+    // .offsetWidth and .offsetHeight. This can be necessary for assets such
+    // as ImagePacks because the asset's element will not have a size until
+    // at least some of its children are shown.
+    //
     function DisplayObject (asset, interpreter) {
         
         this.stage = interpreter.stage;
@@ -13199,6 +13216,10 @@ define("WSE.DisplayObject", function (
         element.style.top = "" + y + yUnit;
     };
     
+    //
+    // Calculates .boxWidth and .boxHeight by finding the highest width and height
+    // of the element's children depending on the selectors in ._boxSizeSelectors.
+    //
     DisplayObject.prototype._calculateBoxSize = function () {
         
         var width = 0;
@@ -15485,6 +15506,7 @@ using().define("WSE.commands.restart", function () {
         
         interpreter.assets = {};
         interpreter.buildAssets();
+        interpreter.callOnLoad();
         
         while (interpreter.callStack.length > 0) {
             interpreter.callStack.shift();
