@@ -61,7 +61,7 @@ define("WSE.loader", function (ajax, compile) {
     }
     
     function compileFile (path, then) {
-        ajax.get(path, function (error, obj) {
+        ajax.get(path + "?random=" + Math.random(), function (error, obj) {
             
             if (error) {
                 console.error(error);
