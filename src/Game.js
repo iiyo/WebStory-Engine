@@ -32,6 +32,8 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         
         var host;
         
+        WSE.instances.push(this);
+        
         WSE.trigger("wse.game.constructor", {args: args, game: this});
         
         args = args || {};

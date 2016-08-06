@@ -9,6 +9,8 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     DataBus.inject(WSE);
     
+    WSE.instances = [];
+    
     WSE.dataSources = dataSources;
     WSE.assets = assets;
     WSE.commands = commands;
