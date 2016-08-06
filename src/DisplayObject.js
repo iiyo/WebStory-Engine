@@ -19,6 +19,16 @@ define("WSE.DisplayObject", function (
     anchoredValue
 ) {
     
+    //
+    // The prototype for all displayable assets.
+    //
+    // Set ._boxSizeSelectors to an array containing CSS selectors in your
+    // asset if you want the initial position of the asset to be calculated
+    // depending on some of its element's children instead of the element's
+    // .offsetWidth and .offsetHeight. This can be necessary for assets such
+    // as ImagePacks because the asset's element will not have a size until
+    // at least some of its children are shown.
+    //
     function DisplayObject (asset, interpreter) {
         
         this.stage = interpreter.stage;
@@ -818,6 +828,10 @@ define("WSE.DisplayObject", function (
         element.style.top = "" + y + yUnit;
     };
     
+    //
+    // Calculates .boxWidth and .boxHeight by finding the highest width and height
+    // of the element's children depending on the selectors in ._boxSizeSelectors.
+    //
     DisplayObject.prototype._calculateBoxSize = function () {
         
         var width = 0;
