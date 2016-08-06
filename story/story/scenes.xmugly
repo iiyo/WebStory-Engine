@@ -5,23 +5,23 @@
     . trigger name next_on_space, action activate
     . trigger name game_menu_key_trigger, action activate
     
-    . set @backgrounds, image rainbow, :0
+    . set @backgrounds, image muffin, :0
     . set @cecile, image smile, :0
     . set @logo, image logo, :0
     . set @music, track legend
     
     . move @cecile, x 50%, y 100%, xAnchor 45%, yAnchor 100%, :0
-    . move @tb_main, x 50%, y 90%, xAnchor 50%, yAnchor 100%, :0
     . move @logo, x 50%, y 50%, xAnchor 50%, yAnchor 50%, :0
     
     . wait
     
-    . show @white, :500
+    . show @bgcolor, :500
     . show @logo, :1000
     
     . break
     
     . hide @logo, :500
+    . show @backgrounds, :1000
     
     . wait
     
@@ -35,19 +35,19 @@
     
     . set @cecile, image shy
     
-    (( c: I... I'm... <b>C-Cecile</b>. ))
+    (( c: I...               I'm...                          <b>C-Cecile</b>. ))
     
-    (( c: Oh god, I'm soo nervous. All these p-people are w-w-watching me. Kyaa! ))
+    (( c: Oh god, I'm soo nervous.                    All these p-      people are w-    w-    watching me.               Kyaa! ))
     
     . set @cecile, image crying, :200
     
-    (( c: G-great, now they a-all think I'm totally stupid and w-worthless. ))
+    (( c: G-    great,          now they a-   all think I'm totally stupid and w-       worthless. ))
     
-    (( c: I can't stand this anymore. S-somebody, please... h-help meee! ))
+    (( c: I can't stand this anymore.                 S-somebody, please...                  h-help meee! ))
     
     . set @cecile, image amused, :200
     
-    (( c: Just kidding, I'm fine! Tehehe~ ))
+    (( c: Just kidding, I'm fine!           Tehehe~ ))
     
     . set @jack, image grin, :0
     . move @jack, x 180%, xAnchor 45%, y 100%, yAnchor 100%, :0
@@ -58,32 +58,30 @@
     . move @cecile, x 20%, xAnchor 45%
     . move @jack, x 75%, xAnchor 50%, y 100%, yAnchor 100%
     
-    (( j: You're such a tease, C! ))
+    (( j: You're such a tease,              C! ))
     
-    (( c: I know, right? Haha... ))
+    (( c: I know,          right?            Haha... ))
     
     . set @jack, image neutral
     
-    (( j: By the way, why is there no background? ))
+    (( j: By the way,              why is there no background? ))
     
     . set @cecile, image surprised
     
-    (( c:
-        Oh, you are right! I totally forgot about that.
-        Let me give us a cozy sky background...
-    ))
+    (( c: Oh, you are right!                    I totally forgot about that. ))
+    (( c:Let's use this amazing sunset background I stole from the internet... ))
     
-    . show @backgrounds
+    . set @backgrounds, image sunset, :500
     
     . wait
     
     . set @cecile, image smile
     
-    (( c: There you go. Better, right? ))
+    (( c: There you go.               Better,                         right? ))
     
     . set @jack, image smile
     
-    (( j: Yeah, now we're talking! ))
+    (( j: Yeah,           now we're talking! ))
     
     . hide @tb_main
     . clear @tb_main

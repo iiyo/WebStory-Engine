@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Sat, 06 Aug 2016 18:11:03 GMT
+    Build time: Sat, 06 Aug 2016 22:43:05 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -9415,7 +9415,7 @@ define("WSE.loader", function (ajax, compile) {
     }
     
     function compileFile (path, then) {
-        ajax.get(path, function (error, obj) {
+        ajax.get(path + "?random=" + Math.random(), function (error, obj) {
             
             if (error) {
                 console.error(error);
@@ -12359,6 +12359,11 @@ using("xmugly").define("WSE.tools.compile", function (xmugly) {
             {
                 identifier: "#",
                 attribute: "id",
+                value: "_"
+            },
+            {
+                identifier: "~",
+                attribute: "name",
                 value: "_"
             }
         ]);

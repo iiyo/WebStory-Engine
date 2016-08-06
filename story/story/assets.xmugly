@@ -1,5 +1,5 @@
 
-. textbox name tb_main, x 0, y 365px, width 900px, height 120px, speed 50
+. textbox name tb_main, x 50%, xAnchor 50%, y 100%, yAnchor 100%, width 99%, height 160px, speed 30, +namebox
 
 . character name n, textbox tb_main
 
@@ -19,6 +19,8 @@
     . image src assets/images/daytime_clouds_A_01.jpg, name clouds01
     . image src assets/images/Evening_clouds_C_01.jpg, name clouds02
     . image src assets/images/Rainbow_A_01.jpg, name rainbow
+    . image src assets/images/sunsetintheswamp.png, name sunset
+    . image src assets/images/muffin-dot-dat.png, name muffin
 --
 
 . imagepack name cecile, x 50%, y 0, z 10, xAnchor 50% :
@@ -41,4 +43,4 @@
     . image src assets/images/logo.png, name logo
 --
 
-. curtain name white, color white, z 0
+. curtain name bgcolor, color black, z 0

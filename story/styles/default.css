@@ -100,18 +100,25 @@ img
 .WSEStage .textbox, #NvlTb
 {
     position: absolute;
-    background: rgb(0, 0, 0);
-    background: rgba(0, 0, 0, 0.8);
     padding: 15px;
-    box-shadow: 0 0 5px black;
-    border: 1px solid black;
-    border-radius: 10px;
-    font-size: 24px;
+    font-size: 22px;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -o-user-select: none;
     user-select: none;
+    text-align: center;
+    color: white;
+    font-weight: lighter;
+    text-shadow: 2px 2px 2px black;
+    background: rgba(0, 0, 0, 0.9);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 -2px 10px black;
+    background: -moz-linear-gradient(top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.9) 50%,  rgba(0, 0, 0, 1) 100%);
+    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.9) 50%,  rgba(0, 0, 0, 1) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.9) 50%,  rgba(0, 0, 0, 1) 100%);
 }
 
 #NvlTb p
@@ -122,15 +129,17 @@ img
 .WSEStage .textbox .name
 {
     position: absolute;
-    top: -40px;
+    top: -45px;
     left: 0;
     background: rgb(0, 0, 0);
     background: rgba(0, 0, 0, 0.8);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     padding: 5px;
     padding-left: 10px;
     box-shadow: 0 0 5px black;
-    border-radius: 5px;
-    min-width: 100px;
+    border-radius: 10px;
+    min-width: 150px;
     min-height: 30px;
     font-size: 16px;
     font-weight: bold;
