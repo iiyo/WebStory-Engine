@@ -10,17 +10,18 @@
     "test": "tests"
   },
   "dependencies": {
-    "archiver": "^1.0.1",
-    "browserify": "^13.1.0",
     "databus": "^1.0.1",
     "eases": "^1.0.8",
     "easy-ajax": "^1.0.0-final.1512141736",
-    "minify": "^2.0.0",
-    "ncp": "^2.0.0",
     "transform-js": "^1.1.0-final.1512141547",
     "xmugly": "^1.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "ncp": "^2.0.0",
+    "archiver": "^1.0.1",
+    "browserify": "^13.1.0",
+    "minify": "^2.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
