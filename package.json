@@ -17,10 +17,11 @@
     "xmugly": "^1.0.3"
   },
   "devDependencies": {
-    "ncp": "^2.0.0",
     "archiver": "^1.0.1",
     "browserify": "^13.1.0",
-    "minify": "^2.0.0"
+    "minify": "^2.0.0",
+    "ncp": "^2.0.0",
+    "usingify": "^1.0.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

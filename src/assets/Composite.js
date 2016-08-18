@@ -1,7 +1,7 @@
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",

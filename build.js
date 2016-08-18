@@ -7,17 +7,23 @@ var os = require("os");
 var normalizePath = require("path").normalize;
 var minify = require("minify");
 var copy = require("ncp").ncp;
+var usingify = require("usingify").usingify;
 
 mkdirSync('./build');
 mkdirSync('./export');
 mkdirSync('./export/engine');
 
+var usingifyFilePath = normalizePath("WebStoryEngine_usingify.js");
 var dependencyFilePath = normalizePath(os.tmpdir() + "/WebStoryEngine_dependencies.js");
+
+fs.writeFileSync(usingifyFilePath, usingify(JSON.parse("" + fs.readFileSync("package.json"))));
+
 var dependencyFile = fs.createWriteStream(dependencyFilePath);
-var bundle = browserify("browserifyToUsing.js").bundle();
+var bundle = browserify(usingifyFilePath).bundle();
 var info = JSON.parse("" + fs.readFileSync("package.json"));
 
 scriptsFilePath = 'scripts.json';
+
 
 dependencyFile.write(
     "/*\n" +
@@ -153,4 +159,5 @@ function removeUnwantedSections (fileContents) {
 
 setTimeout(function () {
     processScriptsFileFn(fs.readFileSync(scriptsFilePath, 'utf-8'));
+    fs.unlinkSync(usingifyFilePath);
 }, 2000);

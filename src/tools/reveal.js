@@ -34,7 +34,7 @@
 
 /* global using, setTimeout */
 
-using("transform::transform").define("WSE.tools.reveal", function (transform) {
+using("transform-js::transform").define("WSE.tools.reveal", function (transform) {
     
     function reveal (element, args) {
         

@@ -1,6 +1,6 @@
 /* global using */
 
-using("transform::transform", "databus").
+using("transform-js::transform", "databus").
 define("WSE.LoadingScreen", function (transform, DataBus) {
     
     function LoadingScreen () {

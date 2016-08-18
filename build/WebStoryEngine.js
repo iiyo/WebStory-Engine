@@ -451,36 +451,20 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Sat, 06 Aug 2016 22:43:05 GMT
+    Build time: Thu, 18 Aug 2016 18:17:51 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
 
-var transform = require("transform-js");
-var databus = require("databus");
-var xmugly = require("xmugly");
-var eases = require("eases");
-var ajax = require("easy-ajax");
+using().define("databus", function () { return require("databus"); });
 
-using().define("transform", function () {
-    return transform;
-});
+using().define("eases", function () { return require("eases"); });
 
-using().define("databus", function () {
-    return databus;
-});
+using().define("easy-ajax", function () { return require("easy-ajax"); });
 
-using().define("xmugly", function () {
-    return xmugly;
-});
+using().define("transform-js", function () { return require("transform-js"); });
 
-using().define("eases", function () {
-    return eases;
-});
-
-using().define("easy-ajax", function () {
-    return ajax;
-});
+using().define("xmugly", function () { return require("xmugly"); });
 
 },{"databus":2,"eases":22,"easy-ajax":37,"transform-js":38,"xmugly":71}],2:[function(require,module,exports){
 /* global require, module */
@@ -11560,7 +11544,7 @@ define("WSE.Interpreter", function (
 
 /* global using */
 
-using("transform::transform", "databus").
+using("transform-js::transform", "databus").
 define("WSE.LoadingScreen", function (transform, DataBus) {
     
     function LoadingScreen () {
@@ -12179,7 +12163,7 @@ using(
 
 /* global using, setTimeout */
 
-using("transform::transform").define("WSE.tools.reveal", function (transform) {
+using("transform-js::transform").define("WSE.tools.reveal", function (transform) {
     
     function reveal (element, args) {
         
@@ -12394,7 +12378,7 @@ using("xmugly").define("WSE.tools.compile", function (xmugly) {
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "WSE.tools",
     "WSE.tools::warn",
@@ -13262,7 +13246,7 @@ define("WSE.DisplayObject", function (
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "MO5.Animation",
     "MO5.TimerWatcher",
@@ -13905,7 +13889,7 @@ define("WSE.assets.Curtain", function (DisplayObject, warn) {
 /* global using, console */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
@@ -14198,7 +14182,7 @@ define("WSE.assets.Imagepack", function (
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "WSE.tools.reveal",
     "MO5.dom.Element",
     "WSE.DisplayObject",
@@ -14570,7 +14554,7 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",

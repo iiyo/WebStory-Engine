@@ -1,7 +1,7 @@
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "WSE.tools.reveal",
     "MO5.dom.Element",
     "WSE.DisplayObject",

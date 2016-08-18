@@ -1,7 +1,7 @@
 /* global using */
 
 using(
-    "transform::transform",
+    "transform-js::transform",
     "eases",
     "MO5.Animation",
     "MO5.TimerWatcher",
