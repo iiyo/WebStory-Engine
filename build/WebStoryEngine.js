@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Fri, 19 Aug 2016 11:38:15 GMT
+    Build time: Fri, 19 Aug 2016 12:02:01 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -462,11 +462,13 @@ using().define("eases", function () { return require("eases"); });
 
 using().define("easy-ajax", function () { return require("easy-ajax"); });
 
+using().define("howler", function () { return require("howler"); });
+
 using().define("transform-js", function () { return require("transform-js"); });
 
 using().define("xmugly", function () { return require("xmugly"); });
 
-},{"databus":2,"eases":22,"easy-ajax":37,"transform-js":38,"xmugly":71}],2:[function(require,module,exports){
+},{"databus":2,"eases":22,"easy-ajax":37,"howler":38,"transform-js":39,"xmugly":72}],2:[function(require,module,exports){
 /* global require, module */
 
 module.exports = require("./src/databus");
@@ -1215,778 +1217,11 @@ module.exports = sineOut
 module.exports = require("./easy-ajax.js");
 
 },{"./easy-ajax.js":36}],38:[function(require,module,exports){
-/* global requestAnimationFrame */
-
-var eases = require("eases");
-
-if (typeof requestAnimationFrame === "undefined") {
-    var requestAnimationFrame = function (fn) {
-        setTimeout(fn, 1000 / 60);
-    }
-}
-
-function transformation (from, to, callback, args, after) {
-    
-    var dur, easing, cv, diff, c, lastExecution, fps;
-    var canceled, paused, running, stopped;
-    var timeElapsed, startTime, pauseTimeElapsed, pauseStartTime;
-    
-    args = args || {};
-    
-    if (typeof args === "function" && !after) {
-        after = args;
-        args = {};
-    }
-    
-    after = typeof after === "function" ? after : function () {};
-    
-    if (typeof callback === "undefined" || !callback) {
-        throw new Error("Argument callback must be a function.");
-    }
-    
-    init();
-    
-    function init () {
-        
-        dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500;
-        cv = from;
-        diff = to - from;
-        c = 0, // number of times loop get's executed
-        lastExecution = 0;
-        fps = args.fps || 60;
-        canceled = false;
-        paused = false;
-        running = false;
-        stopped = false;
-        timeElapsed = 0;
-        startTime = 0;
-        pauseTimeElapsed = 0;
-        pauseStartTime = 0;
-        easing = eases.linear;
-        
-        if (args.easing) {
-            if (typeof args.easing === "function") {
-                easing = args.easing;
-            }
-            else {
-                easing = eases[args.easing];
-            }
-        }
-    }
-    
-    function loop () {
-        
-        var dt, tElapsed;
-        
-        if (!running) {
-            return;
-        }
-        
-        if ((Date.now() - lastExecution) > (1000 / fps)) {
-            
-            if (canceled || paused) {
-                return;
-            }
-            
-            c += 1;
-            tElapsed = elapsed();
-            
-            if (tElapsed > dur || stopped) {
-                
-                cv = from + diff;
-                
-                if (!stopped) {
-                    stop();
-                }
-                
-                return;
-            }
-            
-            cv = easing(tElapsed / dur) * diff + from;
-            
-            callback(cv);
-            
-            dt = elapsed() - tElapsed;
-            
-            lastExecution = Date.now();
-        }
-        
-        requestAnimationFrame(loop);
-    };
-    
-    function elapsed () {
-        
-        if (running && !paused) {
-            timeElapsed = ((+(new Date()) - startTime) - pauseTimeElapsed);
-        }
-        
-        return timeElapsed;
-    }
-    
-    function start () {
-        
-        reset();
-        
-        startTime = +(new Date());
-        pauseStartTime = startTime;
-        running = true;
-        
-        requestAnimationFrame(loop);
-    }
-    
-    function stop () {
-        
-        running = false;
-        paused = false;
-        
-        callback(to);
-        after();
-    }
-    
-    function resume () {
-        
-        if (!paused) {
-            return;
-        }
-        
-        paused = false;
-        pauseTimeElapsed += +(new Date()) - pauseStartTime;
-        
-        requestAnimationFrame(loop);
-    }
-    
-    function pause () {
-        paused = true;
-        pauseStartTime = +(new Date());
-    }
-    
-    function cancel () {
-        
-        if (!running) {
-            return;
-        }
-        
-        elapsed();
-        
-        canceled = true;
-        running = false;
-        paused = false;
-        
-        after();
-    }
-    
-    function reset () {
-        
-        if (running) {
-            cancel();
-        }
-        
-        init();
-    }
-    
-    return {
-        start: start,
-        stop: stop,
-        pause: pause,
-        resume: resume,
-        cancel: cancel,
-        elapsed: elapsed,
-        reset: reset
-    };
-}
-
-function transform () {
-    
-    var t = transformation.apply(undefined, arguments);
-    
-    t.start();
-    
-    return t;
-}
-
-module.exports = {
-    transformation: transformation,
-    transform: transform
-};
-
-},{"eases":57}],39:[function(require,module,exports){
-arguments[4][4][0].apply(exports,arguments)
-},{"dup":4}],40:[function(require,module,exports){
-arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],41:[function(require,module,exports){
-arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],42:[function(require,module,exports){
-arguments[4][7][0].apply(exports,arguments)
-},{"./bounce-out":44,"dup":7}],43:[function(require,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"./bounce-out":44,"dup":8}],44:[function(require,module,exports){
-arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],45:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],46:[function(require,module,exports){
-arguments[4][11][0].apply(exports,arguments)
-},{"dup":11}],47:[function(require,module,exports){
-arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],48:[function(require,module,exports){
-arguments[4][13][0].apply(exports,arguments)
-},{"dup":13}],49:[function(require,module,exports){
-arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],50:[function(require,module,exports){
-arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],51:[function(require,module,exports){
-arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],52:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],53:[function(require,module,exports){
-arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],54:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],55:[function(require,module,exports){
-arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],56:[function(require,module,exports){
-arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],57:[function(require,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"./back-in":40,"./back-in-out":39,"./back-out":41,"./bounce-in":43,"./bounce-in-out":42,"./bounce-out":44,"./circ-in":46,"./circ-in-out":45,"./circ-out":47,"./cubic-in":49,"./cubic-in-out":48,"./cubic-out":50,"./elastic-in":52,"./elastic-in-out":51,"./elastic-out":53,"./expo-in":55,"./expo-in-out":54,"./expo-out":56,"./linear":58,"./quad-in":60,"./quad-in-out":59,"./quad-out":61,"./quart-in":63,"./quart-in-out":62,"./quart-out":64,"./quint-in":66,"./quint-in-out":65,"./quint-out":67,"./sine-in":69,"./sine-in-out":68,"./sine-out":70,"dup":22}],58:[function(require,module,exports){
-arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],59:[function(require,module,exports){
-arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],60:[function(require,module,exports){
-arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],61:[function(require,module,exports){
-arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],62:[function(require,module,exports){
-arguments[4][27][0].apply(exports,arguments)
-},{"dup":27}],63:[function(require,module,exports){
-arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],64:[function(require,module,exports){
-arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],65:[function(require,module,exports){
-arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],66:[function(require,module,exports){
-arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],67:[function(require,module,exports){
-arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],68:[function(require,module,exports){
-arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],69:[function(require,module,exports){
-arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],70:[function(require,module,exports){
-arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],71:[function(require,module,exports){
-/* global module, require */
-
-module.exports = require("./src/xmugly.js");
-
-},{"./src/xmugly.js":72}],72:[function(require,module,exports){
-/* global module */
-
-(function () {
-    
-    //
-    // Compiles
-    //     . some_element attr1 val1, attr2 val2
-    // to:
-    //     <some_element attr1="val1", attr2="val2" />
-    // and
-    //     . some_element attr1 val1 :
-    //     ...
-    //     --
-    // to
-    //     <some_element attr1="val1">
-    //     ...
-    //     </some_element>
-    //
-    function compile (text, defaultMacros) {
-        
-    //
-    // A stack of element names, so that know which "--" closes which element.
-    //
-        var stack = [];
-        var lines = toLines(text);
-        var macros = processMacros(lines);
-        
-        if (Array.isArray(defaultMacros)) {
-            defaultMacros.forEach(function (macro) {
-                macros.push(macro);
-            });
-        }
-        
-        lines = removeMacroDefinitions(lines);
-        
-        lines = lines.map(function (line, i) {
-            
-            var name, attributes, parts, trimmed, head, whitespace, strings, result, hasContent;
-            
-            trimmed = line.trim();
-            strings = [];
-            whitespace = line.replace(/^([\s]*).*$/, "$1");
-            
-            if (trimmed === "--") {
-                
-                if (!stack.length) {
-                    throw new SyntaxError(
-                        "Closing '--' without matching opening tag on line " + (i + 1)
-                    );
-                }
-                
-                return whitespace + '</' + stack.pop() + '>';
-            }
-            
-            if (trimmed[0] !== ".") {
-                return line;
-            }
-            
-            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
-                
-                strings.push(p1);
-                
-                return "{{" + strings.length + "}}";
-            });
-            
-            if (trimmed[trimmed.length - 1] === ":") {
-                hasContent = true;
-                trimmed = trimmed.replace(/:$/, "");
-            }
-            
-            parts = trimmed.split(",");
-            head = parts[0].split(" ");
-            
-            head.shift();
-            
-            name = head[0];
-            
-            if (hasContent) {
-                stack.push(name);
-            }
-            
-            head.shift();
-            
-            parts[0] = head.join(" ");
-            
-            attributes = [];
-            
-            parts.forEach(function (current) {
-                
-                var split, name, value, enlarged;
-                
-                split = normalizeWhitespace(current).split(" ");
-                
-                name = split[0].trim();
-                
-                if (!name) {
-                    return;
-                }
-                
-                enlarged = applyMacros(name, macros);
-                
-                if (enlarged) {
-                    value = enlarged.value;
-                    name = enlarged.name;
-                }
-                else {
-                    
-                    split.shift();
-                    
-                    value = split.join(" ");
-                }
-                
-                attributes.push(name + '="' + value + '"');
-            });
-            
-            result = whitespace + '<' + name + (attributes.length ? ' ' : '') +
-                attributes.join(" ") + (hasContent ? '>' : ' />');
-            
-            strings.forEach(function (value, i) {
-                result = result.replace("{{" + (i + 1) + "}}", value);
-            });
-            
-            return result;
-            
-        });
-        
-        return toText(lines);
-    }
-
-    function toLines (text) {
-        return text.split("\n");
-    }
-
-    function toText (lines) {
-        return lines.join("\n");
-    }
-
-    //
-    // Creates a replacement rule from an attribute macro line.
-    // Attribute macros look like this:
-    //
-    // ~ @ asset _
-    //
-    // The ~ at the start of a line signalizes that this is an attribute macro.
-    // The first non-whitespace part (@ in this case) is the character or text part
-    // which will be used as the macro identifier.
-    // The second part (asset in this case) is the attribute name.
-    // The third and last part (_ here) is the attribute value.
-    // The "_" character will be replaced by whatever follows the macro identifier.
-    // 
-    // The example above will result in this transformation:
-    //
-    // . move @frodo => <move asset="frodo" />
-    //
-    // Some more examples:
-    //
-    // Macro: ~ : duration _
-    // Transformation: . wait :200 => <wait duration="200" />
-    //
-    // Macro: ~ + _ true
-    // Macro: ~ - _ false
-    // Transformation: . stage -resize, +center => <stage resize="false" center="true" />
-    //
-    function processAttributeMacro (line) {
-        
-        var parts = normalizeWhitespace(line).split(" ");
-        
-        parts.shift();
-        
-        return {
-            identifier: parts[0],
-            attribute: parts[1],
-            value: parts[2]
-        };
-    }
-
-    function processMacros (lines) {
-        
-        var macros = [];
-        
-        lines.forEach(function (line) {
-            
-            if (line.trim()[0] !== "~") {
-                return;
-            }
-            
-            macros.push(processAttributeMacro(line));
-        });
-        
-        return macros;
-    }
-
-    function applyMacros (raw, macros) {
-        
-        var name, value;
-        
-        macros.some(function (macro) {
-            
-            var macroValue;
-            
-            if (raw[0] !== macro.identifier) {
-                return false;
-            }
-            
-            macroValue = raw.replace(macro.identifier, "");
-            name = (macro.attribute === "_" ? macroValue : macro.attribute);
-            value = (macro.value === "_" ? macroValue : macro.value);
-            
-            return true;
-        });
-        
-        if (!name) {
-            return null;
-        }
-        
-        return {
-            name: name,
-            value: value
-        };
-    }
-    
-    function removeMacroDefinitions (lines) {
-        return lines.filter(function (line) {
-            return line.trim()[0] !== "~";
-        });
-    }
-    
-    //
-    // Replaces all whitespace with a single space character.
-    //
-    function normalizeWhitespace (text) {
-        return text.trim().replace(/[\s]+/g, " ");
-    }
-    
-    if (typeof module !== "undefined") {
-        module.exports = {
-            compile: compile
-        };
-    }
-    else {
-        window.xmugly = {
-            compile: compile
-        };
-    }
-    
-}());
-
-},{}]},{},[1]);
-
-
-/*/////////////////////////////////////////////////////////////////////////////////
-
- MO5.js - Modular JavaScript. Batteries included.
-
- Copyright (c) 2015 Jonathan Steinbeck
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
-
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
- * Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
- * Neither the name MO5.js nor the names of its contributors 
-   may be used to endorse or promote products derived from this software 
-   without specific prior written permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
- DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-/////////////////////////////////////////////////////////////////////////////////*/
-
-/* global using, window, require, process, document, console */
-
-if (typeof window !== "undefined") {
-    // If the browser doesn't support requestAnimationFrame, use a fallback.
-    window.requestAnimationFrame = (function ()
-    {
-        "use strict";
-     
-        return window.requestAnimationFrame || 
-            window.webkitRequestAnimationFrame || 
-            window.mozRequestAnimationFrame || 
-            window.oRequestAnimationFrame || 
-            window.msRequestAnimationFrame || 
-            function (callback) {
-                window.setTimeout(callback, 1000 / 60);
-            };
-    }());
-}
-
-// [].forEach() shim
-(function () {
-    
-    if (Array.prototype.forEach) {
-        return;
-    }
-    
-    Array.prototype.forEach = function (callback) {
-        for (var i = 0, len = this.length; i < len; i += 1) {
-            callback(this[i], i, this);
-        }
-    };
-    
-}());
-
-// [].indexOf() shim
-(function () {
-    
-    if (Array.prototype.indexOf) {
-        return;
-    }
-    
-    Array.prototype.indexOf = function (searchElement, fromIndex) {
-        
-        var k;
-        
-        if (this == null) {
-          throw new TypeError('"this" is null or not defined');
-        }
-        
-        var O = Object(this);
-        
-        var len = O.length >>> 0;
-        
-        if (len === 0) {
-            return -1;
-        }
-        
-        var n = +fromIndex || 0;
-        
-        if (Math.abs(n) === Infinity) {
-            n = 0;
-        }
-        
-        if (n >= len) {
-            return -1;
-        }
-        
-        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-        
-        while (k < len) {
-            
-            if (k in O && O[k] === searchElement) {
-                return k;
-            }
-            
-            k++;
-        }
-        
-        return -1;
-    };
-    
-}());
-
-
-if (typeof console === "undefined") {
-    this.console = {};
-}
-
-if (!console.log) {
-    console.log = function () {};
-}
-
-if (!console.dir) {
-    console.dir = console.log;
-}
-
-if (!console.error) {
-    console.error = console.log;
-}
-
-if (!console.warn) {
-    console.warn = console.log;
-}
-
-
-(function () {
-    
-    var scripts = document.getElementsByTagName("script");
-    var path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
-    
-    using.modules = {
-        "MO5.ajax": path + "ajax.js",
-        "MO5.assert": path + "assert.js",
-        "MO5.Exception": path + "Exception.js",
-        "MO5.fail": path + "fail.js",
-        "MO5.EventBus": path + "EventBus.js",
-        "MO5.CoreObject": path + "CoreObject.js",
-        "MO5.List": path + "List.js",
-        "MO5.Queue": path + "Queue.js",
-        "MO5.Map": path + "Map.js",
-        "MO5.Set": path + "Set.js",
-        "MO5.Result": path + "Result.js", // deprecated - use MO5.Promise instead!
-        "MO5.Promise": path + "Promise.js",
-        "MO5.Timer": path + "Timer.js",
-        "MO5.TimerWatcher": path + "TimerWatcher.js",
-        "MO5.easing": path + "easing.js",
-        "MO5.transform": path + "transform.js",
-        "MO5.range": path + "range.js",
-        "MO5.tools": path + "tools.js",
-        "MO5.Point": path + "Point.js",
-        "MO5.Size": path + "Size.js",
-        "MO5.Animation": path + "Animation.js",
-        "MO5.dom.effects.typewriter": path + "dom.effects.typewriter.js",
-        "MO5.dom.Element": path + "dom.Element.js",
-        "MO5.dom.escape": path + "dom.escape.js",
-        "MO5.globals.document": path + "globals.document.js",
-        "MO5.globals.window": path + "globals.window.js",
-        "MO5.types": path + "types.js"
-    };
-}());
-
-
-var $__WSEScripts = document.getElementsByTagName('script');
-WSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;
-
-using.modules['howler'] = WSEPath;
-using.modules['MO5.ajax'] = WSEPath;
-using.modules['MO5.Animation'] = WSEPath;
-using.modules['MO5.assert'] = WSEPath;
-using.modules['MO5.CoreObject'] = WSEPath;
-using.modules['MO5.dom.effects.typewriter'] = WSEPath;
-using.modules['MO5.dom.Element'] = WSEPath;
-using.modules['MO5.dom.escape'] = WSEPath;
-using.modules['MO5.easing'] = WSEPath;
-using.modules['MO5.EventBus'] = WSEPath;
-using.modules['MO5.Exception'] = WSEPath;
-using.modules['MO5.fail'] = WSEPath;
-using.modules['MO5.globals.document'] = WSEPath;
-using.modules['MO5.globals.window'] = WSEPath;
-using.modules['MO5.List'] = WSEPath;
-using.modules['MO5.Map'] = WSEPath;
-using.modules['MO5.Point'] = WSEPath;
-using.modules['MO5.Promise'] = WSEPath;
-using.modules['MO5.Queue'] = WSEPath;
-using.modules['MO5.range'] = WSEPath;
-using.modules['MO5.Result'] = WSEPath;
-using.modules['MO5.Set'] = WSEPath;
-using.modules['MO5.Size'] = WSEPath;
-using.modules['MO5.Timer'] = WSEPath;
-using.modules['MO5.TimerWatcher'] = WSEPath;
-using.modules['MO5.tools'] = WSEPath;
-using.modules['MO5.transform'] = WSEPath;
-using.modules['MO5.types'] = WSEPath;
-using.modules['WSE.assets'] = WSEPath;
-using.modules['WSE.commands'] = WSEPath;
-using.modules['WSE.functions'] = WSEPath;
-using.modules['WSE.dataSources'] = WSEPath;
-using.modules['WSE'] = WSEPath;
-using.modules['WSE.Keys'] = WSEPath;
-using.modules['WSE.tools'] = WSEPath;
-using.modules['WSE.loader'] = WSEPath;
-using.modules['WSE.dataSources.LocalStorage'] = WSEPath;
-using.modules['WSE.Trigger'] = WSEPath;
-using.modules['WSE.Game'] = WSEPath;
-using.modules['WSE.Interpreter'] = WSEPath;
-using.modules['WSE.LoadingScreen'] = WSEPath;
-using.modules['WSE.tools.ui'] = WSEPath;
-using.modules['WSE.tools.reveal'] = WSEPath;
-using.modules['WSE.tools.compile'] = WSEPath;
-using.modules['WSE.DisplayObject'] = WSEPath;
-using.modules['WSE.assets.Animation'] = WSEPath;
-using.modules['WSE.assets.Audio'] = WSEPath;
-using.modules['WSE.assets.Character'] = WSEPath;
-using.modules['WSE.assets.Curtain'] = WSEPath;
-using.modules['WSE.assets.Imagepack'] = WSEPath;
-using.modules['WSE.assets.Textbox'] = WSEPath;
-using.modules['WSE.assets.Background'] = WSEPath;
-using.modules['WSE.assets.Composite'] = WSEPath;
-using.modules['WSE.commands.alert'] = WSEPath;
-using.modules['WSE.commands.break'] = WSEPath;
-using.modules['WSE.commands.choice'] = WSEPath;
-using.modules['WSE.commands.confirm'] = WSEPath;
-using.modules['WSE.commands.do'] = WSEPath;
-using.modules['WSE.commands.fn'] = WSEPath;
-using.modules['WSE.commands.global'] = WSEPath;
-using.modules['WSE.commands.globalize'] = WSEPath;
-using.modules['WSE.commands.goto'] = WSEPath;
-using.modules['WSE.commands.line'] = WSEPath;
-using.modules['WSE.commands.localize'] = WSEPath;
-using.modules['WSE.commands.prompt'] = WSEPath;
-using.modules['WSE.commands.restart'] = WSEPath;
-using.modules['WSE.commands.sub'] = WSEPath;
-using.modules['WSE.commands.trigger'] = WSEPath;
-using.modules['WSE.commands.var'] = WSEPath;
-using.modules['WSE.commands.set_vars'] = WSEPath;
-using.modules['WSE.commands.wait'] = WSEPath;
-using.modules['WSE.commands.with'] = WSEPath;
-using.modules['WSE.commands.while'] = WSEPath;
-
 /*!
- *  howler.js v1.1.26
+ *  howler.js v1.1.29
  *  howlerjs.com
  *
- *  (c) 2013-2015, James Simpson of GoldFire Studios
+ *  (c) 2013-2016, James Simpson of GoldFire Studios
  *  goldfirestudios.com
  *
  *  MIT License
@@ -2123,7 +1358,7 @@ using.modules['WSE.commands.while'] = WSEPath;
 
     /**
      * Check for codec support.
-     * @param  {String} ext Audio file extention.
+     * @param  {String} ext Audio file extension.
      * @return {Boolean}
      */
     codecs: function(ext) {
@@ -2171,13 +1406,13 @@ using.modules['WSE.commands.while'] = WSEPath;
             self.iOSAutoEnable = false;
 
             // remove the touch start listener
-            window.removeEventListener('touchstart', unlock, false);
+            window.removeEventListener('touchend', unlock, false);
           }
         }, 0);
       };
 
       // setup a touch start listener to attempt an unlock in
-      window.addEventListener('touchstart', unlock, false);
+      window.addEventListener('touchend', unlock, false);
 
       return self;
     }
@@ -2268,7 +1503,7 @@ using.modules['WSE.commands.while'] = WSEPath;
 
       // if no audio is available, quit immediately
       if (noAudio) {
-        self.on('loaderror');
+        self.on('loaderror', new Error('No audio support.'));
         return;
       }
 
@@ -2290,7 +1525,7 @@ using.modules['WSE.commands.while'] = WSEPath;
           if (ext) {
             ext = ext[1].toLowerCase();
           } else {
-            self.on('loaderror');
+            self.on('loaderror', new Error('Could not extract format from passed URLs, please add format parameter.'));
             return;
           }
         }
@@ -2302,7 +1537,7 @@ using.modules['WSE.commands.while'] = WSEPath;
       }
 
       if (!url) {
-        self.on('loaderror');
+        self.on('loaderror', new Error('No codec support for selected audio sources.'));
         return;
       }
 
@@ -2467,7 +1702,7 @@ using.modules['WSE.commands.while'] = WSEPath;
 
             // fire ended event
             self.on('end', soundId);
-          }, duration * 1000);
+          }, (duration / self._rate) * 1000);
 
           // store the reference to the timer
           self._onendTimer.push({timer: timerId, id: data.id});
@@ -3044,7 +2279,7 @@ using.modules['WSE.commands.while'] = WSEPath;
      */
     _clearEndTimer: function(soundId) {
       var self = this,
-        index = 0;
+        index = -1;
 
       // loop through the timers to find the one associated with this sound
       for (var i=0; i<self._onendTimer.length; i++) {
@@ -3120,13 +2355,12 @@ using.modules['WSE.commands.while'] = WSEPath;
      */
     off: function(event, fn) {
       var self = this,
-        events = self['_on' + event],
-        fnString = fn ? fn.toString() : null;
+        events = self['_on' + event];
 
-      if (fnString) {
+      if (fn) {
         // loop through functions in the event for comparison
         for (var i=0; i<events.length; i++) {
-          if (fnString === events[i].toString()) {
+          if (fn === events[i]) {
             events.splice(i, 1);
             break;
           }
@@ -3253,7 +2487,7 @@ using.modules['WSE.commands.while'] = WSEPath;
           }
         },
         function(err) {
-          obj.on('loaderror');
+          obj.on('loaderror', err);
         }
       );
     };
@@ -3336,6 +2570,772 @@ using.modules['WSE.commands.while'] = WSEPath;
 
 })();
 
+},{}],39:[function(require,module,exports){
+/* global requestAnimationFrame */
+
+var eases = require("eases");
+
+if (typeof requestAnimationFrame === "undefined") {
+    var requestAnimationFrame = function (fn) {
+        setTimeout(fn, 1000 / 60);
+    }
+}
+
+function transformation (from, to, callback, args, after) {
+    
+    var dur, easing, cv, diff, c, lastExecution, fps;
+    var canceled, paused, running, stopped;
+    var timeElapsed, startTime, pauseTimeElapsed, pauseStartTime;
+    
+    args = args || {};
+    
+    if (typeof args === "function" && !after) {
+        after = args;
+        args = {};
+    }
+    
+    after = typeof after === "function" ? after : function () {};
+    
+    if (typeof callback === "undefined" || !callback) {
+        throw new Error("Argument callback must be a function.");
+    }
+    
+    init();
+    
+    function init () {
+        
+        dur = typeof args.duration !== "undefined" && args.duration >= 0 ? args.duration : 500;
+        cv = from;
+        diff = to - from;
+        c = 0, // number of times loop get's executed
+        lastExecution = 0;
+        fps = args.fps || 60;
+        canceled = false;
+        paused = false;
+        running = false;
+        stopped = false;
+        timeElapsed = 0;
+        startTime = 0;
+        pauseTimeElapsed = 0;
+        pauseStartTime = 0;
+        easing = eases.linear;
+        
+        if (args.easing) {
+            if (typeof args.easing === "function") {
+                easing = args.easing;
+            }
+            else {
+                easing = eases[args.easing];
+            }
+        }
+    }
+    
+    function loop () {
+        
+        var dt, tElapsed;
+        
+        if (!running) {
+            return;
+        }
+        
+        if ((Date.now() - lastExecution) > (1000 / fps)) {
+            
+            if (canceled || paused) {
+                return;
+            }
+            
+            c += 1;
+            tElapsed = elapsed();
+            
+            if (tElapsed > dur || stopped) {
+                
+                cv = from + diff;
+                
+                if (!stopped) {
+                    stop();
+                }
+                
+                return;
+            }
+            
+            cv = easing(tElapsed / dur) * diff + from;
+            
+            callback(cv);
+            
+            dt = elapsed() - tElapsed;
+            
+            lastExecution = Date.now();
+        }
+        
+        requestAnimationFrame(loop);
+    };
+    
+    function elapsed () {
+        
+        if (running && !paused) {
+            timeElapsed = ((+(new Date()) - startTime) - pauseTimeElapsed);
+        }
+        
+        return timeElapsed;
+    }
+    
+    function start () {
+        
+        reset();
+        
+        startTime = +(new Date());
+        pauseStartTime = startTime;
+        running = true;
+        
+        requestAnimationFrame(loop);
+    }
+    
+    function stop () {
+        
+        running = false;
+        paused = false;
+        
+        callback(to);
+        after();
+    }
+    
+    function resume () {
+        
+        if (!paused) {
+            return;
+        }
+        
+        paused = false;
+        pauseTimeElapsed += +(new Date()) - pauseStartTime;
+        
+        requestAnimationFrame(loop);
+    }
+    
+    function pause () {
+        paused = true;
+        pauseStartTime = +(new Date());
+    }
+    
+    function cancel () {
+        
+        if (!running) {
+            return;
+        }
+        
+        elapsed();
+        
+        canceled = true;
+        running = false;
+        paused = false;
+        
+        after();
+    }
+    
+    function reset () {
+        
+        if (running) {
+            cancel();
+        }
+        
+        init();
+    }
+    
+    return {
+        start: start,
+        stop: stop,
+        pause: pause,
+        resume: resume,
+        cancel: cancel,
+        elapsed: elapsed,
+        reset: reset
+    };
+}
+
+function transform () {
+    
+    var t = transformation.apply(undefined, arguments);
+    
+    t.start();
+    
+    return t;
+}
+
+module.exports = {
+    transformation: transformation,
+    transform: transform
+};
+
+},{"eases":58}],40:[function(require,module,exports){
+arguments[4][4][0].apply(exports,arguments)
+},{"dup":4}],41:[function(require,module,exports){
+arguments[4][5][0].apply(exports,arguments)
+},{"dup":5}],42:[function(require,module,exports){
+arguments[4][6][0].apply(exports,arguments)
+},{"dup":6}],43:[function(require,module,exports){
+arguments[4][7][0].apply(exports,arguments)
+},{"./bounce-out":45,"dup":7}],44:[function(require,module,exports){
+arguments[4][8][0].apply(exports,arguments)
+},{"./bounce-out":45,"dup":8}],45:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],46:[function(require,module,exports){
+arguments[4][10][0].apply(exports,arguments)
+},{"dup":10}],47:[function(require,module,exports){
+arguments[4][11][0].apply(exports,arguments)
+},{"dup":11}],48:[function(require,module,exports){
+arguments[4][12][0].apply(exports,arguments)
+},{"dup":12}],49:[function(require,module,exports){
+arguments[4][13][0].apply(exports,arguments)
+},{"dup":13}],50:[function(require,module,exports){
+arguments[4][14][0].apply(exports,arguments)
+},{"dup":14}],51:[function(require,module,exports){
+arguments[4][15][0].apply(exports,arguments)
+},{"dup":15}],52:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],53:[function(require,module,exports){
+arguments[4][17][0].apply(exports,arguments)
+},{"dup":17}],54:[function(require,module,exports){
+arguments[4][18][0].apply(exports,arguments)
+},{"dup":18}],55:[function(require,module,exports){
+arguments[4][19][0].apply(exports,arguments)
+},{"dup":19}],56:[function(require,module,exports){
+arguments[4][20][0].apply(exports,arguments)
+},{"dup":20}],57:[function(require,module,exports){
+arguments[4][21][0].apply(exports,arguments)
+},{"dup":21}],58:[function(require,module,exports){
+arguments[4][22][0].apply(exports,arguments)
+},{"./back-in":41,"./back-in-out":40,"./back-out":42,"./bounce-in":44,"./bounce-in-out":43,"./bounce-out":45,"./circ-in":47,"./circ-in-out":46,"./circ-out":48,"./cubic-in":50,"./cubic-in-out":49,"./cubic-out":51,"./elastic-in":53,"./elastic-in-out":52,"./elastic-out":54,"./expo-in":56,"./expo-in-out":55,"./expo-out":57,"./linear":59,"./quad-in":61,"./quad-in-out":60,"./quad-out":62,"./quart-in":64,"./quart-in-out":63,"./quart-out":65,"./quint-in":67,"./quint-in-out":66,"./quint-out":68,"./sine-in":70,"./sine-in-out":69,"./sine-out":71,"dup":22}],59:[function(require,module,exports){
+arguments[4][23][0].apply(exports,arguments)
+},{"dup":23}],60:[function(require,module,exports){
+arguments[4][24][0].apply(exports,arguments)
+},{"dup":24}],61:[function(require,module,exports){
+arguments[4][25][0].apply(exports,arguments)
+},{"dup":25}],62:[function(require,module,exports){
+arguments[4][26][0].apply(exports,arguments)
+},{"dup":26}],63:[function(require,module,exports){
+arguments[4][27][0].apply(exports,arguments)
+},{"dup":27}],64:[function(require,module,exports){
+arguments[4][28][0].apply(exports,arguments)
+},{"dup":28}],65:[function(require,module,exports){
+arguments[4][29][0].apply(exports,arguments)
+},{"dup":29}],66:[function(require,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"dup":30}],67:[function(require,module,exports){
+arguments[4][31][0].apply(exports,arguments)
+},{"dup":31}],68:[function(require,module,exports){
+arguments[4][32][0].apply(exports,arguments)
+},{"dup":32}],69:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],70:[function(require,module,exports){
+arguments[4][34][0].apply(exports,arguments)
+},{"dup":34}],71:[function(require,module,exports){
+arguments[4][35][0].apply(exports,arguments)
+},{"dup":35}],72:[function(require,module,exports){
+/* global module, require */
+
+module.exports = require("./src/xmugly.js");
+
+},{"./src/xmugly.js":73}],73:[function(require,module,exports){
+/* global module */
+
+(function () {
+    
+    //
+    // Compiles
+    //     . some_element attr1 val1, attr2 val2
+    // to:
+    //     <some_element attr1="val1", attr2="val2" />
+    // and
+    //     . some_element attr1 val1 :
+    //     ...
+    //     --
+    // to
+    //     <some_element attr1="val1">
+    //     ...
+    //     </some_element>
+    //
+    function compile (text, defaultMacros) {
+        
+    //
+    // A stack of element names, so that know which "--" closes which element.
+    //
+        var stack = [];
+        var lines = toLines(text);
+        var macros = processMacros(lines);
+        
+        if (Array.isArray(defaultMacros)) {
+            defaultMacros.forEach(function (macro) {
+                macros.push(macro);
+            });
+        }
+        
+        lines = removeMacroDefinitions(lines);
+        
+        lines = lines.map(function (line, i) {
+            
+            var name, attributes, parts, trimmed, head, whitespace, strings, result, hasContent;
+            
+            trimmed = line.trim();
+            strings = [];
+            whitespace = line.replace(/^([\s]*).*$/, "$1");
+            
+            if (trimmed === "--") {
+                
+                if (!stack.length) {
+                    throw new SyntaxError(
+                        "Closing '--' without matching opening tag on line " + (i + 1)
+                    );
+                }
+                
+                return whitespace + '</' + stack.pop() + '>';
+            }
+            
+            if (trimmed[0] !== ".") {
+                return line;
+            }
+            
+            trimmed = trimmed.replace(/"([^"]+)"/g, function (match, p1) {
+                
+                strings.push(p1);
+                
+                return "{{" + strings.length + "}}";
+            });
+            
+            if (trimmed[trimmed.length - 1] === ":") {
+                hasContent = true;
+                trimmed = trimmed.replace(/:$/, "");
+            }
+            
+            parts = trimmed.split(",");
+            head = parts[0].split(" ");
+            
+            head.shift();
+            
+            name = head[0];
+            
+            if (hasContent) {
+                stack.push(name);
+            }
+            
+            head.shift();
+            
+            parts[0] = head.join(" ");
+            
+            attributes = [];
+            
+            parts.forEach(function (current) {
+                
+                var split, name, value, enlarged;
+                
+                split = normalizeWhitespace(current).split(" ");
+                
+                name = split[0].trim();
+                
+                if (!name) {
+                    return;
+                }
+                
+                enlarged = applyMacros(name, macros);
+                
+                if (enlarged) {
+                    value = enlarged.value;
+                    name = enlarged.name;
+                }
+                else {
+                    
+                    split.shift();
+                    
+                    value = split.join(" ");
+                }
+                
+                attributes.push(name + '="' + value + '"');
+            });
+            
+            result = whitespace + '<' + name + (attributes.length ? ' ' : '') +
+                attributes.join(" ") + (hasContent ? '>' : ' />');
+            
+            strings.forEach(function (value, i) {
+                result = result.replace("{{" + (i + 1) + "}}", value);
+            });
+            
+            return result;
+            
+        });
+        
+        return toText(lines);
+    }
+
+    function toLines (text) {
+        return text.split("\n");
+    }
+
+    function toText (lines) {
+        return lines.join("\n");
+    }
+
+    //
+    // Creates a replacement rule from an attribute macro line.
+    // Attribute macros look like this:
+    //
+    // ~ @ asset _
+    //
+    // The ~ at the start of a line signalizes that this is an attribute macro.
+    // The first non-whitespace part (@ in this case) is the character or text part
+    // which will be used as the macro identifier.
+    // The second part (asset in this case) is the attribute name.
+    // The third and last part (_ here) is the attribute value.
+    // The "_" character will be replaced by whatever follows the macro identifier.
+    // 
+    // The example above will result in this transformation:
+    //
+    // . move @frodo => <move asset="frodo" />
+    //
+    // Some more examples:
+    //
+    // Macro: ~ : duration _
+    // Transformation: . wait :200 => <wait duration="200" />
+    //
+    // Macro: ~ + _ true
+    // Macro: ~ - _ false
+    // Transformation: . stage -resize, +center => <stage resize="false" center="true" />
+    //
+    function processAttributeMacro (line) {
+        
+        var parts = normalizeWhitespace(line).split(" ");
+        
+        parts.shift();
+        
+        return {
+            identifier: parts[0],
+            attribute: parts[1],
+            value: parts[2]
+        };
+    }
+
+    function processMacros (lines) {
+        
+        var macros = [];
+        
+        lines.forEach(function (line) {
+            
+            if (line.trim()[0] !== "~") {
+                return;
+            }
+            
+            macros.push(processAttributeMacro(line));
+        });
+        
+        return macros;
+    }
+
+    function applyMacros (raw, macros) {
+        
+        var name, value;
+        
+        macros.some(function (macro) {
+            
+            var macroValue;
+            
+            if (raw[0] !== macro.identifier) {
+                return false;
+            }
+            
+            macroValue = raw.replace(macro.identifier, "");
+            name = (macro.attribute === "_" ? macroValue : macro.attribute);
+            value = (macro.value === "_" ? macroValue : macro.value);
+            
+            return true;
+        });
+        
+        if (!name) {
+            return null;
+        }
+        
+        return {
+            name: name,
+            value: value
+        };
+    }
+    
+    function removeMacroDefinitions (lines) {
+        return lines.filter(function (line) {
+            return line.trim()[0] !== "~";
+        });
+    }
+    
+    //
+    // Replaces all whitespace with a single space character.
+    //
+    function normalizeWhitespace (text) {
+        return text.trim().replace(/[\s]+/g, " ");
+    }
+    
+    if (typeof module !== "undefined") {
+        module.exports = {
+            compile: compile
+        };
+    }
+    else {
+        window.xmugly = {
+            compile: compile
+        };
+    }
+    
+}());
+
+},{}]},{},[1]);
+
+
+/*/////////////////////////////////////////////////////////////////////////////////
+
+ MO5.js - Modular JavaScript. Batteries included.
+
+ Copyright (c) 2015 Jonathan Steinbeck
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+ * Neither the name MO5.js nor the names of its contributors 
+   may be used to endorse or promote products derived from this software 
+   without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+/////////////////////////////////////////////////////////////////////////////////*/
+
+/* global using, window, require, process, document, console */
+
+if (typeof window !== "undefined") {
+    // If the browser doesn't support requestAnimationFrame, use a fallback.
+    window.requestAnimationFrame = (function ()
+    {
+        "use strict";
+     
+        return window.requestAnimationFrame || 
+            window.webkitRequestAnimationFrame || 
+            window.mozRequestAnimationFrame || 
+            window.oRequestAnimationFrame || 
+            window.msRequestAnimationFrame || 
+            function (callback) {
+                window.setTimeout(callback, 1000 / 60);
+            };
+    }());
+}
+
+// [].forEach() shim
+(function () {
+    
+    if (Array.prototype.forEach) {
+        return;
+    }
+    
+    Array.prototype.forEach = function (callback) {
+        for (var i = 0, len = this.length; i < len; i += 1) {
+            callback(this[i], i, this);
+        }
+    };
+    
+}());
+
+// [].indexOf() shim
+(function () {
+    
+    if (Array.prototype.indexOf) {
+        return;
+    }
+    
+    Array.prototype.indexOf = function (searchElement, fromIndex) {
+        
+        var k;
+        
+        if (this == null) {
+          throw new TypeError('"this" is null or not defined');
+        }
+        
+        var O = Object(this);
+        
+        var len = O.length >>> 0;
+        
+        if (len === 0) {
+            return -1;
+        }
+        
+        var n = +fromIndex || 0;
+        
+        if (Math.abs(n) === Infinity) {
+            n = 0;
+        }
+        
+        if (n >= len) {
+            return -1;
+        }
+        
+        k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+        
+        while (k < len) {
+            
+            if (k in O && O[k] === searchElement) {
+                return k;
+            }
+            
+            k++;
+        }
+        
+        return -1;
+    };
+    
+}());
+
+
+if (typeof console === "undefined") {
+    this.console = {};
+}
+
+if (!console.log) {
+    console.log = function () {};
+}
+
+if (!console.dir) {
+    console.dir = console.log;
+}
+
+if (!console.error) {
+    console.error = console.log;
+}
+
+if (!console.warn) {
+    console.warn = console.log;
+}
+
+
+(function () {
+    
+    var scripts = document.getElementsByTagName("script");
+    var path = scripts[scripts.length - 1].src.replace(/MO5\.js$/, "");
+    
+    using.modules = {
+        "MO5.ajax": path + "ajax.js",
+        "MO5.assert": path + "assert.js",
+        "MO5.Exception": path + "Exception.js",
+        "MO5.fail": path + "fail.js",
+        "MO5.EventBus": path + "EventBus.js",
+        "MO5.CoreObject": path + "CoreObject.js",
+        "MO5.List": path + "List.js",
+        "MO5.Queue": path + "Queue.js",
+        "MO5.Map": path + "Map.js",
+        "MO5.Set": path + "Set.js",
+        "MO5.Result": path + "Result.js", // deprecated - use MO5.Promise instead!
+        "MO5.Promise": path + "Promise.js",
+        "MO5.Timer": path + "Timer.js",
+        "MO5.TimerWatcher": path + "TimerWatcher.js",
+        "MO5.easing": path + "easing.js",
+        "MO5.transform": path + "transform.js",
+        "MO5.range": path + "range.js",
+        "MO5.tools": path + "tools.js",
+        "MO5.Point": path + "Point.js",
+        "MO5.Size": path + "Size.js",
+        "MO5.Animation": path + "Animation.js",
+        "MO5.dom.effects.typewriter": path + "dom.effects.typewriter.js",
+        "MO5.dom.Element": path + "dom.Element.js",
+        "MO5.dom.escape": path + "dom.escape.js",
+        "MO5.globals.document": path + "globals.document.js",
+        "MO5.globals.window": path + "globals.window.js",
+        "MO5.types": path + "types.js"
+    };
+}());
+
+
+var $__WSEScripts = document.getElementsByTagName('script');
+WSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;
+
+using.modules['MO5.ajax'] = WSEPath;
+using.modules['MO5.Animation'] = WSEPath;
+using.modules['MO5.assert'] = WSEPath;
+using.modules['MO5.CoreObject'] = WSEPath;
+using.modules['MO5.dom.effects.typewriter'] = WSEPath;
+using.modules['MO5.dom.Element'] = WSEPath;
+using.modules['MO5.dom.escape'] = WSEPath;
+using.modules['MO5.easing'] = WSEPath;
+using.modules['MO5.EventBus'] = WSEPath;
+using.modules['MO5.Exception'] = WSEPath;
+using.modules['MO5.fail'] = WSEPath;
+using.modules['MO5.globals.document'] = WSEPath;
+using.modules['MO5.globals.window'] = WSEPath;
+using.modules['MO5.List'] = WSEPath;
+using.modules['MO5.Map'] = WSEPath;
+using.modules['MO5.Point'] = WSEPath;
+using.modules['MO5.Promise'] = WSEPath;
+using.modules['MO5.Queue'] = WSEPath;
+using.modules['MO5.range'] = WSEPath;
+using.modules['MO5.Result'] = WSEPath;
+using.modules['MO5.Set'] = WSEPath;
+using.modules['MO5.Size'] = WSEPath;
+using.modules['MO5.Timer'] = WSEPath;
+using.modules['MO5.TimerWatcher'] = WSEPath;
+using.modules['MO5.tools'] = WSEPath;
+using.modules['MO5.transform'] = WSEPath;
+using.modules['MO5.types'] = WSEPath;
+using.modules['WSE.assets'] = WSEPath;
+using.modules['WSE.commands'] = WSEPath;
+using.modules['WSE.functions'] = WSEPath;
+using.modules['WSE.dataSources'] = WSEPath;
+using.modules['WSE'] = WSEPath;
+using.modules['WSE.Keys'] = WSEPath;
+using.modules['WSE.tools'] = WSEPath;
+using.modules['WSE.loader'] = WSEPath;
+using.modules['WSE.dataSources.LocalStorage'] = WSEPath;
+using.modules['WSE.Trigger'] = WSEPath;
+using.modules['WSE.Game'] = WSEPath;
+using.modules['WSE.Interpreter'] = WSEPath;
+using.modules['WSE.LoadingScreen'] = WSEPath;
+using.modules['WSE.tools.ui'] = WSEPath;
+using.modules['WSE.tools.reveal'] = WSEPath;
+using.modules['WSE.tools.compile'] = WSEPath;
+using.modules['WSE.DisplayObject'] = WSEPath;
+using.modules['WSE.assets.Animation'] = WSEPath;
+using.modules['WSE.assets.Audio'] = WSEPath;
+using.modules['WSE.assets.Character'] = WSEPath;
+using.modules['WSE.assets.Curtain'] = WSEPath;
+using.modules['WSE.assets.Imagepack'] = WSEPath;
+using.modules['WSE.assets.Textbox'] = WSEPath;
+using.modules['WSE.assets.Background'] = WSEPath;
+using.modules['WSE.assets.Composite'] = WSEPath;
+using.modules['WSE.commands.alert'] = WSEPath;
+using.modules['WSE.commands.break'] = WSEPath;
+using.modules['WSE.commands.choice'] = WSEPath;
+using.modules['WSE.commands.confirm'] = WSEPath;
+using.modules['WSE.commands.do'] = WSEPath;
+using.modules['WSE.commands.fn'] = WSEPath;
+using.modules['WSE.commands.global'] = WSEPath;
+using.modules['WSE.commands.globalize'] = WSEPath;
+using.modules['WSE.commands.goto'] = WSEPath;
+using.modules['WSE.commands.line'] = WSEPath;
+using.modules['WSE.commands.localize'] = WSEPath;
+using.modules['WSE.commands.prompt'] = WSEPath;
+using.modules['WSE.commands.restart'] = WSEPath;
+using.modules['WSE.commands.sub'] = WSEPath;
+using.modules['WSE.commands.trigger'] = WSEPath;
+using.modules['WSE.commands.var'] = WSEPath;
+using.modules['WSE.commands.set_vars'] = WSEPath;
+using.modules['WSE.commands.wait'] = WSEPath;
+using.modules['WSE.commands.with'] = WSEPath;
+using.modules['WSE.commands.while'] = WSEPath;
 
 /* global using */
 
@@ -13459,10 +13459,10 @@ define("WSE.assets.Animation", function (
 });
 
 
-/* global using, Howl */
+/* global using */
 
-using("WSE.tools::warn").
-define("WSE.assets.Audio", function (warn) {
+using("WSE.tools::warn", "howler::Howl").
+define("WSE.assets.Audio", function (warn, Howl) {
     
     "use strict";
     

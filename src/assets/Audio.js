@@ -1,7 +1,7 @@
-/* global using, Howl */
+/* global using */
 
-using("WSE.tools::warn").
-define("WSE.assets.Audio", function (warn) {
+using("WSE.tools::warn", "howler::Howl").
+define("WSE.assets.Audio", function (warn, Howl) {
     
     "use strict";
     

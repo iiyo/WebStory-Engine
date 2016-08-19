@@ -13,6 +13,7 @@
     "databus": "^1.0.1",
     "eases": "^1.0.8",
     "easy-ajax": "^1.0.0-final.1512141736",
+    "howler": "^1.1.29",
     "transform-js": "^1.1.0-final.1512141547",
     "xmugly": "^1.0.3"
   },
