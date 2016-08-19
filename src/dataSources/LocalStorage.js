@@ -1,6 +1,6 @@
 /* global using */
 
-using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
+using("string-dict").define("WSE.dataSources.LocalStorage", function (Dict) {
     
     "use strict";
     

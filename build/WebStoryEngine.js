@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Fri, 19 Aug 2016 12:02:01 GMT
+    Build time: Fri, 19 Aug 2016 13:43:00 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -464,11 +464,13 @@ using().define("easy-ajax", function () { return require("easy-ajax"); });
 
 using().define("howler", function () { return require("howler"); });
 
+using().define("string-dict", function () { return require("string-dict"); });
+
 using().define("transform-js", function () { return require("transform-js"); });
 
 using().define("xmugly", function () { return require("xmugly"); });
 
-},{"databus":2,"eases":22,"easy-ajax":37,"howler":38,"transform-js":39,"xmugly":72}],2:[function(require,module,exports){
+},{"databus":2,"eases":22,"easy-ajax":37,"howler":38,"string-dict":39,"transform-js":40,"xmugly":73}],2:[function(require,module,exports){
 /* global require, module */
 
 module.exports = require("./src/databus");
@@ -2571,6 +2573,271 @@ module.exports = require("./easy-ajax.js");
 })();
 
 },{}],39:[function(require,module,exports){
+//
+// A simple dictionary prototype for JavaScript, avoiding common object pitfalls
+// and offering some handy convenience methods.
+//
+
+/* global module, require, window */
+
+var prefix = "string-dict_";
+
+function makeKey (k) {
+    return prefix + k;
+}
+
+function revokeKey (k) {
+    return k.replace(new RegExp(prefix), "");
+}
+
+function Dict (content) {
+    
+    var key;
+    
+    this.clear();
+    
+    if (content) {
+        for (key in content) {
+            this.set(key, content[key]);
+        }
+    }
+}
+
+Dict.prototype.clear = function () {
+    this.items = {};
+    this.count = 0;
+};
+
+Dict.prototype.length = function () {
+    return this.count;
+};
+
+Dict.prototype.set = function (k, value) {
+    
+    var key = makeKey(k);
+    
+    if (!k) {
+        throw new Error("Dictionary keys cannot be falsy.");
+    }
+    
+    if (this.has(key)) {
+        this.remove(key);
+    }
+    
+    this.items[key] = value;
+    this.count += 1;
+    
+    return this;
+};
+
+Dict.prototype.get = function (k) {
+    
+    var key = makeKey(k);
+    
+    if (!this.items.hasOwnProperty(key)) {
+        return undefined;
+    }
+    
+    return this.items[key];
+};
+
+//
+// The same as .get(), but throws when the key doesn't exist.
+// This can be useful if you want to use a dict as some sort of registry.
+//
+Dict.prototype.require = function (key) {
+    
+    if (!this.has(key)) {
+        throw new Error("Required key '" + key + "' does not exist.");
+    }
+    
+    return this.get(key);
+};
+
+Dict.prototype.remove = function (k) {
+    
+    var key = makeKey(k);
+    
+    if (this.has(k)) {
+        delete this.items[key];
+        this.count -= 1;
+    }
+    
+    return this;
+};
+
+Dict.prototype.has = function (k) {
+    
+    var key = makeKey(k);
+    
+    return this.items.hasOwnProperty(key);
+};
+
+Dict.prototype.forEach = function (fn) {
+    
+    if (!fn || typeof fn !== "function") {
+        throw new Error("Argument 1 is expected to be of type function.");
+    }
+    
+    for (var key in this.items) {
+        fn(this.items[key], revokeKey(key), this);
+    }
+    
+    return this;
+};
+
+Dict.prototype.filter = function (fn) {
+    
+    var matches = new Dict();
+    
+    this.forEach(function (item, key, all) {
+        if (fn(item, key, all)) {
+            matches.set(key, item);
+        }
+    });
+    
+    return matches;
+};
+
+Dict.prototype.find = function (fn) {
+    
+    var value;
+    
+    this.some(function (item, key, all) {
+        
+        if (fn(item, key, all)) {
+            value = item;
+            return true;
+        }
+        
+        return false;
+    });
+    
+    return value;
+};
+
+Dict.prototype.map = function (fn) {
+    
+    var mapped = new Dict();
+    
+    this.forEach(function (item, key, all) {
+        mapped.set(key, fn(item, key, all));
+    });
+    
+    return mapped;
+};
+
+Dict.prototype.reduce = function (fn, initialValue) {
+    
+    var result = initialValue;
+    
+    this.forEach(function (item, key, all) {
+        result = fn(result, item, key, all);
+    });
+    
+    return result;
+};
+
+Dict.prototype.every = function (fn) {
+    return this.reduce(function (last, item, key, all) {
+        return last && fn(item, key, all);
+    }, true);
+};
+
+Dict.prototype.some = function (fn) {
+    
+    for (var key in this.items) {
+        if (fn(this.items[key], revokeKey(key), this)) {
+            return true;
+        }
+    }
+    
+    return false;
+};
+
+//
+// Returns an array containing the dictionary's keys.
+//
+Dict.prototype.keys = function () {
+    
+    var keys = [];
+    
+    this.forEach(function (item, key) {
+        keys.push(key);
+    });
+    
+    return keys;
+};
+
+//
+// Returns the dictionary's values in an array.
+//
+Dict.prototype.values = function () {
+
+    var values = [];
+    
+    this.forEach(function (item) {
+        values.push(item);
+    });
+    
+    return values;
+};
+
+//
+// Creates a normal JS object containing the contents of the dictionary.
+//
+Dict.prototype.toObject = function () {
+    
+    var jsObject = {};
+    
+    this.forEach(function (item, key) {
+        jsObject[key] = item;
+    });
+    
+    return jsObject;
+};
+
+//
+// Creates another dictionary with the same contents as this one.
+//
+Dict.prototype.clone = function () {
+    
+    var clone = new Dict();
+    
+    this.forEach(function (item, key) {
+        clone.set(key, item);
+    });
+    
+    return clone;
+};
+
+//
+// Adds the content of another dictionary to this dictionary's content.
+//
+Dict.prototype.addMap = function (otherMap) {
+    
+    var self = this;
+    
+    otherMap.forEach(function (item, key) {
+        self.set(key, item);
+    });
+    
+    return this;
+};
+
+//
+// Returns a new map which is the result of joining this map
+// with another map. This map isn't changed in the process.
+// The keys from otherMap will replace any keys from this map that
+// are the same.
+//
+Dict.prototype.join = function (otherMap) {
+    return this.clone().addMap(otherMap);
+};
+
+module.exports = Dict;
+
+},{}],40:[function(require,module,exports){
 /* global requestAnimationFrame */
 
 var eases = require("eases");
@@ -2765,76 +3032,76 @@ module.exports = {
     transform: transform
 };
 
-},{"eases":58}],40:[function(require,module,exports){
+},{"eases":59}],41:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"dup":4}],41:[function(require,module,exports){
+},{"dup":4}],42:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],42:[function(require,module,exports){
+},{"dup":5}],43:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],43:[function(require,module,exports){
+},{"dup":6}],44:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"./bounce-out":45,"dup":7}],44:[function(require,module,exports){
+},{"./bounce-out":46,"dup":7}],45:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"./bounce-out":45,"dup":8}],45:[function(require,module,exports){
+},{"./bounce-out":46,"dup":8}],46:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],46:[function(require,module,exports){
+},{"dup":9}],47:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],47:[function(require,module,exports){
+},{"dup":10}],48:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11}],48:[function(require,module,exports){
+},{"dup":11}],49:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],49:[function(require,module,exports){
+},{"dup":12}],50:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"dup":13}],50:[function(require,module,exports){
+},{"dup":13}],51:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],51:[function(require,module,exports){
+},{"dup":14}],52:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],52:[function(require,module,exports){
+},{"dup":15}],53:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],53:[function(require,module,exports){
+},{"dup":16}],54:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],54:[function(require,module,exports){
+},{"dup":17}],55:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],55:[function(require,module,exports){
+},{"dup":18}],56:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],56:[function(require,module,exports){
+},{"dup":19}],57:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],57:[function(require,module,exports){
+},{"dup":20}],58:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],58:[function(require,module,exports){
+},{"dup":21}],59:[function(require,module,exports){
 arguments[4][22][0].apply(exports,arguments)
-},{"./back-in":41,"./back-in-out":40,"./back-out":42,"./bounce-in":44,"./bounce-in-out":43,"./bounce-out":45,"./circ-in":47,"./circ-in-out":46,"./circ-out":48,"./cubic-in":50,"./cubic-in-out":49,"./cubic-out":51,"./elastic-in":53,"./elastic-in-out":52,"./elastic-out":54,"./expo-in":56,"./expo-in-out":55,"./expo-out":57,"./linear":59,"./quad-in":61,"./quad-in-out":60,"./quad-out":62,"./quart-in":64,"./quart-in-out":63,"./quart-out":65,"./quint-in":67,"./quint-in-out":66,"./quint-out":68,"./sine-in":70,"./sine-in-out":69,"./sine-out":71,"dup":22}],59:[function(require,module,exports){
+},{"./back-in":42,"./back-in-out":41,"./back-out":43,"./bounce-in":45,"./bounce-in-out":44,"./bounce-out":46,"./circ-in":48,"./circ-in-out":47,"./circ-out":49,"./cubic-in":51,"./cubic-in-out":50,"./cubic-out":52,"./elastic-in":54,"./elastic-in-out":53,"./elastic-out":55,"./expo-in":57,"./expo-in-out":56,"./expo-out":58,"./linear":60,"./quad-in":62,"./quad-in-out":61,"./quad-out":63,"./quart-in":65,"./quart-in-out":64,"./quart-out":66,"./quint-in":68,"./quint-in-out":67,"./quint-out":69,"./sine-in":71,"./sine-in-out":70,"./sine-out":72,"dup":22}],60:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"dup":23}],60:[function(require,module,exports){
+},{"dup":23}],61:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],61:[function(require,module,exports){
+},{"dup":24}],62:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],62:[function(require,module,exports){
+},{"dup":25}],63:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],63:[function(require,module,exports){
+},{"dup":26}],64:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"dup":27}],64:[function(require,module,exports){
+},{"dup":27}],65:[function(require,module,exports){
 arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],65:[function(require,module,exports){
+},{"dup":28}],66:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],66:[function(require,module,exports){
+},{"dup":29}],67:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],67:[function(require,module,exports){
+},{"dup":30}],68:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],68:[function(require,module,exports){
+},{"dup":31}],69:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],69:[function(require,module,exports){
+},{"dup":32}],70:[function(require,module,exports){
 arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],70:[function(require,module,exports){
+},{"dup":33}],71:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],71:[function(require,module,exports){
+},{"dup":34}],72:[function(require,module,exports){
 arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],72:[function(require,module,exports){
+},{"dup":35}],73:[function(require,module,exports){
 /* global module, require */
 
 module.exports = require("./src/xmugly.js");
 
-},{"./src/xmugly.js":73}],73:[function(require,module,exports){
+},{"./src/xmugly.js":74}],74:[function(require,module,exports){
 /* global module */
 
 (function () {
@@ -9444,7 +9711,7 @@ define("WSE.loader", function (ajax, compile) {
 
 /* global using */
 
-using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
+using("string-dict").define("WSE.dataSources.LocalStorage", function (Dict) {
     
     "use strict";
     
