@@ -6,7 +6,7 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     
     function doCommand (command, interpreter, args) {
         
-        var assetName, action, isAnimation, bus = interpreter.bus, assets = interpreter.assets;
+        var assetName, action, bus = interpreter.bus, assets = interpreter.assets;
         
         args = args || {};
         
@@ -21,7 +21,6 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
         
         assetName = command.getAttribute("asset");
         action = command.getAttribute("action");
-        isAnimation = args.animation || false;
         
         if (assetName === null) {
             warn(bus, "Element of type 'do' must have an attribute 'asset'. " +
@@ -51,7 +50,7 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
         }
         
         return assets[assetName][action](command, args);
-    };
+    }
     
     return doCommand;
       

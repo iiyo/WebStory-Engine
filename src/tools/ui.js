@@ -18,7 +18,6 @@ using(
             var tEl, mEl, yesEl, noEl, container, pause, oldState, doNext;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Confirm?";
@@ -90,7 +89,6 @@ using(
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true) {
                     interpreter.state = oldState;
@@ -121,7 +119,6 @@ using(
             var tEl, mEl, buttonEl, container, pause, oldState, doNext;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Alert!";
@@ -164,7 +161,6 @@ using(
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true) {
                     interpreter.state = oldState;
@@ -195,7 +191,6 @@ using(
             var allowEmptyInput, hideCancelButton, prefill;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Input required";

@@ -4,8 +4,6 @@ using("WSE.commands").run(function (commands) {
     
     "use strict";
     
-    console.log('Loading extension getBacktrace...');
-    
     commands.getBacktrace = function (command, interpreter) {
         
         var i, frame, str = "", len = interpreter.callStack.length;

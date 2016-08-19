@@ -29,8 +29,8 @@ define("WSE.assets.Composite", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Composite (asset)
-    {
+    function Composite (asset) {
+        
         var element, children;
         var self, triggerDecreaseFn, width, height;
         

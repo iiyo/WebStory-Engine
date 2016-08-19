@@ -14,7 +14,7 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
         
         if (name === null) {
             warn(interpreter.bus, "No name defined on element 'global'.", command);
-            return next
+            return next;
         }
         
         if (value === null) {
@@ -25,7 +25,7 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
         interpreter.globalVars.set(name, value);
         
         return next;
-    };
+    }
     
     return global;
     

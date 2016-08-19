@@ -15,11 +15,10 @@ define("WSE.assets.Audio", function (warn) {
      */
     function Audio (asset, interpreter) {
         
-        var self, sources, i, len, j, jlen, current, track, trackName;
+        var sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
         bus = interpreter.bus;
-        self = this;
         
         this.interpreter = interpreter;
         this.bus = bus;

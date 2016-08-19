@@ -19,7 +19,7 @@ using().define("WSE.commands.break", function () {
             doNext: false,
             wait: true
         };
-    };
+    }
     
     return breakFn;
     

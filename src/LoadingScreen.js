@@ -47,8 +47,6 @@ define("WSE.LoadingScreen", function (transform, DataBus) {
             return;
         }
         
-        console.log("LoadingScreen: new item loading...");
-        
         this._loading += 1;
         this._max += 1;
         
@@ -64,8 +62,6 @@ define("WSE.LoadingScreen", function (transform, DataBus) {
         if (this._finished) {
             return;
         }
-        
-        console.log("LoadingScreen: item loaded.");
         
         if (this._loaded === this._max) {
             return;

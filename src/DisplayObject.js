@@ -589,8 +589,7 @@ define("WSE.DisplayObject", function (
             transform(
                 ox - dx,
                 ox + dx,
-                function (v)
-                {
+                function (v) {
                     element.style.left = v + xUnit;
                 },
                 {

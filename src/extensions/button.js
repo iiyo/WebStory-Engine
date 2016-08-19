@@ -5,17 +5,13 @@ define("WSE.assets.Button", function (assets, DisplayObject, tools, functions) {
     
     "use strict";
     
-    console.log('Loading extension button...');
-    
     function Button (asset, interpreter) {
         
-        var el, cssid, width, height, x, y, z, clickFn, text;
+        var el, cssid, x, y, z, clickFn, text;
         
         DisplayObject.call(this);
         
         // read the preferences from the definition:
-        width = asset.getAttribute("width") || "20px";
-        height = asset.getAttribute("height") || "20px";
         x = asset.getAttribute("x") || 0;
         y = asset.getAttribute("y") || 0;
         z = asset.getAttribute("z") || 10000;
@@ -53,7 +49,7 @@ define("WSE.assets.Button", function (assets, DisplayObject, tools, functions) {
         tools.attachEventListener(el, 'click', clickFn);
         
         interpreter.stage.appendChild(el);
-    };
+    }
     
     Button.prototype = new DisplayObject();
 

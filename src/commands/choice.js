@@ -7,7 +7,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
     
     function choice (command, interpreter) {
         
-        var menuElement, buttons, children, len, i, current, duration;
+        var menuElement, buttons, children, len, i, current;
         var currentButton, scenes, self, sceneName;
         var makeButtonClickFn, oldState, cssid;
         
@@ -28,8 +28,6 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         self = interpreter;
         children = command.childNodes;
         len = children.length;
-        duration = command.getAttribute("duration") || 500;
-        duration = parseInt(duration, 10);
         cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
         
         makeButtonClickFn = function (cur, me, sc, idx) {
@@ -157,7 +155,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             doNext: false,
             wait: true
         };
-    };
+    }
     
     return choice;
     

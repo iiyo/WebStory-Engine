@@ -1,4 +1,5 @@
 /* global require, console */
+/* eslint no-console: off */
 
 var processScriptsFileFn, concatJsFiles, scriptsFilePath;
 var browserify = require("browserify");
@@ -35,30 +36,25 @@ dependencyFile.write(
 bundle.pipe(dependencyFile);
 
 
-function mkdirSync (path)
-{
-    try
-    {
+function mkdirSync (path) {
+    try {
         fs.mkdirSync(path);
     }
-    catch (e)
-    {
+    catch (e) {
         if (e.code != 'EEXIST') {
             throw e;
         }
     }
 }
 
-processScriptsFileFn = function (data)
-{
+processScriptsFileFn = function (data) {
+    
     var json;
     
-    try
-    {
+    try {
         json = JSON.parse(data);
     }
-    catch (e)
-    {
+    catch (e) {
         console.log('Parsing file ' + scriptsFilePath + ' as JSON failed!');
         console.log('Error was:' + e);
         
@@ -68,19 +64,18 @@ processScriptsFileFn = function (data)
     concatJsFiles(json.files);
 };
 
-concatJsFiles = function (files)
-{
+concatJsFiles = function (files) {
+    
     var fn, concatFile, moduleName, moduleString;
     
     moduleString = '';
     concatFile = ''; 
     
-    fn = function (path)
-    {
+    fn = function (path) {
+        
         var concFn;
         
-        concFn = function (data)
-        {
+        concFn = function (data) {
             concatFile += "\n\n" + removeUnwantedSections(data);
         };
         
@@ -108,13 +103,12 @@ concatJsFiles = function (files)
     writeFileFn(concatFile);
 };
 
-function writeFileFn (concatFile)
-{
+function writeFileFn (concatFile) {
+    
     function makeErrorFn (successText) {
-        return function (err)
-        {
-            if (err)
-            {
+        return function (err) {
+            
+            if (err) {
                 console.log(err);
                 return;
             }

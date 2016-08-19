@@ -1,4 +1,5 @@
 /* global using */
+/* eslint no-console: off */
 
 using(
     "databus",
@@ -54,7 +55,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         }
         else {
             if (host) {
-                loader.generateFromString(host.get(url), this.load.bind(this));
+                loader.generateFromString(host.get(this.url), this.load.bind(this));
             }
             else {
                 loader.generateGameFile(this.url, this.load.bind(this));
@@ -121,10 +122,8 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
      */
     Game.prototype.init = function () {
         
-        //console.log("Initializing game...");
-        var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn, resizeFn;
+        var ws, stage, stageElements, stageInfo, width, height, id, alignFn, resizeFn;
         
-        self = this;
         ws = this.ws;
         
         (function () {

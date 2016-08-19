@@ -1,4 +1,5 @@
 /* global using */
+/* eslint no-console: off */
 
 using(
     "WSE.dataSources.LocalStorage",
@@ -125,7 +126,7 @@ define("WSE.Interpreter", function (
         if (this.debug === true) {
             this.game.bus.debug = true;
         }
-    };
+    }
     
     Interpreter.prototype.start = function () {
         
@@ -163,8 +164,9 @@ define("WSE.Interpreter", function (
                     section = data.element.tagName === "asset" ? "assets" : null;
                     section = data.element.parent.tagName === "settings" ? "settings" : null;
                 }
-                catch (e)
-                {}
+                catch (e) {
+                    // do nothing
+                }
             }
             
             section = section || "scenes";
@@ -697,11 +699,9 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createTriggers = function () {
         
-        var triggers, i, len, cur, curName, self, curTrigger, bus = this.bus;
+        var triggers, i, len, cur, curName, curTrigger, bus = this.bus;
         
         bus.trigger("wse.interpreter.triggers.create", this, false);
-        
-        self = this;
         
         this.triggers = {};
         
@@ -767,7 +767,7 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createAsset = function (asset) {
         
-        var name, assetType, self, bus = this.bus;
+        var name, assetType, bus = this.bus;
         
         bus.trigger(
             "wse.interpreter.createasset",
@@ -780,7 +780,6 @@ define("WSE.Interpreter", function (
         
         name = asset.getAttribute("name");
         assetType = asset.tagName;
-        self = this;
         
         if (name === null) {
             logError(bus, "Expected attribute 'name'.", asset);
@@ -995,10 +994,9 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.load = function (name) {
         
-        var ds, savegame, scene, sceneId, scenePath, scenes, i, len, self;
+        var ds, savegame, scene, sceneId, scenePath, scenes, i, len;
         var savegameId, bus = this.bus;
         
-        self = this;
         savegameId = this.buildSavegameId(name);
         ds = this.datasource;
         savegame = ds.get(savegameId);

@@ -34,7 +34,7 @@ using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (fu
         return {
             doNext: true
         };
-    };
+    }
     
     return fn;
     

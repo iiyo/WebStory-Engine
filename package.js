@@ -1,4 +1,5 @@
 /* global require, console */
+/* eslint no-console: off */
 
 var fs = require("fs");
 var normalizePath = require("path").normalize;
@@ -16,12 +17,12 @@ var output = fs.createWriteStream(destinationFile);
 archive.pipe(output);
 
 archive.bulk([{
-    src: [ '**/*' ],
+    src: ['**/*'],
     cwd: source,
     expand: true
 }]);
 
-archive.finalize(function(err, bytes) {
+archive.finalize(function(err) {
     
     if (err) {
         throw err;

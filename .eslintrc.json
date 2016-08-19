@@ -16,7 +16,13 @@
             "error",
             "always"
         ],
-        "brace-style": "off",
+        "brace-style": [
+            "error",
+            "stroustrup",
+            {
+                "allowSingleLine": true
+            }
+        ],
         "callback-return": "off",
         "camelcase": "off",
         "comma-dangle": "error",
@@ -45,7 +51,7 @@
             "object"
         ],
         "dot-notation": "off",
-        "eol-last": "off",
+        "eol-last": "warn",
         "eqeqeq": "off",
         "func-names": "off",
         "func-style": [
@@ -74,7 +80,7 @@
             "error",
             "unix"
         ],
-        "lines-around-comment": "error",
+        "lines-around-comment": "off",
         "max-depth": "error",
         "max-len": "off",
         "max-lines": "off",
@@ -175,7 +181,7 @@
         "no-shadow": "off",
         "no-shadow-restricted-names": "error",
         "no-spaced-func": "error",
-        "no-sync": "error",
+        "no-sync": "off",
         "no-tabs": "error",
         "no-ternary": "off",
         "no-throw-literal": "error",
@@ -229,7 +235,7 @@
         "radix": "off",
         "require-jsdoc": "off",
         "rest-spread-spacing": "error",
-        "semi": "off",
+        "semi": "error",
         "semi-spacing": [
             "error",
             {

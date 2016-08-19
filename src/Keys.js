@@ -253,11 +253,13 @@ using().define("WSE.Keys", function () {
         };
         
         examineEvent = function (event) {
+            /* eslint-disable no-console */
             console.log(event);
+            /* eslint-enable no-console */
         };
         
         attach(element);
-    };
+    }
     
     /**
     

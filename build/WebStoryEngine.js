@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Thu, 18 Aug 2016 18:17:51 GMT
+    Build time: Fri, 19 Aug 2016 11:38:15 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -8463,6 +8463,7 @@ define("WSE.assets", function (
     
 });
 
+
 /* global using */
 
 using(
@@ -8539,6 +8540,7 @@ define("WSE.commands", function (
     
 });
 
+
 /* global using */
 
 using().define("WSE.functions", function () {
@@ -8565,6 +8567,7 @@ using().define("WSE.functions", function () {
     
 });
 
+
 /* global using */
 
 using("WSE.dataSources.LocalStorage").
@@ -8577,6 +8580,7 @@ define("WSE.dataSources", function (LocalStorageDataSource) {
     return dataSources;
     
 });
+
 
 /* global using */
 
@@ -8603,6 +8607,7 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     return WSE;
     
 });
+
 
 /* global using */
 
@@ -8859,11 +8864,13 @@ using().define("WSE.Keys", function () {
         };
         
         examineEvent = function (event) {
+            /* eslint-disable no-console */
             console.log(event);
+            /* eslint-enable no-console */
         };
         
         attach(element);
-    };
+    }
     
     /**
     
@@ -9018,6 +9025,7 @@ using().define("WSE.Keys", function () {
     return Keys;
     
 });
+
 
 /* global using */
 
@@ -9503,6 +9511,7 @@ using("MO5.Map").define("WSE.dataSources.LocalStorage", function (Dict) {
     
 });
 
+
 /* global using */
 
 using("WSE.commands", "WSE.functions", "WSE.tools::warn").
@@ -9546,7 +9555,6 @@ define("WSE.Trigger", function (commands, functions, warn) {
         if (this.scene) {
             
             fn = function () {
-                console.log('Triggering event "' + self.event + '"...');
                 commands.sub(trigger, interpreter);
                 interpreter.index = 0;
                 interpreter.currentElement = 0;
@@ -9664,7 +9672,9 @@ define("WSE.Trigger", function (commands, functions, warn) {
     
 });
 
+
 /* global using */
+/* eslint no-console: off */
 
 using(
     "databus",
@@ -9720,7 +9730,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         }
         else {
             if (host) {
-                loader.generateFromString(host.get(url), this.load.bind(this));
+                loader.generateFromString(host.get(this.url), this.load.bind(this));
             }
             else {
                 loader.generateGameFile(this.url, this.load.bind(this));
@@ -9787,10 +9797,8 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
      */
     Game.prototype.init = function () {
         
-        //console.log("Initializing game...");
-        var ws, stage, stageElements, stageInfo, width, height, id, self, alignFn, resizeFn;
+        var ws, stage, stageElements, stageInfo, width, height, id, alignFn, resizeFn;
         
-        self = this;
         ws = this.ws;
         
         (function () {
@@ -10006,7 +10014,9 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
     
 });
 
+
 /* global using */
+/* eslint no-console: off */
 
 using(
     "WSE.dataSources.LocalStorage",
@@ -10133,7 +10143,7 @@ define("WSE.Interpreter", function (
         if (this.debug === true) {
             this.game.bus.debug = true;
         }
-    };
+    }
     
     Interpreter.prototype.start = function () {
         
@@ -10171,8 +10181,9 @@ define("WSE.Interpreter", function (
                     section = data.element.tagName === "asset" ? "assets" : null;
                     section = data.element.parent.tagName === "settings" ? "settings" : null;
                 }
-                catch (e)
-                {}
+                catch (e) {
+                    // do nothing
+                }
             }
             
             section = section || "scenes";
@@ -10705,11 +10716,9 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createTriggers = function () {
         
-        var triggers, i, len, cur, curName, self, curTrigger, bus = this.bus;
+        var triggers, i, len, cur, curName, curTrigger, bus = this.bus;
         
         bus.trigger("wse.interpreter.triggers.create", this, false);
-        
-        self = this;
         
         this.triggers = {};
         
@@ -10775,7 +10784,7 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createAsset = function (asset) {
         
-        var name, assetType, self, bus = this.bus;
+        var name, assetType, bus = this.bus;
         
         bus.trigger(
             "wse.interpreter.createasset",
@@ -10788,7 +10797,6 @@ define("WSE.Interpreter", function (
         
         name = asset.getAttribute("name");
         assetType = asset.tagName;
-        self = this;
         
         if (name === null) {
             logError(bus, "Expected attribute 'name'.", asset);
@@ -11003,10 +11011,9 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.load = function (name) {
         
-        var ds, savegame, scene, sceneId, scenePath, scenes, i, len, self;
+        var ds, savegame, scene, sceneId, scenePath, scenes, i, len;
         var savegameId, bus = this.bus;
         
-        self = this;
         savegameId = this.buildSavegameId(name);
         ds = this.datasource;
         savegame = ds.get(savegameId);
@@ -11542,6 +11549,7 @@ define("WSE.Interpreter", function (
     return Interpreter;
 });
 
+
 /* global using */
 
 using("transform-js::transform", "databus").
@@ -11591,8 +11599,6 @@ define("WSE.LoadingScreen", function (transform, DataBus) {
             return;
         }
         
-        console.log("LoadingScreen: new item loading...");
-        
         this._loading += 1;
         this._max += 1;
         
@@ -11608,8 +11614,6 @@ define("WSE.LoadingScreen", function (transform, DataBus) {
         if (this._finished) {
             return;
         }
-        
-        console.log("LoadingScreen: item loaded.");
         
         if (this._loaded === this._max) {
             return;
@@ -11714,7 +11718,6 @@ using(
             var tEl, mEl, yesEl, noEl, container, pause, oldState, doNext;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Confirm?";
@@ -11786,7 +11789,6 @@ using(
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true) {
                     interpreter.state = oldState;
@@ -11817,7 +11819,6 @@ using(
             var tEl, mEl, buttonEl, container, pause, oldState, doNext;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Alert!";
@@ -11860,7 +11861,6 @@ using(
                 ev.preventDefault();
                 root.removeChild(container);
                 interpreter.waitCounter -= 1;
-                //                     interpreter.keysDisabled -= 1;
                 
                 if (pause === true) {
                     interpreter.state = oldState;
@@ -11891,7 +11891,6 @@ using(
             var allowEmptyInput, hideCancelButton, prefill;
             
             interpreter.waitCounter += 1;
-            //             interpreter.keysDisabled += 1;
             
             args = args || {};
             title = args.title || "Input required";
@@ -12127,6 +12126,7 @@ using(
     
 });
 
+
 /*/////////////////////////////////////////////////////////////////////////////////
 
  MO5.js - JavaScript Library For Building Modern DOM And Canvas Applications
@@ -12304,6 +12304,7 @@ using("transform-js::transform").define("WSE.tools.reveal", function (transform)
     }
     
 });
+
 
 //
 // A module containing functions for compiling a simple command language to the old
@@ -12966,8 +12967,7 @@ define("WSE.DisplayObject", function (
             transform(
                 ox - dx,
                 ox + dx,
-                function (v)
-                {
+                function (v) {
                     element.style.left = v + xUnit;
                 },
                 {
@@ -13458,6 +13458,7 @@ define("WSE.assets.Animation", function (
     
 });
 
+
 /* global using, Howl */
 
 using("WSE.tools::warn").
@@ -13475,11 +13476,10 @@ define("WSE.assets.Audio", function (warn) {
      */
     function Audio (asset, interpreter) {
         
-        var self, sources, i, len, j, jlen, current, track, trackName;
+        var sources, i, len, j, jlen, current, track, trackName;
         var trackFiles, href, type, source, tracks, bus, trackSettings;
         
         bus = interpreter.bus;
-        self = this;
         
         this.interpreter = interpreter;
         this.bus = bus;
@@ -13769,6 +13769,7 @@ define("WSE.assets.Audio", function (warn) {
     
 });
 
+
 /* global using */
 
 using().define("WSE.assets.Character", function () {
@@ -13823,6 +13824,7 @@ using().define("WSE.assets.Character", function () {
     return Character;
     
 });
+
 
 /* global using */
 
@@ -13886,6 +13888,7 @@ define("WSE.assets.Curtain", function (DisplayObject, warn) {
     
 });
 
+
 /* global using, console */
 
 using(
@@ -13917,8 +13920,8 @@ define("WSE.assets.Imagepack", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Imagepack (asset)
-    {
+    function Imagepack (asset) {
+        
         var images, children, i, len, current, name;
         var src, image, self, triggerDecreaseFn, width, height;
         
@@ -14178,6 +14181,7 @@ define("WSE.assets.Imagepack", function (
     return Imagepack;
     
 });
+
 
 /* global using */
 
@@ -14473,6 +14477,7 @@ define("WSE.assets.Textbox", function (
     
 });
 
+
 /* global using */
 
 using("WSE.tools::applyAssetUnits", "WSE.DisplayObject", "WSE.tools::warn").
@@ -14551,6 +14556,7 @@ define("WSE.assets.Background", function (applyUnits, DisplayObject, warn) {
     
 });
 
+
 /* global using */
 
 using(
@@ -14582,8 +14588,8 @@ define("WSE.assets.Composite", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Composite (asset)
-    {
+    function Composite (asset) {
+        
         var element, children;
         var self, triggerDecreaseFn, width, height;
         
@@ -14891,6 +14897,7 @@ define("WSE.assets.Composite", function (
     
 });
 
+
 /* global using */
 
 using(
@@ -14958,11 +14965,12 @@ using().define("WSE.commands.break", function () {
             doNext: false,
             wait: true
         };
-    };
+    }
     
     return breakFn;
     
 });
+
 
 /* global using */
 
@@ -14973,7 +14981,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
     
     function choice (command, interpreter) {
         
-        var menuElement, buttons, children, len, i, current, duration;
+        var menuElement, buttons, children, len, i, current;
         var currentButton, scenes, self, sceneName;
         var makeButtonClickFn, oldState, cssid;
         
@@ -14994,8 +15002,6 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
         self = interpreter;
         children = command.childNodes;
         len = children.length;
-        duration = command.getAttribute("duration") || 500;
-        duration = parseInt(duration, 10);
         cssid = command.getAttribute("cssid") || "WSEChoiceMenu";
         
         makeButtonClickFn = function (cur, me, sc, idx) {
@@ -15123,11 +15129,12 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             doNext: false,
             wait: true
         };
-    };
+    }
     
     return choice;
     
 });
+
 
 /* global using */
 
@@ -15144,7 +15151,7 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
     
     function doCommand (command, interpreter, args) {
         
-        var assetName, action, isAnimation, bus = interpreter.bus, assets = interpreter.assets;
+        var assetName, action, bus = interpreter.bus, assets = interpreter.assets;
         
         args = args || {};
         
@@ -15159,7 +15166,6 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
         
         assetName = command.getAttribute("asset");
         action = command.getAttribute("action");
-        isAnimation = args.animation || false;
         
         if (assetName === null) {
             warn(bus, "Element of type 'do' must have an attribute 'asset'. " +
@@ -15189,11 +15195,12 @@ using("WSE.tools::warn").define("WSE.commands.do", function (warn) {
         }
         
         return assets[assetName][action](command, args);
-    };
+    }
     
     return doCommand;
       
 });
+
 
 /* global using */
 
@@ -15231,11 +15238,12 @@ using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (fu
         return {
             doNext: true
         };
-    };
+    }
     
     return fn;
     
 });
+
 
 /* global using */
 
@@ -15253,7 +15261,7 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
         
         if (name === null) {
             warn(interpreter.bus, "No name defined on element 'global'.", command);
-            return next
+            return next;
         }
         
         if (value === null) {
@@ -15264,11 +15272,12 @@ using("WSE.tools::warn").define("WSE.commands.global", function (warn) {
         interpreter.globalVars.set(name, value);
         
         return next;
-    };
+    }
     
     return global;
     
 });
+
 
 /* global using */
 
@@ -15301,6 +15310,7 @@ using("WSE.tools::warn").define("WSE.commands.globalize", function (warn) {
     return globalize;
     
 });
+
 
 /* global using */
 
@@ -15348,6 +15358,7 @@ define("WSE.commands.goto", function (replaceVars, logError) {
     return gotoCommand;
     
 });
+
 
 /* global using */
 
@@ -15426,6 +15437,7 @@ define("WSE.commands.line", function (getSerializedNodes, warn) {
      
 });
 
+
 /* global using */
 
 using("WSE.tools::warn").define("WSE.commands.localize", function (warn) {
@@ -15457,6 +15469,7 @@ using("WSE.tools::warn").define("WSE.commands.localize", function (warn) {
     return localize;
     
 });
+
 
 /* global using */
 
@@ -15510,6 +15523,7 @@ using().define("WSE.commands.restart", function () {
     return restart;
     
 });
+
 
 /* global using */
 
@@ -15577,6 +15591,7 @@ define("WSE.commands.sub", function (replaceVars, setVars, warn, logError, log) 
     
 });
 
+
 /* global using */
 
 using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
@@ -15634,6 +15649,7 @@ using("WSE.tools::warn").define("WSE.commands.trigger", function (warn) {
     return trigger;
      
 });
+
 
 /* global using */
 
@@ -15750,6 +15766,7 @@ define("WSE.commands.var", function (replaceVars, warn, log) {
     
 });
 
+
 /* global using */
 
 using("WSE.tools::logError").define("WSE.commands.set_vars", function (logError) {
@@ -15780,6 +15797,7 @@ using("WSE.tools::logError").define("WSE.commands.set_vars", function (logError)
     return setVars;
     
 });
+
 
 /* global using */
 

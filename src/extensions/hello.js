@@ -4,8 +4,6 @@ using("WSE.tools.ui", "WSE.commands").define("WSE.commands.hello", function (ui,
     
     "use strict";
     
-    console.log('Loading extension hello...');
-    
     // A command is given the XML element that triggered the command
     // and a reference to the interpreter object:
     function hello (command, interpreter) {

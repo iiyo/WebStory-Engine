@@ -41,7 +41,6 @@ define("WSE.Trigger", function (commands, functions, warn) {
         if (this.scene) {
             
             fn = function () {
-                console.log('Triggering event "' + self.event + '"...');
                 commands.sub(trigger, interpreter);
                 interpreter.index = 0;
                 interpreter.currentElement = 0;

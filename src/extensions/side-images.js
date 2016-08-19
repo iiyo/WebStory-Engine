@@ -11,15 +11,13 @@ using().define("WSE.extensions.sideImages", function () {
     
     "use strict";
     
-    console.log('Loading extension side-images...');
-    
     function makeToggleSideImagesFn (game) {
         
         var lastSpeakerName = '', fn;
         
         fn = function (data) {
             
-            var tb, speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
+            var speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
             
             assets = game.interpreter.assets;
             speakerName = data.command.getAttribute('s');
@@ -53,7 +51,6 @@ using().define("WSE.extensions.sideImages", function () {
                 return;
             }
             
-            tb = assets[speaker.asset.getAttribute('textbox')];
             ip = assets[ipName];
             
             //console.log('Showing new imagepack...');
@@ -63,7 +60,7 @@ using().define("WSE.extensions.sideImages", function () {
         game.bus.subscribe(function () { lastSpeakerName = ''; }, 'wse.interpreter.restart');
         
         return fn;
-    };
+    }
     
     return function (game) {
         game.bus.subscribe(makeToggleSideImagesFn(game), 'wse.interpreter.commands.line');

@@ -29,8 +29,8 @@ define("WSE.assets.Imagepack", function (
      * @param asset [DOM Element] The asset definition.
      * @param interpreter [WSE.Interpreter] The interpreter object.
      */
-    function Imagepack (asset)
-    {
+    function Imagepack (asset) {
+        
         var images, children, i, len, current, name;
         var src, image, self, triggerDecreaseFn, width, height;
         

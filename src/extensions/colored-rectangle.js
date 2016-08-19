@@ -5,8 +5,6 @@ define("WSE.assets.Rectangle", function (assets, DisplayObject, tools) {
     
     "use strict";
     
-    console.log('Loading extension colored-rectangle...');
-    
     // An asset constructor is given the XML element that defines the asset instance
     // and a reference to the interpreter object:
     function Rectangle (asset, interpreter) {
@@ -57,7 +55,7 @@ define("WSE.assets.Rectangle", function (assets, DisplayObject, tools) {
         
         // the interpreter holds a reference to the stage element:
         interpreter.stage.appendChild(el);
-    };
+    }
     
     Rectangle.prototype = new DisplayObject();
 
