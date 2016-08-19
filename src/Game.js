@@ -3,7 +3,7 @@
 
 using(
     "databus",
-    "MO5.ajax",
+    "easy-ajax",
     "WSE.Keys",
     "WSE.Interpreter",
     "WSE.tools",
@@ -113,7 +113,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
             self.init();
         };
         
-        ajax("GET", this.url, null, fn);
+        ajax.get(this.url, null, fn);
         
     };
     
