@@ -10,6 +10,7 @@
     "test": "tests"
   },
   "dependencies": {
+    "class-manipulator": "^1.0.0",
     "databus": "^1.0.1",
     "eases": "^1.0.8",
     "easy-ajax": "^1.0.0-final.1512141736",

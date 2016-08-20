@@ -3,7 +3,7 @@
 using(
     "transform-js::transform",
     "WSE.tools.reveal",
-    "MO5.dom.Element",
+    "class-manipulator::list",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
     "WSE.tools::replaceVariables"
@@ -11,7 +11,7 @@ using(
 define("WSE.assets.Textbox", function (
     transform,
     reveal,
-    Element,
+    classes,
     DisplayObject,
     applyUnits,
     replaceVars
@@ -105,7 +105,7 @@ define("WSE.assets.Textbox", function (
         self = this;
         textElement = document.getElementById(this.textElement);
         nameElement = document.getElementById(this.nameElement);
-        element = Element.fromDomElement(document.getElementById(this.cssid));
+        element = document.getElementById(this.cssid);
         
         text = replaceVars(text, this.interpreter);
         
@@ -135,12 +135,12 @@ define("WSE.assets.Textbox", function (
         }
         
         if (this._lastCssClass) {
-            element.removeCssClass(this._lastCssClass);
+            classes(element).remove(this._lastCssClass).apply();
         }
         
         this._lastCssClass = cssClass;
         
-        element.addCssClass(cssClass);
+        classes(element).add(cssClass).apply();
         
         if (this.speed < 1) {
             
