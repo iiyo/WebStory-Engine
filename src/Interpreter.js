@@ -10,7 +10,9 @@ using(
     "WSE.tools::logError",
     "WSE.tools::warn",
     "WSE.LoadingScreen",
-    "WSE.tools::getSerializedNodes"
+    "WSE.tools::getSerializedNodes",
+    "enjoy-core::each",
+    "enjoy-core::find"
 ).
 define("WSE.Interpreter", function (
     LocalStorageSource,
@@ -21,7 +23,9 @@ define("WSE.Interpreter", function (
     logError,
     warn,
     LoadingScreen,
-    getSerializedNodes
+    getSerializedNodes,
+    each,
+    find
 ) {
     
     "use strict";
@@ -271,32 +275,17 @@ define("WSE.Interpreter", function (
     };
     
     Interpreter.prototype.callOnLoad = function () {
-        for (var key in this.assets) {
-            if (typeof this.assets[key].onLoad === "function") {
-                this.assets[key].onLoad();
+        each(function (asset) {
+            if (typeof asset.onLoad === "function") {
+                asset.onLoad();
             }
-        }
+        }, this.assets);
     };
     
     Interpreter.prototype.runStory = function () {
         
-        var self;
-        
-        self = this;
-        
         if (this.assetsLoading > 0) {
-            
-            (function () {
-                
-                var timeoutFn;
-                
-                timeoutFn = function () {
-                    self.runStory();
-                };
-                
-                setTimeout(timeoutFn, 100);
-            }());
-            
+            setTimeout(this.runStory.bind(this), 100);
             return;
         }
         
@@ -426,19 +415,9 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.getSceneById = function (sceneName) {
         
-        var i, len, current, scene;
-        
-        scene = null;
-        
-        for (i = 0, len = this.scenes.length; i < len; i += 1) {
-            
-            current = this.scenes[i];
-            
-            if (current.getAttribute("id") === sceneName) {
-                scene = current;
-                break;
-            }
-        }
+        var scene = find(function (current) {
+            return current.getAttribute("id") === sceneName;
+        }, this.scenes);
         
         if (scene === null) {
             warn(this.bus, "Scene '" + sceneName + "' not found!");
@@ -699,7 +678,8 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createTriggers = function () {
         
-        var triggers, i, len, cur, curName, curTrigger, bus = this.bus;
+        var triggers, curName, curTrigger, bus = this.bus;
+        var interpreter = this;
         
         bus.trigger("wse.interpreter.triggers.create", this, false);
         
@@ -714,33 +694,35 @@ define("WSE.Interpreter", function (
             return;
         }
         
-        for (i = 0, len = triggers.length; i < len; i += 1) {
+        each(function (cur) {
             
-            cur = triggers[i];
             curName = cur.getAttribute("name") || null;
             
             if (curName === null) {
                 warn(bus, "No name specified for trigger.", cur);
-                continue;
+                return;
             }
             
-            if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null) {
+            if (typeof interpreter.triggers[curName] !== "undefined" &&
+                    interpreter.triggers[curName] !== null) {
                 warn(bus, "A trigger with the name '" + curName +
                     "' already exists.", cur);
-                continue;
+                return;
             }
             
-            curTrigger = new Trigger(cur, this);
+            curTrigger = new Trigger(cur, interpreter);
             
             if (typeof curTrigger.fn === "function") {
-                this.triggers[curName] = curTrigger;
+                interpreter.triggers[curName] = curTrigger;
             }
-        }
+            
+        }, triggers);
+        
     };
     
     Interpreter.prototype.buildAssets = function () {
         
-        var assets, len, i, cur, bus = this.bus;
+        var assets, bus = this.bus;
         
         bus.trigger("wse.assets.loading.started");
         
@@ -751,18 +733,16 @@ define("WSE.Interpreter", function (
             logError(bus, "Error while creating assets: " + e.getMessage());
         }
         
-        len = assets.length;
-        
-        for (i = 0; i < len; i += 1) {
+        each(function (asset) {
             
-            cur = assets[i];
-            
-            if (cur.nodeType !== 1) {
-                continue;
+            if (asset.nodeType !== 1) {
+                return;
             }
             
-            this.createAsset(cur);
-        }
+            this.createAsset(asset);
+            
+        }.bind(this), assets);
+        
     };
     
     Interpreter.prototype.createAsset = function (asset) {
@@ -809,47 +789,39 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createSaveGame = function () {
         
-        var assets, key, saves;
+        var saves = {};
         
-        saves = {};
-        assets = this.assets;
-        
-        for (key in assets) {
+        each(function (asset, key) {
             
-            if (assets.hasOwnProperty(key)) {
-                
-                try {
-                    saves[key] = assets[key].save();
-                }
-                catch (e) {
-                    console.log("WSE Internal Error: Asset '" + key + 
-                        "' does not have a 'save' method!");
-                }
+            try {
+                saves[key] = asset.save();
             }
-        }
+            catch (e) {
+                console.log("WSE Internal Error: Asset '" + key + 
+                    "' does not have a 'save' method!");
+            }
+            
+        }, this.assets);
         
         return saves;
     };
     
     Interpreter.prototype.restoreSaveGame = function (saves) {
         
-        var assets, key;
+        var bus = this.bus;
         
-        assets = this.assets;
-        
-        for (key in assets) {
+        each(function (asset, key) {
             
-            if (assets.hasOwnProperty(key)) {
-                
-                try {
-                    assets[key].restore(saves[key]);
-                }
-                catch (e) {
-                    console.log(e);
-                    warn(this.bus, "Could not restore asset state for asset '" + key + "'!");
-                }
+            try {
+                asset.restore(saves[key]);
             }
-        }
+            catch (e) {
+                console.log(e);
+                warn(bus, "Could not restore asset state for asset '" + key + "'!");
+            }
+            
+        }, this.assets);
+        
     };
     
     Interpreter.prototype.save = function (name) {
@@ -938,27 +910,28 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.getSavegameList = function (reversed) {
         
-        var json, key, names, i, len, out;
-        
-        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
-        json = this.datasource.get(key);
+        var names;
+        var out = [];
+        var key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
+        var json = this.datasource.get(key);
         
         if (json === null) {
-            return [];
+            return out;
         }
         
         names = JSON.parse(json);
         out = [];
         
-        for (i = 0, len = names.length; i < len; i += 1) {
+        each(function (name) {
             
             if (reversed === true) {
-                out.unshift(JSON.parse(this.datasource.get(names[i])));
+                out.unshift(JSON.parse(this.datasource.get(name)));
             }
             else {
-                out.push(JSON.parse(this.datasource.get(names[i])));
+                out.push(JSON.parse(this.datasource.get(name)));
             }
-        }
+            
+        }.bind(this), names);
         
         this.bus.trigger(
             "wse.interpreter.getsavegamelist",
@@ -994,7 +967,7 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.load = function (name) {
         
-        var ds, savegame, scene, sceneId, scenePath, scenes, i, len;
+        var ds, savegame, scene, sceneId, scenePath, scenes;
         var savegameId, bus = this.bus;
         
         savegameId = this.buildSavegameId(name);
@@ -1038,13 +1011,9 @@ define("WSE.Interpreter", function (
         scenes = this.story.getElementsByTagName("scene");
         this.scenes = scenes;
         
-        for (i = 0, len = this.scenes.length; i < len; i += 1) {
-            
-            if (scenes[i].getAttribute("id") === sceneId) {
-                scene = scenes[i];
-                break;
-            }
-        }
+        scene = find(function (scene) {
+            return scene.getAttribute("id") === sceneId;
+        }, this.scenes);
         
         if (!scene) {
             
@@ -1071,16 +1040,12 @@ define("WSE.Interpreter", function (
         // Remove savegame menu on load:
         (function (interpreter) {
             
-            var elements, i, len, cur, index, wseType, com, rem;
+            var index, wseType, com, rem;
             
-            elements = interpreter.stage.getElementsByTagName("*");
-            
-            for (i = 0, len = elements.length; i < len; i += 1) {
-                
-                cur = elements[i];
+            each(function (cur) {
                 
                 if (typeof cur === "undefined" || cur === null) {
-                    continue;
+                    return;
                 }
                 
                 wseType = cur.getAttribute("data-wse-type") || "";
@@ -1091,26 +1056,28 @@ define("WSE.Interpreter", function (
                 }
                 
                 if (wseType !== "choice") {
-                    continue;
+                    return;
                 }
                 
                 index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
                 
                 if (index === null) {
                     warn(interpreter.bus, "No data-wse-index found on element.");
-                    continue;
+                    return;
                 }
                 
                 com = interpreter.currentCommands[index];
                 
                 if (com.nodeName === "#text" || com.nodeName === "#comment") {
-                    continue;
+                    return;
                 }
                 
                 interpreter.stage.removeChild(cur);
                 WSE.commands.choice(com, interpreter);
                 interpreter.waitCounter -= 1;
-            }
+                
+            }, interpreter.stage.getElementsByTagName("*"));
+            
         }(this));
         
         bus.trigger(
@@ -1160,8 +1127,8 @@ define("WSE.Interpreter", function (
     Interpreter.prototype.toggleSavegameMenu = function () {
         
         var menu, deleteButton, loadButton, saveButton, self;
-        var savegames, i, len, buttonPanel, resumeButton, id, sgList;
-        var cur, curEl, makeClickFn, listenerStatus, curElapsed, oldState;
+        var savegames, buttonPanel, resumeButton, id, sgList;
+        var curEl, listenerStatus, curElapsed, oldState;
         
         self = this;
         id = "WSESaveGameMenu_" + this.game.url;
@@ -1438,7 +1405,7 @@ define("WSE.Interpreter", function (
         buttonPanel.appendChild(resumeButton);
         menu.appendChild(buttonPanel);
         
-        makeClickFn = function (curEl) {
+        function makeClickFn (curEl) {
             
             return function (event) {
                 
@@ -1462,14 +1429,13 @@ define("WSE.Interpreter", function (
                 curEl.setAttribute("class", curEl.getAttribute("class") + " active");
                 loadButton.focus();
             };
-        };
+        }
         
         curEl = document.createElement("div");
         curEl.setAttribute("class", "button");
         
-        for (i = 0, len = savegames.length; i < len; i += 1) {
+        each(function (cur) {
             
-            cur = savegames[i];
             curEl = document.createElement("div");
             curElapsed = cur.saveTime - cur.startTime;
             curEl.setAttribute("class", "button");
@@ -1492,7 +1458,8 @@ define("WSE.Interpreter", function (
             
             curEl.addEventListener("click", makeClickFn(curEl, cur), false);
             sgList.appendChild(curEl);
-        }
+            
+        }, savegames);
         
         menu.addEventListener(
             "click",
