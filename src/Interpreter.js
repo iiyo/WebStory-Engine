@@ -12,7 +12,10 @@ using(
     "WSE.LoadingScreen",
     "WSE.tools::getSerializedNodes",
     "enjoy-core::each",
-    "enjoy-core::find"
+    "enjoy-core::find",
+    "enjoy-typechecks::isUndefined",
+    "enjoy-typechecks::isNull",
+    "WSE.savegames"
 ).
 define("WSE.Interpreter", function (
     LocalStorageSource,
@@ -25,7 +28,10 @@ define("WSE.Interpreter", function (
     LoadingScreen,
     getSerializedNodes,
     each,
-    find
+    find,
+    isUndefined,
+    isNull,
+    savegames
 ) {
     
     "use strict";
@@ -117,7 +123,7 @@ define("WSE.Interpreter", function (
             
             has: function (name) {
                 
-                if (datasource.get(key + name) === null) {
+                if (isNull(datasource.get(key + name))) {
                     return false;
                 }
                 
@@ -335,7 +341,7 @@ define("WSE.Interpreter", function (
             false
         );
         
-        if (typeof scene === "undefined" || scene === null) {
+        if (isUndefined(scene) || isNull(scene)) {
             logError(bus, "Scene does not exist.");
             return;
         }
@@ -343,7 +349,7 @@ define("WSE.Interpreter", function (
         id = scene.getAttribute("id");
         this.visitedScenes.push(id);
         
-        if (id === null) {
+        if (isNull(id)) {
             logError(bus, "Encountered scene without id attribute.");
             return;
         }
@@ -419,7 +425,7 @@ define("WSE.Interpreter", function (
             return current.getAttribute("id") === sceneName;
         }, this.scenes);
         
-        if (scene === null) {
+        if (isNull(scene)) {
             warn(this.bus, "Scene '" + sceneName + "' not found!");
         }
         
@@ -787,347 +793,10 @@ define("WSE.Interpreter", function (
         }
     };
     
-    Interpreter.prototype.createSaveGame = function () {
-        
-        var saves = {};
-        
-        each(function (asset, key) {
-            
-            try {
-                saves[key] = asset.save();
-            }
-            catch (e) {
-                console.log("WSE Internal Error: Asset '" + key + 
-                    "' does not have a 'save' method!");
-            }
-            
-        }, this.assets);
-        
-        return saves;
-    };
-    
-    Interpreter.prototype.restoreSaveGame = function (saves) {
-        
-        var bus = this.bus;
-        
-        each(function (asset, key) {
-            
-            try {
-                asset.restore(saves[key]);
-            }
-            catch (e) {
-                console.log(e);
-                warn(bus, "Could not restore asset state for asset '" + key + "'!");
-            }
-            
-        }, this.assets);
-        
-    };
-    
-    Interpreter.prototype.save = function (name) {
-        
-        name = name || "no name";
-        
-        var savegame, json, key, savegameList, listKey, lastKey, bus = this.bus;
-        
-        savegame = {};
-        
-        bus.trigger(
-            "wse.interpreter.save.before",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        savegame.saves = this.createSaveGame();
-        savegame.startTime = this.startTime;
-        savegame.saveTime = Math.round(+new Date() / 1000);
-        savegame.screenContents = this.stage.innerHTML;
-        savegame.runVars = this.runVars;
-        savegame.name = name;
-        savegame.log = this.log;
-        savegame.visitedScenes = this.visitedScenes;
-        savegame.gameUrl = this.game.url;
-        savegame.index = this.index;
-        savegame.wait = this.wait;
-        savegame.waitForTimer = this.waitForTimer;
-        savegame.currentElement = this.currentElement;
-        savegame.sceneId = this.sceneId;
-        savegame.scenePath = this.scenePath;
-        savegame.listenersSubscribed = this.game.listenersSubscribed;
-        savegame.callStack = this.callStack;
-        savegame.waitCounter = this.waitCounter;
-        savegame.pathname = location.pathname;
-        
-        key = this.buildSavegameId(name);
-        
-        json = JSON.stringify(savegame);
-        
-        listKey = "wse_" + savegame.pathname + "_" + savegame.gameUrl + "_savegames_list";
-        
-        savegameList = JSON.parse(this.datasource.get(listKey));
-        savegameList = savegameList || [];
-        lastKey = savegameList.indexOf(key);
-        
-        if (lastKey >= 0) {
-            savegameList.splice(lastKey, 1);
-        }
-        
-        savegameList.push(key);
-        
-        try {
-            this.datasource.set(key, json);
-            this.datasource.set(listKey, JSON.stringify(savegameList));
-        }
-        catch (e) {
-            
-            warn(bus, "Savegame could not be created!");
-            
-            bus.trigger(
-                "wse.interpreter.save.after.error",
-                {
-                    interpreter: this,
-                    savegame: savegame
-                }, 
-                false
-            );
-            
-            return false;
-        }
-        
-        bus.trigger(
-            "wse.interpreter.save.after.success",
-            {
-                interpreter: this,
-                savegame: savegame
-            }
-        );
-        
-        return true;
-    };
-    
-    Interpreter.prototype.getSavegameList = function (reversed) {
-        
-        var names;
-        var out = [];
-        var key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
-        var json = this.datasource.get(key);
-        
-        if (json === null) {
-            return out;
-        }
-        
-        names = JSON.parse(json);
-        out = [];
-        
-        each(function (name) {
-            
-            if (reversed === true) {
-                out.unshift(JSON.parse(this.datasource.get(name)));
-            }
-            else {
-                out.push(JSON.parse(this.datasource.get(name)));
-            }
-            
-        }.bind(this), names);
-        
-        this.bus.trigger(
-            "wse.interpreter.getsavegamelist",
-            {
-                interpreter: this,
-                list: out,
-                names: names
-            }, 
-            false
-        );
-        
-        return out;
-    };
-    
-    Interpreter.prototype.buildSavegameId = function (name) {
-        
-        var vars = {};
-        
-        vars.name = name;
-        vars.id = "wse_" + location.pathname + "_" + this.game.url + "_savegame_" + name;
-        
-        this.bus.trigger(
-            "wse.interpreter.save.before",
-            {
-                interpreter: this,
-                vars: vars
-            }, 
-            false
-        );
-        
-        return vars.id;
-    };
-    
-    Interpreter.prototype.load = function (name) {
-        
-        var ds, savegame, scene, sceneId, scenePath, scenes;
-        var savegameId, bus = this.bus;
-        
-        savegameId = this.buildSavegameId(name);
-        ds = this.datasource;
-        savegame = ds.get(savegameId);
-        
-        bus.trigger(
-            "wse.interpreter.load.before",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        if (!savegame) {
-            warn(bus, "Could not load savegame '" + savegameId + "'!");
-            return false;
-        }
-        
-        savegame = JSON.parse(savegame);
-        this.stage.innerHTML = savegame.screenContents;
-        
-        this.restoreSaveGame(savegame.saves);
-        
-        this.startTime = savegame.startTime;
-        this.runVars = savegame.runVars;
-        this.log = savegame.log;
-        this.visitedScenes = savegame.visitedScenes;
-        this.index = savegame.index;
-        this.wait = savegame.wait;
-        this.waitForTimer = savegame.waitForTimer;
-        this.currentElement = savegame.currentElement;
-        this.callStack = savegame.callStack;
-        this.waitCounter = savegame.waitCounter;
-        this.state = "listen";
-        
-        sceneId = savegame.sceneId;
-        this.sceneId = sceneId;
-        
-        scenes = this.story.getElementsByTagName("scene");
-        this.scenes = scenes;
-        
-        scene = find(function (scene) {
-            return scene.getAttribute("id") === sceneId;
-        }, this.scenes);
-        
-        if (!scene) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Loading savegame '" + savegameId + "' failed: Scene not found!"
-                }
-            );
-            
-            return false;
-        }
-        
-        scenePath = savegame.scenePath;
-        this.scenePath = scenePath.slice();
-        
-        this.currentCommands = scene.childNodes;
-        
-        while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
-        }
-        
-        // Re-insert choice menu to get back the DOM events associated with it:
-        // Remove savegame menu on load:
-        (function (interpreter) {
-            
-            var index, wseType, com, rem;
-            
-            each(function (cur) {
-                
-                if (typeof cur === "undefined" || cur === null) {
-                    return;
-                }
-                
-                wseType = cur.getAttribute("data-wse-type") || "";
-                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
-                
-                if (rem === true) {
-                    interpreter.stage.removeChild(cur);
-                }
-                
-                if (wseType !== "choice") {
-                    return;
-                }
-                
-                index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
-                
-                if (index === null) {
-                    warn(interpreter.bus, "No data-wse-index found on element.");
-                    return;
-                }
-                
-                com = interpreter.currentCommands[index];
-                
-                if (com.nodeName === "#text" || com.nodeName === "#comment") {
-                    return;
-                }
-                
-                interpreter.stage.removeChild(cur);
-                WSE.commands.choice(com, interpreter);
-                interpreter.waitCounter -= 1;
-                
-            }, interpreter.stage.getElementsByTagName("*"));
-            
-        }(this));
-        
-        bus.trigger(
-            "wse.interpreter.load.after",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        return true;
-    };
-    
-    Interpreter.prototype.deleteSavegame = function (name) {
-        
-        var sgs, key, index, json, id;
-        
-        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
-        json = this.datasource.get(key);
-        
-        if (json === null) {
-            return false;
-        }
-        
-        sgs = JSON.parse(json);
-        id = this.buildSavegameId(name);
-        index = sgs.indexOf(id);
-        
-        if (index >= 0) {
-            
-            sgs.splice(index, 1);
-            
-            this.datasource.set(
-                "wse_" + location.pathname + "_" + this.game.url + "_savegames_list",
-                JSON.stringify(sgs)
-            );
-            
-            this.datasource.remove(id);
-            
-            return true;
-        }
-        
-        return false;
-    };
-    
     Interpreter.prototype.toggleSavegameMenu = function () {
         
         var menu, deleteButton, loadButton, saveButton, self;
-        var savegames, buttonPanel, resumeButton, id, sgList;
+        var saves, buttonPanel, resumeButton, id, sgList;
         var curEl, listenerStatus, curElapsed, oldState;
         
         self = this;
@@ -1180,17 +849,18 @@ define("WSE.Interpreter", function (
         menu.style.zIndex = 100000;
         menu.style.position = "absolute";
         
-        savegames = this.getSavegameList(true);
+        saves = savegames.getSavegameList(this, true);
         
         deleteButton = document.createElement("input");
         deleteButton.setAttribute("class", "button delete");
         deleteButton.setAttribute("type", "button");
         deleteButton.value = "Delete";
+        
         deleteButton.addEventListener(
             "click",
             function (ev) {
                 
-                var active, savegameName, fn;
+                var active, savegameName;
                 
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -1203,16 +873,16 @@ define("WSE.Interpreter", function (
                 
                 savegameName = active.getAttribute("data-wse-savegame-name");
                 
-                fn = function (decision) {
+                function fn (decision) {
                     
                     if (decision === false) {
                         return;
                     }
                     
-                    self.deleteSavegame(savegameName);
+                    savegames.remove(self, savegameName);
                     self.toggleSavegameMenu();
                     self.toggleSavegameMenu();
-                };
+                }
                 
                 ui.confirm(
                     self,
@@ -1270,7 +940,7 @@ define("WSE.Interpreter", function (
                                 
                                 self.toggleSavegameMenu();
                                 self.game.listenersSubscribed = listenerStatus;
-                                self.save(data);
+                                savegames.save(self, data);
                                 self.toggleSavegameMenu();
                                 self.game.listenersSubscribed = false;
                                 
@@ -1304,7 +974,7 @@ define("WSE.Interpreter", function (
                             }
                             
                             self.toggleSavegameMenu();
-                            self.save(savegameName);
+                            savegames.save(self, savegameName);
                             self.toggleSavegameMenu();
                             
                             ui.alert(
@@ -1326,6 +996,7 @@ define("WSE.Interpreter", function (
         loadButton.setAttribute("type", "button");
         loadButton.setAttribute("tabindex", 1);
         loadButton.value = "Load";
+        
         loadButton.addEventListener(
             "click",
             function (ev) {
@@ -1353,7 +1024,7 @@ define("WSE.Interpreter", function (
                     self.savegameMenuVisible = false;
                     self.waitCounter -= 1;
                     self.state = oldState;
-                    self.load(savegameName);
+                    savegames.load(self, savegameName);
                 };
                 
                 ui.confirm(
@@ -1459,7 +1130,7 @@ define("WSE.Interpreter", function (
             curEl.addEventListener("click", makeClickFn(curEl, cur), false);
             sgList.appendChild(curEl);
             
-        }, savegames);
+        }, saves);
         
         menu.addEventListener(
             "click",

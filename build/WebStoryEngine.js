@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Sat, 20 Aug 2016 20:51:27 GMT
+    Build time: Fri, 02 Sep 2016 20:22:53 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -464,6 +464,10 @@ using().define("eases", function () { return require("eases"); });
 
 using().define("easy-ajax", function () { return require("easy-ajax"); });
 
+using().define("enjoy-core", function () { return require("enjoy-core"); });
+
+using().define("enjoy-typechecks", function () { return require("enjoy-typechecks"); });
+
 using().define("howler", function () { return require("howler"); });
 
 using().define("string-dict", function () { return require("string-dict"); });
@@ -472,7 +476,7 @@ using().define("transform-js", function () { return require("transform-js"); });
 
 using().define("xmugly", function () { return require("xmugly"); });
 
-},{"class-manipulator":2,"databus":3,"eases":23,"easy-ajax":38,"howler":39,"string-dict":40,"transform-js":41,"xmugly":74}],2:[function(require,module,exports){
+},{"class-manipulator":2,"databus":3,"eases":23,"easy-ajax":38,"enjoy-core":58,"enjoy-typechecks":85,"howler":86,"string-dict":87,"transform-js":88,"xmugly":121}],2:[function(require,module,exports){
 //
 // # class-manipulator
 //
@@ -1659,6 +1663,944 @@ module.exports = sineOut
 module.exports = require("./easy-ajax.js");
 
 },{"./easy-ajax.js":37}],39:[function(require,module,exports){
+
+function add () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a + b; });
+}
+
+module.exports = add;
+
+},{}],40:[function(require,module,exports){
+
+function apply (fn, args) {
+    
+    if (typeof fn !== "function") {
+        throw new TypeError("Argument 'fn' must be a function.");
+    }
+    
+    return fn.apply(undefined, args);
+}
+
+module.exports = apply;
+
+},{}],41:[function(require,module,exports){
+
+function at (collection, key) {
+    return collection[key];
+}
+
+module.exports = at;
+
+},{}],42:[function(require,module,exports){
+
+var bind = require("./bind");
+var apply = require("./apply");
+
+//
+// **auto(fn)**
+//
+// Wraps `fn` so that if it is called with only a function as its first argument,
+// a partial application is returned. This means that you can do this:
+//
+//     each(fn)(collection);
+//
+// Instead of this:
+//
+//     each(fn, collection);
+//
+
+function auto (fn) {
+    return function () {
+        return (
+            (arguments.length === 1 && typeof arguments[0] === "function") ?
+            bind(fn, arguments[0]) :
+            apply(fn, arguments)
+        );
+    };
+}
+
+module.exports = auto;
+
+},{"./apply":40,"./bind":43}],43:[function(require,module,exports){
+
+function bind (fn) {
+    
+    var args = [].slice.call(arguments);
+    
+    args.shift();
+    
+    return function () {
+        
+        var allArgs = args.slice(), i;
+        
+        for (i = 0; i < arguments.length; i += 1) {
+            allArgs.push(arguments[i]);
+        }
+        
+        return fn.apply(undefined, allArgs);
+    };
+}
+
+module.exports = bind;
+
+},{}],44:[function(require,module,exports){
+
+function call (fn) {
+    
+    var args = [].slice.call(arguments);
+    
+    args.shift();
+    
+    return fn.apply(undefined, args);
+}
+
+module.exports = call;
+
+},{}],45:[function(require,module,exports){
+
+var apply = require("./apply");
+var pipe = require("./pipe");
+var toArray = require("./toArray");
+
+function compose () {
+    
+    var functions = toArray(arguments);
+    
+    return function (value) {
+        
+        var args = functions.slice();
+        
+        args.unshift(value);
+        
+        return apply(pipe, args);
+    };
+}
+
+module.exports = compose;
+
+},{"./apply":40,"./pipe":69,"./toArray":83}],46:[function(require,module,exports){
+
+var some = require("./some");
+
+function contains (collection, item) {
+    return some(collection, function (currentItem) {
+        return item === currentItem;
+    }) || false;
+}
+
+module.exports = contains;
+
+},{"./some":79}],47:[function(require,module,exports){
+
+function divide () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a / b; });
+}
+
+module.exports = divide;
+
+},{}],48:[function(require,module,exports){
+
+var types = require("enjoy-typechecks");
+var auto = require("./auto");
+
+function eachInArray (fn, collection) {
+    [].forEach.call(collection, fn);
+}
+
+function eachInObject (fn, collection) {
+    Object.keys(collection).forEach(function (key) {
+        fn(collection[key], key, collection);
+    });
+}
+
+function each (fn, collection) {
+    return types.isArrayLike(collection) ?
+        eachInArray(fn, collection) :
+        eachInObject(fn, collection);
+}
+
+module.exports = auto(each);
+
+},{"./auto":42,"enjoy-typechecks":65}],49:[function(require,module,exports){
+
+var some = require("./some");
+var auto = require("./auto");
+
+function every (fn, collection) {
+    
+    var result = true;
+    
+    some(someToEvery, collection);
+    
+    function someToEvery (item, key) {
+        
+        if (!fn(item, key, collection)) {
+            result = false;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    return result;
+}
+
+module.exports = auto(every);
+
+},{"./auto":42,"./some":79}],50:[function(require,module,exports){
+
+var each = require("./each");
+
+//
+// Turns an array of objects into an object where the keys are the
+// values of a property of the objects contained within the original array.
+//
+// Example:
+//
+//     [{name: "foo"},{name: "bar"}] => {foo: {name: "foo"}, bar: {name: "bar"}}
+//
+
+function expose (collection, key) {
+    
+    var result = {};
+    
+    each(function (item) {
+        result[item[key]] = item;
+    }, collection);
+    
+    return result;
+}
+
+module.exports = expose;
+
+},{"./each":48}],51:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+
+function filter (fn, collection) {
+    
+    var items = [];
+    
+    each(applyFilter, collection);
+    
+    function applyFilter (item, key) {
+        if (fn(item, key, collection)) {
+            items.push(item);
+        }
+    }
+    
+    return items;
+}
+
+module.exports = auto(filter);
+
+},{"./auto":42,"./each":48}],52:[function(require,module,exports){
+
+var some = require("./some");
+var auto = require("./auto");
+
+function find (fn, collection) {
+    
+    var value;
+    
+    some(function (item, key) {
+        
+        if (fn(item, key, collection)) {
+            value = item;
+            return true;
+        }
+        
+        return false;
+        
+    }, collection);
+    
+    return value;
+}
+
+module.exports = auto(find);
+
+},{"./auto":42,"./some":79}],53:[function(require,module,exports){
+
+var apply = require("./apply");
+var toArray = require("./toArray");
+
+//
+// Reverses a function's order of arguments.
+//
+
+function flip (fn) {
+    return function () {
+        return apply(fn, toArray(arguments).reverse())
+    };
+}
+
+module.exports = flip;
+
+},{"./apply":40,"./toArray":83}],54:[function(require,module,exports){
+
+function free (method) {
+    return Function.prototype.call.bind(method);
+}
+
+module.exports = free;
+
+},{}],55:[function(require,module,exports){
+
+var at = require("./at");
+var bind = require("./bind");
+
+//
+// ### Function getter(collection)
+//
+//     collection -> (string | number -> any)
+//
+// Binds `at` to a `collection`.
+//
+
+function getter (collection) {
+    return bind(at, collection);
+}
+
+module.exports = getter;
+
+},{"./at":41,"./bind":43}],56:[function(require,module,exports){
+
+var some = require("./some");
+
+function has (collection, key) {
+    return some(function (item, currentKey) {
+        return key === currentKey;
+    }, collection) || false;
+}
+
+module.exports = has;
+
+},{"./some":79}],57:[function(require,module,exports){
+
+function id (thing) {
+    return thing;
+}
+
+module.exports = id;
+
+},{}],58:[function(require,module,exports){
+/* eslint "global-require": "off" */
+
+module.exports = {
+    "add": require("./add"),
+    "apply": require("./apply"),
+    "at": require("./at"),
+    "auto": require("./auto"),
+    "bind": require("./bind"),
+    "call": require("./call"),
+    "contains": require("./contains"),
+    "divide": require("./divide"),
+    "each": require("./each"),
+    "every": require("./every"),
+    "expose": require("./expose"),
+    "filter": require("./filter"),
+    "find": require("./find"),
+    "flip": require("./flip"),
+    "free": require("./free"),
+    "getter": require("./getter"),
+    "has": require("./has"),
+    "id": require("./id"),
+    "join": require("./join"),
+    "keys": require("./keys"),
+    "loop": require("./loop"),
+    "map": require("./map"),
+    "mod": require("./mod"),
+    "multiply": require("./multiply"),
+    "not": require("./not"),
+    "partial": require("./partial"),
+    "picker": require("./picker"),
+    "pipe": require("./pipe"),
+    "compose": require("./compose"),
+    "pluck": require("./pluck"),
+    "privatize": require("./privatize"),
+    "put": require("./put"),
+    "putter": require("./putter"),
+    "reduce": require("./reduce"),
+    "repeat": require("./repeat"),
+    "reverse": require("./reverse"),
+    "setter": require("./setter"),
+    "slice": require("./slice"),
+    "some": require("./some"),
+    "sort": require("./sort"),
+    "split": require("./split"),
+    "subtract": require("./subtract"),
+    "toArray": require("./toArray"),
+    "values": require("./values")
+};
+
+},{"./add":39,"./apply":40,"./at":41,"./auto":42,"./bind":43,"./call":44,"./compose":45,"./contains":46,"./divide":47,"./each":48,"./every":49,"./expose":50,"./filter":51,"./find":52,"./flip":53,"./free":54,"./getter":55,"./has":56,"./id":57,"./join":59,"./keys":60,"./loop":61,"./map":62,"./mod":63,"./multiply":64,"./not":66,"./partial":67,"./picker":68,"./pipe":69,"./pluck":70,"./privatize":71,"./put":72,"./putter":73,"./reduce":74,"./repeat":75,"./reverse":76,"./setter":77,"./slice":78,"./some":79,"./sort":80,"./split":81,"./subtract":82,"./toArray":83,"./values":84}],59:[function(require,module,exports){
+
+var free = require("./free");
+var reduce = require("./reduce");
+var isArrayLike = require("enjoy-typechecks").isArrayLike;
+
+var joinArrayLike = free(Array.prototype.join);
+
+function join (collection, glue) {
+    
+    if (arguments.length < 2) {
+        glue = "";
+    }
+    
+    if (isArrayLike(collection)) {
+        return joinArrayLike(collection, glue);
+    }
+    
+    return reduce(function (previous, current) {
+        return previous + "" + glue + current
+    }, collection, "");
+}
+
+module.exports = join;
+
+},{"./free":54,"./reduce":74,"enjoy-typechecks":65}],60:[function(require,module,exports){
+
+var map = require("./map");
+
+function keys (collection) {
+    return map(function (value, key) {
+        return key;
+    }, collection);
+}
+
+module.exports = keys;
+
+},{"./map":62}],61:[function(require,module,exports){
+
+function loop (fn) {
+    while (fn()) {
+        /* do nothing */
+    }
+}
+
+module.exports = loop;
+
+},{}],62:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+
+function map (fn, collection) {
+    
+    var items = [];
+    
+    each(function (item, key) {
+        items.push(fn(item, key, collection));
+    }, collection);
+    
+    return items;
+}
+
+module.exports = auto(map);
+
+},{"./auto":42,"./each":48}],63:[function(require,module,exports){
+
+function mod () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a % b; });
+}
+
+module.exports = mod;
+
+},{}],64:[function(require,module,exports){
+
+function multiply () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a * b; });
+}
+
+module.exports = multiply;
+
+},{}],65:[function(require,module,exports){
+/* eslint no-self-compare: off */
+
+function isNull (a) {
+    return a === null;
+}
+
+function isUndefined (a) {
+    return typeof a === "undefined";
+}
+
+function isBoolean (a) {
+    return typeof a === "boolean";
+}
+
+function isNumber (a) {
+    return typeof a === "number";
+}
+
+function isFiniteNumber (a) {
+    return isNumber(a) && isFinite(a);
+}
+
+function isInfiniteNumber (a) {
+    return isNumber(a) && !isFinite(a);
+}
+
+function isInfinity (a) {
+    return isPositiveInfinity(a) || isNegativeInfinity(a);
+}
+
+function isPositiveInfinity (a) {
+    return a === Number.POSITIVE_INFINITY;
+}
+
+function isNegativeInfinity (a) {
+    return a === Number.NEGATIVE_INFINITY;
+}
+
+function isNaN (a) {
+    return a !== a;
+}
+
+//
+// Checks if a number is an integer. Please note that there's currently no way
+// to identify "x.000" and similar as either integer or float in JavaScript because
+// those are automatically truncated to "x".
+//
+function isInteger (n) {
+    return isFiniteNumber(n) && n % 1 === 0;
+}
+
+function isFloat (n) {
+    return isFiniteNumber(n) && n % 1 !== 0;
+}
+
+function isString (a) {
+    return typeof a === "string";
+}
+
+function isChar (a) {
+    return isString(a) && a.length === 1;
+}
+
+function isCollection (a) {
+    return isObject(a) || isArray(a);
+}
+
+function isObject (a) {
+    return typeof a === "object" && a !== null;
+}
+
+function isArray (a) {
+    return Array.isArray(a);
+}
+
+function isArrayLike (a) {
+    return (isArray(a) || isString(a) || (
+        isObject(a) && ("length" in a) && isFiniteNumber(a.length) && (
+            (a.length > 0 && (a.length - 1) in a) ||
+            (a.length === 0)
+        )
+    ));
+}
+
+function isFunction (a) {
+    return typeof a === "function";
+}
+
+function isPrimitive (a) {
+    return isNull(a) || isUndefined(a) || isNumber(a) || isString(a) || isBoolean(a);
+}
+
+function isDate (a) {
+    return isObject(a) && Object.prototype.toString.call(a) === "[object Date]";
+}
+
+function isRegExp (a) {
+    return isObject(a) && Object.prototype.toString.call(a) === "[object RegExp]";
+}
+
+function isError (a) {
+    return isObject(a) && Object.prototype.toString.call(a) === "[object Error]";
+}
+
+function isArgumentsObject (a) {
+    return isObject(a) && Object.prototype.toString.call(a) === "[object Arguments]";
+}
+
+function isMathObject (a) {
+    return a === Math;
+}
+
+function isType (a) {
+    return isDerivable(a) && a.$__type__ === "type" && isFunction(a.$__checker__);
+}
+
+function isDerivable (a) {
+    return isObject(a) && "$__children__" in a && Array.isArray(a.$__children__);
+}
+
+function isMethod (a) {
+    return isFunction(a) && a.$__type__ === "method" && isFunction(a.$__default__) &&
+        isArray(a.$__implementations__) && isArray(a.$__dispatchers__);
+}
+
+module.exports = {
+    isArgumentsObject: isArgumentsObject,
+    isArray: isArray,
+    isArrayLike: isArrayLike,
+    isBoolean: isBoolean,
+    isChar: isChar,
+    isCollection: isCollection,
+    isDate: isDate,
+    isDerivable: isDerivable,
+    isError: isError,
+    isFiniteNumber: isFiniteNumber,
+    isFloat: isFloat,
+    isFunction: isFunction,
+    isInfiniteNumber: isInfiniteNumber,
+    isInfinity: isInfinity,
+    isInteger: isInteger,
+    isMathObject: isMathObject,
+    isMethod: isMethod,
+    isNaN: isNaN,
+    isNegativeInfinity: isNegativeInfinity,
+    isNull: isNull,
+    isNumber: isNumber,
+    isPositiveInfinity: isPositiveInfinity,
+    isPrimitive: isPrimitive,
+    isRegExp: isRegExp,
+    isString: isString,
+    isType: isType,
+    isUndefined: isUndefined
+};
+
+},{}],66:[function(require,module,exports){
+
+function not (thing) {
+    return !thing;
+}
+
+module.exports = not;
+
+},{}],67:[function(require,module,exports){
+
+var apply = require("./apply");
+
+function partial (fn) {
+    
+    var args = Array.prototype.slice.call(arguments, 1);
+    
+    return function () {
+        
+        var callArgs = Array.prototype.slice.call(arguments);
+        
+        var allArgs = args.map(function (arg) {
+            
+            if (typeof arg === "undefined") {
+                return callArgs.shift();
+            }
+            
+            return arg;
+        });
+        
+        if (callArgs.length) {
+            callArgs.forEach(function (arg) {
+                allArgs.push(arg);
+            });
+        }
+        
+        return apply(fn, allArgs);
+    };
+}
+
+module.exports = partial;
+
+},{"./apply":40}],68:[function(require,module,exports){
+
+var at = require("./at");
+var partial = require("./partial");
+
+//
+// ### Function picker(key)
+//
+//     string | number -> (collection -> any)
+//
+// Binds `at` to a `key`.
+//
+
+function picker (key) {
+    return partial(at, undefined, key);
+}
+
+module.exports = picker;
+
+},{"./at":41,"./partial":67}],69:[function(require,module,exports){
+
+var each = require("./each");
+
+function pipe (value) {
+    
+    each(function (fn, index) {
+        if (index > 0) {
+            value = fn(value);
+        }
+    }, arguments);
+    
+    return value;
+}
+
+module.exports = pipe;
+
+},{"./each":48}],70:[function(require,module,exports){
+
+var map = require("./map");
+
+function pluck (collection, key) {
+    
+    var result = [];
+    
+    map(function (item) {
+        if (key in item || (Array.isArray(item) && key < item.length)) {
+            result.push(item[key]);
+        }
+    }, collection);
+    
+    return result;
+}
+
+module.exports = pluck;
+
+},{"./map":62}],71:[function(require,module,exports){
+
+var each = require("./each");
+
+//
+// Turns an object into an array by putting its keys into the objects
+// contained within the array.
+//
+// Example:
+//
+//     {foo: {}, bar: {}} => [{name: "foo"},{name: "bar"}]
+//
+
+function privatize (collection, key) {
+    
+    var result = [];
+    
+    each(function (item, currentKey) {
+        
+        item[key] = currentKey;
+        
+        result.push(item);
+        
+    }, collection);
+    
+    return result;
+}
+
+module.exports = privatize;
+
+},{"./each":48}],72:[function(require,module,exports){
+
+//
+// ### Function put(collection, key, value)
+//
+//     collection -> string -> any -> undefined
+//
+// Puts a `value` into a collection at `key`.
+//
+
+function put (collection, key, value) {
+    collection[key] = value;
+}
+
+module.exports = put;
+
+},{}],73:[function(require,module,exports){
+
+var put = require("./put");
+var partial = require("./partial");
+
+//
+// ### Function putter(key)
+//
+//     string -> (collection -> value -> undefined)
+//
+// Binds `put` to a key.
+//
+
+function putter (key) {
+    return partial(put, undefined, key, undefined);
+}
+
+module.exports = putter;
+
+},{"./partial":67,"./put":72}],74:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+var isArrayLike = require("enjoy-typechecks").isArrayLike;
+
+//
+// ### Function reduce(fn, collection[, value])
+//
+//     (any -> any -> string|number -> collection) -> collection -> any -> any
+//
+// Reduces a collection to a single value by applying every item in the collection
+// along with the item's key, the previously reduced value (or the start value)
+// and the collection itself to a reducer function `fn`.
+//
+
+function reduce (fn, collection, value) {
+    
+    var hasValue = arguments.length > 2;
+    
+    // If the collection is array-like, the native .reduce() method is used for performance:
+    if (isArrayLike(collection)) {
+        
+        if (hasValue) {
+            return Array.prototype.reduce.call(collection, fn, value);
+        }
+        
+        return Array.prototype.reduce.call(collection, fn);
+    }
+    
+    each(function (item, key) {
+        
+        if (!hasValue) {
+            hasValue = true;
+            value = item;
+            return;
+        }
+        
+        value = fn(value, item, key, collection);
+        
+    }, collection);
+    
+    return value;
+}
+
+module.exports = auto(reduce);
+
+},{"./auto":42,"./each":48,"enjoy-typechecks":65}],75:[function(require,module,exports){
+
+var auto = require("./auto");
+
+function repeat (fn, times) {
+    for (var i = 0; i < times; i += 1) {
+        fn();
+    }
+}
+
+module.exports = auto(repeat);
+
+},{"./auto":42}],76:[function(require,module,exports){
+
+var free = require("./free");
+var slice = require("./slice");
+var compose = require("./compose");
+
+module.exports = compose(slice, free(Array.prototype.reverse));
+
+},{"./compose":45,"./free":54,"./slice":78}],77:[function(require,module,exports){
+
+var put = require("./put");
+var bind = require("./bind");
+
+//
+// ### Function setter(collection)
+//
+//     collection -> (string -> value -> undefined)
+//
+// Binds `put` to a collection.
+//
+
+function setter (collection) {
+    return bind(put, collection);
+}
+
+module.exports = setter;
+
+},{"./bind":43,"./put":72}],78:[function(require,module,exports){
+
+var free = require("./free");
+
+module.exports = free(Array.prototype.slice);
+
+},{"./free":54}],79:[function(require,module,exports){
+
+var auto = require("./auto");
+var free = require("./free");
+var types = require("enjoy-typechecks");
+
+var someArray = free(Array.prototype.some);
+
+function some (fn, collection) {
+    if (types.isArrayLike(collection)) {
+        return someArray(collection, fn);
+    }
+    else {
+        return someObject(fn, collection);
+    }
+}
+
+function someObject (fn, collection) {
+    return Object.keys(collection).some(function (key) {
+        return fn(collection[key], key, collection);
+    });
+}
+
+module.exports = auto(some);
+
+},{"./auto":42,"./free":54,"enjoy-typechecks":65}],80:[function(require,module,exports){
+
+var free = require("./free");
+var slice = require("./slice");
+var compose = require("./compose");
+
+module.exports = compose(slice, free(Array.prototype.sort));
+
+},{"./compose":45,"./free":54,"./slice":78}],81:[function(require,module,exports){
+
+var free = require("./free");
+
+module.exports = free(String.prototype.split);
+
+},{"./free":54}],82:[function(require,module,exports){
+
+function subtract () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a - b; });
+}
+
+module.exports = subtract;
+
+},{}],83:[function(require,module,exports){
+
+function toArray (thing) {
+    return Array.prototype.slice.call(thing);
+}
+
+module.exports = toArray;
+
+},{}],84:[function(require,module,exports){
+
+var map = require("./map");
+var id = require("./id");
+
+//
+// ### Function values(collection)
+//
+//     collection -> [any]
+//
+// Extracts all values from a collection such as `array` or `object`.
+//
+
+function values (collection) {
+    return map(id, collection);
+}
+
+module.exports = values;
+
+},{"./id":57,"./map":62}],85:[function(require,module,exports){
+arguments[4][65][0].apply(exports,arguments)
+},{"dup":65}],86:[function(require,module,exports){
 /*!
  *  howler.js v1.1.29
  *  howlerjs.com
@@ -3012,7 +3954,7 @@ module.exports = require("./easy-ajax.js");
 
 })();
 
-},{}],40:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 //
 // A simple dictionary prototype for JavaScript, avoiding common object pitfalls
 // and offering some handy convenience methods.
@@ -3277,7 +4219,7 @@ Dict.prototype.join = function (otherMap) {
 
 module.exports = Dict;
 
-},{}],41:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 /* global requestAnimationFrame */
 
 var eases = require("eases");
@@ -3472,76 +4414,76 @@ module.exports = {
     transform: transform
 };
 
-},{"eases":60}],42:[function(require,module,exports){
+},{"eases":107}],89:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"dup":5}],43:[function(require,module,exports){
+},{"dup":5}],90:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],44:[function(require,module,exports){
+},{"dup":6}],91:[function(require,module,exports){
 arguments[4][7][0].apply(exports,arguments)
-},{"dup":7}],45:[function(require,module,exports){
+},{"dup":7}],92:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"./bounce-out":47,"dup":8}],46:[function(require,module,exports){
+},{"./bounce-out":94,"dup":8}],93:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"./bounce-out":47,"dup":9}],47:[function(require,module,exports){
+},{"./bounce-out":94,"dup":9}],94:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],48:[function(require,module,exports){
+},{"dup":10}],95:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11}],49:[function(require,module,exports){
+},{"dup":11}],96:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"dup":12}],50:[function(require,module,exports){
+},{"dup":12}],97:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"dup":13}],51:[function(require,module,exports){
+},{"dup":13}],98:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14}],52:[function(require,module,exports){
+},{"dup":14}],99:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"dup":15}],53:[function(require,module,exports){
+},{"dup":15}],100:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"dup":16}],54:[function(require,module,exports){
+},{"dup":16}],101:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],55:[function(require,module,exports){
+},{"dup":17}],102:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],56:[function(require,module,exports){
+},{"dup":18}],103:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}],57:[function(require,module,exports){
+},{"dup":19}],104:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],58:[function(require,module,exports){
+},{"dup":20}],105:[function(require,module,exports){
 arguments[4][21][0].apply(exports,arguments)
-},{"dup":21}],59:[function(require,module,exports){
+},{"dup":21}],106:[function(require,module,exports){
 arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],60:[function(require,module,exports){
+},{"dup":22}],107:[function(require,module,exports){
 arguments[4][23][0].apply(exports,arguments)
-},{"./back-in":43,"./back-in-out":42,"./back-out":44,"./bounce-in":46,"./bounce-in-out":45,"./bounce-out":47,"./circ-in":49,"./circ-in-out":48,"./circ-out":50,"./cubic-in":52,"./cubic-in-out":51,"./cubic-out":53,"./elastic-in":55,"./elastic-in-out":54,"./elastic-out":56,"./expo-in":58,"./expo-in-out":57,"./expo-out":59,"./linear":61,"./quad-in":63,"./quad-in-out":62,"./quad-out":64,"./quart-in":66,"./quart-in-out":65,"./quart-out":67,"./quint-in":69,"./quint-in-out":68,"./quint-out":70,"./sine-in":72,"./sine-in-out":71,"./sine-out":73,"dup":23}],61:[function(require,module,exports){
+},{"./back-in":90,"./back-in-out":89,"./back-out":91,"./bounce-in":93,"./bounce-in-out":92,"./bounce-out":94,"./circ-in":96,"./circ-in-out":95,"./circ-out":97,"./cubic-in":99,"./cubic-in-out":98,"./cubic-out":100,"./elastic-in":102,"./elastic-in-out":101,"./elastic-out":103,"./expo-in":105,"./expo-in-out":104,"./expo-out":106,"./linear":108,"./quad-in":110,"./quad-in-out":109,"./quad-out":111,"./quart-in":113,"./quart-in-out":112,"./quart-out":114,"./quint-in":116,"./quint-in-out":115,"./quint-out":117,"./sine-in":119,"./sine-in-out":118,"./sine-out":120,"dup":23}],108:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"dup":24}],62:[function(require,module,exports){
+},{"dup":24}],109:[function(require,module,exports){
 arguments[4][25][0].apply(exports,arguments)
-},{"dup":25}],63:[function(require,module,exports){
+},{"dup":25}],110:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"dup":26}],64:[function(require,module,exports){
+},{"dup":26}],111:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"dup":27}],65:[function(require,module,exports){
+},{"dup":27}],112:[function(require,module,exports){
 arguments[4][28][0].apply(exports,arguments)
-},{"dup":28}],66:[function(require,module,exports){
+},{"dup":28}],113:[function(require,module,exports){
 arguments[4][29][0].apply(exports,arguments)
-},{"dup":29}],67:[function(require,module,exports){
+},{"dup":29}],114:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],68:[function(require,module,exports){
+},{"dup":30}],115:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],69:[function(require,module,exports){
+},{"dup":31}],116:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
-},{"dup":32}],70:[function(require,module,exports){
+},{"dup":32}],117:[function(require,module,exports){
 arguments[4][33][0].apply(exports,arguments)
-},{"dup":33}],71:[function(require,module,exports){
+},{"dup":33}],118:[function(require,module,exports){
 arguments[4][34][0].apply(exports,arguments)
-},{"dup":34}],72:[function(require,module,exports){
+},{"dup":34}],119:[function(require,module,exports){
 arguments[4][35][0].apply(exports,arguments)
-},{"dup":35}],73:[function(require,module,exports){
+},{"dup":35}],120:[function(require,module,exports){
 arguments[4][36][0].apply(exports,arguments)
-},{"dup":36}],74:[function(require,module,exports){
+},{"dup":36}],121:[function(require,module,exports){
 /* global module, require */
 
 module.exports = require("./src/xmugly.js");
 
-},{"./src/xmugly.js":75}],75:[function(require,module,exports){
+},{"./src/xmugly.js":122}],122:[function(require,module,exports){
 /* global module */
 
 (function () {
@@ -4014,6 +4956,7 @@ using.modules['WSE.LoadingScreen'] = WSEPath;
 using.modules['WSE.tools.ui'] = WSEPath;
 using.modules['WSE.tools.reveal'] = WSEPath;
 using.modules['WSE.tools.compile'] = WSEPath;
+using.modules['WSE.savegames'] = WSEPath;
 using.modules['WSE.DisplayObject'] = WSEPath;
 using.modules['WSE.assets.Animation'] = WSEPath;
 using.modules['WSE.assets.Audio'] = WSEPath;
@@ -10734,7 +11677,12 @@ using(
     "WSE.tools::logError",
     "WSE.tools::warn",
     "WSE.LoadingScreen",
-    "WSE.tools::getSerializedNodes"
+    "WSE.tools::getSerializedNodes",
+    "enjoy-core::each",
+    "enjoy-core::find",
+    "enjoy-typechecks::isUndefined",
+    "enjoy-typechecks::isNull",
+    "WSE.savegames"
 ).
 define("WSE.Interpreter", function (
     LocalStorageSource,
@@ -10745,7 +11693,12 @@ define("WSE.Interpreter", function (
     logError,
     warn,
     LoadingScreen,
-    getSerializedNodes
+    getSerializedNodes,
+    each,
+    find,
+    isUndefined,
+    isNull,
+    savegames
 ) {
     
     "use strict";
@@ -10837,7 +11790,7 @@ define("WSE.Interpreter", function (
             
             has: function (name) {
                 
-                if (datasource.get(key + name) === null) {
+                if (isNull(datasource.get(key + name))) {
                     return false;
                 }
                 
@@ -10995,32 +11948,17 @@ define("WSE.Interpreter", function (
     };
     
     Interpreter.prototype.callOnLoad = function () {
-        for (var key in this.assets) {
-            if (typeof this.assets[key].onLoad === "function") {
-                this.assets[key].onLoad();
+        each(function (asset) {
+            if (typeof asset.onLoad === "function") {
+                asset.onLoad();
             }
-        }
+        }, this.assets);
     };
     
     Interpreter.prototype.runStory = function () {
         
-        var self;
-        
-        self = this;
-        
         if (this.assetsLoading > 0) {
-            
-            (function () {
-                
-                var timeoutFn;
-                
-                timeoutFn = function () {
-                    self.runStory();
-                };
-                
-                setTimeout(timeoutFn, 100);
-            }());
-            
+            setTimeout(this.runStory.bind(this), 100);
             return;
         }
         
@@ -11070,7 +12008,7 @@ define("WSE.Interpreter", function (
             false
         );
         
-        if (typeof scene === "undefined" || scene === null) {
+        if (isUndefined(scene) || isNull(scene)) {
             logError(bus, "Scene does not exist.");
             return;
         }
@@ -11078,7 +12016,7 @@ define("WSE.Interpreter", function (
         id = scene.getAttribute("id");
         this.visitedScenes.push(id);
         
-        if (id === null) {
+        if (isNull(id)) {
             logError(bus, "Encountered scene without id attribute.");
             return;
         }
@@ -11150,21 +12088,11 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.getSceneById = function (sceneName) {
         
-        var i, len, current, scene;
+        var scene = find(function (current) {
+            return current.getAttribute("id") === sceneName;
+        }, this.scenes);
         
-        scene = null;
-        
-        for (i = 0, len = this.scenes.length; i < len; i += 1) {
-            
-            current = this.scenes[i];
-            
-            if (current.getAttribute("id") === sceneName) {
-                scene = current;
-                break;
-            }
-        }
-        
-        if (scene === null) {
+        if (isNull(scene)) {
             warn(this.bus, "Scene '" + sceneName + "' not found!");
         }
         
@@ -11423,7 +12351,8 @@ define("WSE.Interpreter", function (
     
     Interpreter.prototype.createTriggers = function () {
         
-        var triggers, i, len, cur, curName, curTrigger, bus = this.bus;
+        var triggers, curName, curTrigger, bus = this.bus;
+        var interpreter = this;
         
         bus.trigger("wse.interpreter.triggers.create", this, false);
         
@@ -11438,33 +12367,35 @@ define("WSE.Interpreter", function (
             return;
         }
         
-        for (i = 0, len = triggers.length; i < len; i += 1) {
+        each(function (cur) {
             
-            cur = triggers[i];
             curName = cur.getAttribute("name") || null;
             
             if (curName === null) {
                 warn(bus, "No name specified for trigger.", cur);
-                continue;
+                return;
             }
             
-            if (typeof this.triggers[curName] !== "undefined" && this.triggers[curName] !== null) {
+            if (typeof interpreter.triggers[curName] !== "undefined" &&
+                    interpreter.triggers[curName] !== null) {
                 warn(bus, "A trigger with the name '" + curName +
                     "' already exists.", cur);
-                continue;
+                return;
             }
             
-            curTrigger = new Trigger(cur, this);
+            curTrigger = new Trigger(cur, interpreter);
             
             if (typeof curTrigger.fn === "function") {
-                this.triggers[curName] = curTrigger;
+                interpreter.triggers[curName] = curTrigger;
             }
-        }
+            
+        }, triggers);
+        
     };
     
     Interpreter.prototype.buildAssets = function () {
         
-        var assets, len, i, cur, bus = this.bus;
+        var assets, bus = this.bus;
         
         bus.trigger("wse.assets.loading.started");
         
@@ -11475,18 +12406,16 @@ define("WSE.Interpreter", function (
             logError(bus, "Error while creating assets: " + e.getMessage());
         }
         
-        len = assets.length;
-        
-        for (i = 0; i < len; i += 1) {
+        each(function (asset) {
             
-            cur = assets[i];
-            
-            if (cur.nodeType !== 1) {
-                continue;
+            if (asset.nodeType !== 1) {
+                return;
             }
             
-            this.createAsset(cur);
-        }
+            this.createAsset(asset);
+            
+        }.bind(this), assets);
+        
     };
     
     Interpreter.prototype.createAsset = function (asset) {
@@ -11531,361 +12460,11 @@ define("WSE.Interpreter", function (
         }
     };
     
-    Interpreter.prototype.createSaveGame = function () {
-        
-        var assets, key, saves;
-        
-        saves = {};
-        assets = this.assets;
-        
-        for (key in assets) {
-            
-            if (assets.hasOwnProperty(key)) {
-                
-                try {
-                    saves[key] = assets[key].save();
-                }
-                catch (e) {
-                    console.log("WSE Internal Error: Asset '" + key + 
-                        "' does not have a 'save' method!");
-                }
-            }
-        }
-        
-        return saves;
-    };
-    
-    Interpreter.prototype.restoreSaveGame = function (saves) {
-        
-        var assets, key;
-        
-        assets = this.assets;
-        
-        for (key in assets) {
-            
-            if (assets.hasOwnProperty(key)) {
-                
-                try {
-                    assets[key].restore(saves[key]);
-                }
-                catch (e) {
-                    console.log(e);
-                    warn(this.bus, "Could not restore asset state for asset '" + key + "'!");
-                }
-            }
-        }
-    };
-    
-    Interpreter.prototype.save = function (name) {
-        
-        name = name || "no name";
-        
-        var savegame, json, key, savegameList, listKey, lastKey, bus = this.bus;
-        
-        savegame = {};
-        
-        bus.trigger(
-            "wse.interpreter.save.before",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        savegame.saves = this.createSaveGame();
-        savegame.startTime = this.startTime;
-        savegame.saveTime = Math.round(+new Date() / 1000);
-        savegame.screenContents = this.stage.innerHTML;
-        savegame.runVars = this.runVars;
-        savegame.name = name;
-        savegame.log = this.log;
-        savegame.visitedScenes = this.visitedScenes;
-        savegame.gameUrl = this.game.url;
-        savegame.index = this.index;
-        savegame.wait = this.wait;
-        savegame.waitForTimer = this.waitForTimer;
-        savegame.currentElement = this.currentElement;
-        savegame.sceneId = this.sceneId;
-        savegame.scenePath = this.scenePath;
-        savegame.listenersSubscribed = this.game.listenersSubscribed;
-        savegame.callStack = this.callStack;
-        savegame.waitCounter = this.waitCounter;
-        savegame.pathname = location.pathname;
-        
-        key = this.buildSavegameId(name);
-        
-        json = JSON.stringify(savegame);
-        
-        listKey = "wse_" + savegame.pathname + "_" + savegame.gameUrl + "_savegames_list";
-        
-        savegameList = JSON.parse(this.datasource.get(listKey));
-        savegameList = savegameList || [];
-        lastKey = savegameList.indexOf(key);
-        
-        if (lastKey >= 0) {
-            savegameList.splice(lastKey, 1);
-        }
-        
-        savegameList.push(key);
-        
-        try {
-            this.datasource.set(key, json);
-            this.datasource.set(listKey, JSON.stringify(savegameList));
-        }
-        catch (e) {
-            
-            warn(bus, "Savegame could not be created!");
-            
-            bus.trigger(
-                "wse.interpreter.save.after.error",
-                {
-                    interpreter: this,
-                    savegame: savegame
-                }, 
-                false
-            );
-            
-            return false;
-        }
-        
-        bus.trigger(
-            "wse.interpreter.save.after.success",
-            {
-                interpreter: this,
-                savegame: savegame
-            }
-        );
-        
-        return true;
-    };
-    
-    Interpreter.prototype.getSavegameList = function (reversed) {
-        
-        var json, key, names, i, len, out;
-        
-        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
-        json = this.datasource.get(key);
-        
-        if (json === null) {
-            return [];
-        }
-        
-        names = JSON.parse(json);
-        out = [];
-        
-        for (i = 0, len = names.length; i < len; i += 1) {
-            
-            if (reversed === true) {
-                out.unshift(JSON.parse(this.datasource.get(names[i])));
-            }
-            else {
-                out.push(JSON.parse(this.datasource.get(names[i])));
-            }
-        }
-        
-        this.bus.trigger(
-            "wse.interpreter.getsavegamelist",
-            {
-                interpreter: this,
-                list: out,
-                names: names
-            }, 
-            false
-        );
-        
-        return out;
-    };
-    
-    Interpreter.prototype.buildSavegameId = function (name) {
-        
-        var vars = {};
-        
-        vars.name = name;
-        vars.id = "wse_" + location.pathname + "_" + this.game.url + "_savegame_" + name;
-        
-        this.bus.trigger(
-            "wse.interpreter.save.before",
-            {
-                interpreter: this,
-                vars: vars
-            }, 
-            false
-        );
-        
-        return vars.id;
-    };
-    
-    Interpreter.prototype.load = function (name) {
-        
-        var ds, savegame, scene, sceneId, scenePath, scenes, i, len;
-        var savegameId, bus = this.bus;
-        
-        savegameId = this.buildSavegameId(name);
-        ds = this.datasource;
-        savegame = ds.get(savegameId);
-        
-        bus.trigger(
-            "wse.interpreter.load.before",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        if (!savegame) {
-            warn(bus, "Could not load savegame '" + savegameId + "'!");
-            return false;
-        }
-        
-        savegame = JSON.parse(savegame);
-        this.stage.innerHTML = savegame.screenContents;
-        
-        this.restoreSaveGame(savegame.saves);
-        
-        this.startTime = savegame.startTime;
-        this.runVars = savegame.runVars;
-        this.log = savegame.log;
-        this.visitedScenes = savegame.visitedScenes;
-        this.index = savegame.index;
-        this.wait = savegame.wait;
-        this.waitForTimer = savegame.waitForTimer;
-        this.currentElement = savegame.currentElement;
-        this.callStack = savegame.callStack;
-        this.waitCounter = savegame.waitCounter;
-        this.state = "listen";
-        
-        sceneId = savegame.sceneId;
-        this.sceneId = sceneId;
-        
-        scenes = this.story.getElementsByTagName("scene");
-        this.scenes = scenes;
-        
-        for (i = 0, len = this.scenes.length; i < len; i += 1) {
-            
-            if (scenes[i].getAttribute("id") === sceneId) {
-                scene = scenes[i];
-                break;
-            }
-        }
-        
-        if (!scene) {
-            
-            bus.trigger(
-                "wse.interpreter.error",
-                {
-                    message: "Loading savegame '" + savegameId + "' failed: Scene not found!"
-                }
-            );
-            
-            return false;
-        }
-        
-        scenePath = savegame.scenePath;
-        this.scenePath = scenePath.slice();
-        
-        this.currentCommands = scene.childNodes;
-        
-        while (scenePath.length > 0) {
-            this.currentCommands = this.currentCommands[scenePath.shift()].childNodes;
-        }
-        
-        // Re-insert choice menu to get back the DOM events associated with it:
-        // Remove savegame menu on load:
-        (function (interpreter) {
-            
-            var elements, i, len, cur, index, wseType, com, rem;
-            
-            elements = interpreter.stage.getElementsByTagName("*");
-            
-            for (i = 0, len = elements.length; i < len; i += 1) {
-                
-                cur = elements[i];
-                
-                if (typeof cur === "undefined" || cur === null) {
-                    continue;
-                }
-                
-                wseType = cur.getAttribute("data-wse-type") || "";
-                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
-                
-                if (rem === true) {
-                    interpreter.stage.removeChild(cur);
-                }
-                
-                if (wseType !== "choice") {
-                    continue;
-                }
-                
-                index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
-                
-                if (index === null) {
-                    warn(interpreter.bus, "No data-wse-index found on element.");
-                    continue;
-                }
-                
-                com = interpreter.currentCommands[index];
-                
-                if (com.nodeName === "#text" || com.nodeName === "#comment") {
-                    continue;
-                }
-                
-                interpreter.stage.removeChild(cur);
-                WSE.commands.choice(com, interpreter);
-                interpreter.waitCounter -= 1;
-            }
-        }(this));
-        
-        bus.trigger(
-            "wse.interpreter.load.after",
-            {
-                interpreter: this,
-                savegame: savegame
-            }, 
-            false
-        );
-        
-        return true;
-    };
-    
-    Interpreter.prototype.deleteSavegame = function (name) {
-        
-        var sgs, key, index, json, id;
-        
-        key = "wse_" + location.pathname + "_" + this.game.url + "_savegames_list";
-        json = this.datasource.get(key);
-        
-        if (json === null) {
-            return false;
-        }
-        
-        sgs = JSON.parse(json);
-        id = this.buildSavegameId(name);
-        index = sgs.indexOf(id);
-        
-        if (index >= 0) {
-            
-            sgs.splice(index, 1);
-            
-            this.datasource.set(
-                "wse_" + location.pathname + "_" + this.game.url + "_savegames_list",
-                JSON.stringify(sgs)
-            );
-            
-            this.datasource.remove(id);
-            
-            return true;
-        }
-        
-        return false;
-    };
-    
     Interpreter.prototype.toggleSavegameMenu = function () {
         
         var menu, deleteButton, loadButton, saveButton, self;
-        var savegames, i, len, buttonPanel, resumeButton, id, sgList;
-        var cur, curEl, makeClickFn, listenerStatus, curElapsed, oldState;
+        var saves, buttonPanel, resumeButton, id, sgList;
+        var curEl, listenerStatus, curElapsed, oldState;
         
         self = this;
         id = "WSESaveGameMenu_" + this.game.url;
@@ -11937,17 +12516,18 @@ define("WSE.Interpreter", function (
         menu.style.zIndex = 100000;
         menu.style.position = "absolute";
         
-        savegames = this.getSavegameList(true);
+        saves = savegames.getSavegameList(this, true);
         
         deleteButton = document.createElement("input");
         deleteButton.setAttribute("class", "button delete");
         deleteButton.setAttribute("type", "button");
         deleteButton.value = "Delete";
+        
         deleteButton.addEventListener(
             "click",
             function (ev) {
                 
-                var active, savegameName, fn;
+                var active, savegameName;
                 
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -11960,16 +12540,16 @@ define("WSE.Interpreter", function (
                 
                 savegameName = active.getAttribute("data-wse-savegame-name");
                 
-                fn = function (decision) {
+                function fn (decision) {
                     
                     if (decision === false) {
                         return;
                     }
                     
-                    self.deleteSavegame(savegameName);
+                    savegames.remove(self, savegameName);
                     self.toggleSavegameMenu();
                     self.toggleSavegameMenu();
-                };
+                }
                 
                 ui.confirm(
                     self,
@@ -12027,7 +12607,7 @@ define("WSE.Interpreter", function (
                                 
                                 self.toggleSavegameMenu();
                                 self.game.listenersSubscribed = listenerStatus;
-                                self.save(data);
+                                savegames.save(self, data);
                                 self.toggleSavegameMenu();
                                 self.game.listenersSubscribed = false;
                                 
@@ -12061,7 +12641,7 @@ define("WSE.Interpreter", function (
                             }
                             
                             self.toggleSavegameMenu();
-                            self.save(savegameName);
+                            savegames.save(self, savegameName);
                             self.toggleSavegameMenu();
                             
                             ui.alert(
@@ -12083,6 +12663,7 @@ define("WSE.Interpreter", function (
         loadButton.setAttribute("type", "button");
         loadButton.setAttribute("tabindex", 1);
         loadButton.value = "Load";
+        
         loadButton.addEventListener(
             "click",
             function (ev) {
@@ -12110,7 +12691,7 @@ define("WSE.Interpreter", function (
                     self.savegameMenuVisible = false;
                     self.waitCounter -= 1;
                     self.state = oldState;
-                    self.load(savegameName);
+                    savegames.load(self, savegameName);
                 };
                 
                 ui.confirm(
@@ -12162,7 +12743,7 @@ define("WSE.Interpreter", function (
         buttonPanel.appendChild(resumeButton);
         menu.appendChild(buttonPanel);
         
-        makeClickFn = function (curEl) {
+        function makeClickFn (curEl) {
             
             return function (event) {
                 
@@ -12186,14 +12767,13 @@ define("WSE.Interpreter", function (
                 curEl.setAttribute("class", curEl.getAttribute("class") + " active");
                 loadButton.focus();
             };
-        };
+        }
         
         curEl = document.createElement("div");
         curEl.setAttribute("class", "button");
         
-        for (i = 0, len = savegames.length; i < len; i += 1) {
+        each(function (cur) {
             
-            cur = savegames[i];
             curEl = document.createElement("div");
             curElapsed = cur.saveTime - cur.startTime;
             curEl.setAttribute("class", "button");
@@ -12216,7 +12796,8 @@ define("WSE.Interpreter", function (
             
             curEl.addEventListener("click", makeClickFn(curEl, cur), false);
             sgList.appendChild(curEl);
-        }
+            
+        }, saves);
         
         menu.addEventListener(
             "click",
@@ -13079,6 +13660,362 @@ using("xmugly").define("WSE.tools.compile", function (xmugly) {
             '$1<line s="$2">$3</line>$5'
         );
     }
+    
+});
+
+
+/* global using */
+
+using(
+    "enjoy-core::each",
+    "WSE.tools::warn",
+    "enjoy-typechecks::isNull",
+    "enjoy-typechecks::isUndefined",
+    "WSE"
+).
+define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE) {
+    
+    function load (interpreter, name) {
+        
+        var ds, savegame, scene, sceneId, scenePath, scenes;
+        var savegameId, bus = interpreter.bus;
+        
+        savegameId = buildSavegameId(interpreter, name);
+        ds = interpreter.datasource;
+        savegame = ds.get(savegameId);
+        
+        bus.trigger(
+            "wse.interpreter.load.before",
+            {
+                interpreter: interpreter,
+                savegame: savegame
+            }, 
+            false
+        );
+        
+        if (!savegame) {
+            warn(bus, "Could not load savegame '" + savegameId + "'!");
+            return false;
+        }
+        
+        savegame = JSON.parse(savegame);
+        interpreter.stage.innerHTML = savegame.screenContents;
+        
+        restoreSavegame(interpreter, savegame.saves);
+        
+        interpreter.startTime = savegame.startTime;
+        interpreter.runVars = savegame.runVars;
+        interpreter.log = savegame.log;
+        interpreter.visitedScenes = savegame.visitedScenes;
+        interpreter.index = savegame.index;
+        interpreter.wait = savegame.wait;
+        interpreter.waitForTimer = savegame.waitForTimer;
+        interpreter.currentElement = savegame.currentElement;
+        interpreter.callStack = savegame.callStack;
+        interpreter.waitCounter = savegame.waitCounter;
+        interpreter.state = "listen";
+        
+        sceneId = savegame.sceneId;
+        interpreter.sceneId = sceneId;
+        
+        scenes = interpreter.story.getElementsByTagName("scene");
+        interpreter.scenes = scenes;
+        
+        scene = find(function (scene) {
+            return scene.getAttribute("id") === sceneId;
+        }, interpreter.scenes);
+        
+        if (!scene) {
+            
+            bus.trigger(
+                "wse.interpreter.error",
+                {
+                    message: "Loading savegame '" + savegameId + "' failed: Scene not found!"
+                }
+            );
+            
+            return false;
+        }
+        
+        scenePath = savegame.scenePath;
+        interpreter.scenePath = scenePath.slice();
+        
+        interpreter.currentCommands = scene.childNodes;
+        
+        while (scenePath.length > 0) {
+            interpreter.currentCommands = interpreter.currentCommands[scenePath.shift()].childNodes;
+        }
+        
+        // Re-insert choice menu to get back the DOM events associated with it:
+        // Remove savegame menu on load:
+        (function (interpreter) {
+            
+            var index, wseType, com, rem;
+            
+            each(function (cur) {
+                
+                if (isUndefined(cur) || isNull(cur)) {
+                    return;
+                }
+                
+                wseType = cur.getAttribute("data-wse-type") || "";
+                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
+                
+                if (rem === true) {
+                    interpreter.stage.removeChild(cur);
+                }
+                
+                if (wseType !== "choice") {
+                    return;
+                }
+                
+                index = parseInt(cur.getAttribute("data-wse-index"), 10) || null;
+                
+                if (index === null) {
+                    warn(interpreter.bus, "No data-wse-index found on element.");
+                    return;
+                }
+                
+                com = interpreter.currentCommands[index];
+                
+                if (com.nodeName === "#text" || com.nodeName === "#comment") {
+                    return;
+                }
+                
+                interpreter.stage.removeChild(cur);
+                WSE.commands.choice(com, interpreter);
+                interpreter.waitCounter -= 1;
+                
+            }, interpreter.stage.getElementsByTagName("*"));
+            
+        }(interpreter));
+        
+        bus.trigger(
+            "wse.interpreter.load.after",
+            {
+                interpreter: interpreter,
+                savegame: savegame
+            }, 
+            false
+        );
+        
+        return true;
+    }
+    
+    function save (interpreter, name) {
+        
+        name = name || "no name";
+        
+        var savegame, json, key, savegameList, listKey, lastKey, bus = interpreter.bus;
+        
+        savegame = {};
+        
+        bus.trigger(
+            "wse.interpreter.save.before",
+            {
+                interpreter: interpreter,
+                savegame: savegame
+            }, 
+            false
+        );
+        
+        savegame.saves = createSavegame(interpreter);
+        savegame.startTime = interpreter.startTime;
+        savegame.saveTime = Math.round(Date.now() / 1000);
+        savegame.screenContents = interpreter.stage.innerHTML;
+        savegame.runVars = interpreter.runVars;
+        savegame.name = name;
+        savegame.log = interpreter.log;
+        savegame.visitedScenes = interpreter.visitedScenes;
+        savegame.gameUrl = interpreter.game.url;
+        savegame.index = interpreter.index;
+        savegame.wait = interpreter.wait;
+        savegame.waitForTimer = interpreter.waitForTimer;
+        savegame.currentElement = interpreter.currentElement;
+        savegame.sceneId = interpreter.sceneId;
+        savegame.scenePath = interpreter.scenePath;
+        savegame.listenersSubscribed = interpreter.game.listenersSubscribed;
+        savegame.callStack = interpreter.callStack;
+        savegame.waitCounter = interpreter.waitCounter;
+        savegame.pathname = location.pathname;
+        
+        key = buildSavegameId(interpreter, name);
+        
+        json = JSON.stringify(savegame);
+        
+        listKey = "wse_" + savegame.pathname + "_" + savegame.gameUrl + "_savegames_list";
+        
+        savegameList = JSON.parse(interpreter.datasource.get(listKey));
+        savegameList = savegameList || [];
+        lastKey = savegameList.indexOf(key);
+        
+        if (lastKey >= 0) {
+            savegameList.splice(lastKey, 1);
+        }
+        
+        savegameList.push(key);
+        
+        try {
+            interpreter.datasource.set(key, json);
+            interpreter.datasource.set(listKey, JSON.stringify(savegameList));
+        }
+        catch (e) {
+            
+            warn(bus, "Savegame could not be created!");
+            
+            bus.trigger(
+                "wse.interpreter.save.after.error",
+                {
+                    interpreter: interpreter,
+                    savegame: savegame
+                }, 
+                false
+            );
+            
+            return false;
+        }
+        
+        bus.trigger(
+            "wse.interpreter.save.after.success",
+            {
+                interpreter: interpreter,
+                savegame: savegame
+            }
+        );
+        
+        return true;
+    }
+    
+    function createSavegame (interpreter) {
+        
+        var saves = {};
+        
+        each(function (asset, key) {
+            
+            try {
+                saves[key] = asset.save();
+            }
+            catch (e) {
+                console.error("WSE Internal Error: Asset '" + key + 
+                    "' does not have a 'save' method!");
+            }
+            
+        }, interpreter.assets);
+        
+        return saves;
+    }
+    
+    function restoreSavegame (interpreter, saves) {
+        
+        each(function (asset, key) {
+            
+            try {
+                asset.restore(saves[key]);
+            }
+            catch (e) {
+                console.error(e);
+                warn(interpreter.bus, "Could not restore asset state for asset '" + key + "'!");
+            }
+            
+        }, interpreter.assets);
+        
+    }
+    
+    function buildSavegameId (interpreter, name) {
+        
+        var vars = {};
+        
+        vars.name = name;
+        vars.id = "wse_" + location.pathname + "_" + interpreter.game.url + "_savegame_" + name;
+        
+        interpreter.bus.trigger(
+            "wse.interpreter.save.before",
+            {
+                interpreter: interpreter,
+                vars: vars
+            }, 
+            false
+        );
+        
+        return vars.id;
+    }
+    
+    function getSavegameList (interpreter, reversed) {
+        
+        var names;
+        var out = [];
+        var key = "wse_" + location.pathname + "_" + interpreter.game.url + "_savegames_list";
+        var json = interpreter.datasource.get(key);
+        
+        if (json === null) {
+            return out;
+        }
+        
+        names = JSON.parse(json);
+        out = [];
+        
+        each(function (name) {
+            
+            if (reversed === true) {
+                out.unshift(JSON.parse(interpreter.datasource.get(name)));
+            }
+            else {
+                out.push(JSON.parse(interpreter.datasource.get(name)));
+            }
+            
+        }, names);
+        
+        interpreter.bus.trigger(
+            "wse.interpreter.getsavegamelist",
+            {
+                interpreter: interpreter,
+                list: out,
+                names: names
+            }, 
+            false
+        );
+        
+        return out;
+    }
+    
+    function remove (interpreter, name) {
+        
+        var sgs, key, index, json, id;
+        
+        key = "wse_" + location.pathname + "_" + interpreter.game.url + "_savegames_list";
+        json = interpreter.datasource.get(key);
+        
+        if (json === null) {
+            return false;
+        }
+        
+        sgs = JSON.parse(json);
+        id = buildSavegameId(interpreter, name);
+        index = sgs.indexOf(id);
+        
+        if (index >= 0) {
+            
+            sgs.splice(index, 1);
+            
+            interpreter.datasource.set(
+                "wse_" + location.pathname + "_" + interpreter.game.url + "_savegames_list",
+                JSON.stringify(sgs)
+            );
+            
+            interpreter.datasource.remove(id);
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    return {
+        save: save,
+        load: load,
+        remove: remove,
+        getSavegameList: getSavegameList
+    };
     
 });
 

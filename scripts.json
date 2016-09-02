@@ -46,6 +46,7 @@
         "WSE.tools.ui": "src/tools/ui.js",
         "WSE.tools.reveal": "src/tools/reveal.js",
         "WSE.tools.compile": "src/tools/compile.js",
+        "WSE.savegames": "src/savegames.js",
         
         "WSE.DisplayObject": "src/DisplayObject.js",
         
