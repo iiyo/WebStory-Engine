@@ -8,6 +8,8 @@ Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "W
 
 ## Attributions ##
 
+[![Join the chat at https://gitter.im/iiyo/WebStory-Engine](https://badges.gitter.im/iiyo/WebStory-Engine.svg)](https://gitter.im/iiyo/WebStory-Engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Sounds, backgrounds and character sprites contained are in the public domain unless otherwise noted.
 
 The engine uses MO5.js (BSD License), which itself uses
