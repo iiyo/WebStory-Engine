@@ -1,3 +1,7 @@
+# WebStory Engine
+
+[![Join the chat at https://gitter.im/iiyo/WebStory-Engine](https://badges.gitter.im/iiyo/WebStory-Engine.svg)](https://gitter.im/iiyo/WebStory-Engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ![WebStory Engine Logo](https://iiyo.org/res/webstory-engine-logo.png)
 
 WebStory Engine is an engine for interactive web stories (e.g. visual
@@ -7,8 +11,6 @@ and run directly in the browser.
 Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
 
 ## Attributions ##
-
-[![Join the chat at https://gitter.im/iiyo/WebStory-Engine](https://badges.gitter.im/iiyo/WebStory-Engine.svg)](https://gitter.im/iiyo/WebStory-Engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Sounds, backgrounds and character sprites contained are in the public domain unless otherwise noted.
 
