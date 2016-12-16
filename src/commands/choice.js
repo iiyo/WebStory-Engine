@@ -125,8 +125,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
             
-            tools.attachEventListener(
-                currentButton, 
+            currentButton.addEventListener( 
                 'click',
                 makeButtonClickFn(current, menuElement, scenes[i], i)
             );

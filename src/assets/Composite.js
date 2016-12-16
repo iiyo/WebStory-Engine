@@ -5,7 +5,6 @@ using(
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
-    "WSE.tools::attachEventListener",
     "WSE.tools::extractUnit",
     "WSE.tools::calculateValueWithAnchor",
     "WSE.tools::warn"
@@ -15,7 +14,6 @@ define("WSE.assets.Composite", function (
     easing,
     DisplayObject,
     applyUnits,
-    attachListener,
     extractUnit,
     anchoredValue,
     warn
@@ -71,7 +69,7 @@ define("WSE.assets.Composite", function (
             image = new Image();
             
             self.bus.trigger("wse.assets.loading.increase", null, false);
-            attachListener(image, 'load', triggerDecreaseFn);
+            image.addEventListener('load', triggerDecreaseFn);
             
             image.src = src;
             image.style.opacity = 0;

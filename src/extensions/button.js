@@ -46,7 +46,7 @@ define("WSE.assets.Button", function (assets, DisplayObject, tools, functions) {
             functions.savegames(interpreter);
         };
         
-        tools.attachEventListener(el, 'click', clickFn);
+        el.addEventListener('click', clickFn);
         
         interpreter.stage.appendChild(el);
     }

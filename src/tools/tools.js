@@ -7,26 +7,6 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
     var tools = {};
     
     /**
-     * Attaches a DOM Event to a DOM Element.
-     * 
-     * FIXME: Is this even needed? Supported browsers should all 
-     * have .addEventListener()...
-     */
-    tools.attachEventListener = function (elem, type, listener) {
-        
-        if (elem === null || typeof elem === "undefined") {
-            return;
-        }
-        
-        if (elem.addEventListener) {
-            elem.addEventListener(type, listener, false);
-        }
-        else if (elem.attachEvent) {
-            elem.attachEvent("on" + type, listener);
-        }
-    };
-    
-    /**
      * Sets the x and y units on an asset object according
      * to it's definition in the WebStory.
      * @param obj The JavaScript object asset.

@@ -189,7 +189,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         };
         
         if (stageInfo.getAttribute("center") === "yes") {
-            tools.attachEventListener(window, 'resize', alignFn);
+            window.addEventListener('resize', alignFn);
             alignFn();
         }
         
@@ -201,7 +201,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         };
         
         if (stageInfo.getAttribute("resize") === "yes") {
-            tools.attachEventListener(window, 'resize', resizeFn);
+            window.addEventListener('resize', resizeFn);
             resizeFn();
         }
         
@@ -318,16 +318,16 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         
         this.subscribeListeners = function () {
             
-            tools.attachEventListener(this.stage, 'contextmenu', contextmenu_proxy);
-            tools.attachEventListener(this.stage, 'click', fn);
+            this.stage.addEventListener('contextmenu', contextmenu_proxy);
+            this.stage.addEventListener('click', fn);
             
             this.listenersSubscribed = true;
         };
         
         this.unsubscribeListeners = function () {
             
-            tools.removeEventListener(this.stage, 'contextmenu', contextmenu_proxy);
-            tools.removeEventListener(this.stage, 'click', fn);
+            this.stage.removeEventListener('contextmenu', contextmenu_proxy);
+            this.stage.removeEventListener('click', fn);
             
             this.listenersSubscribed = false;
         };
