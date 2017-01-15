@@ -1,5 +1,23 @@
 # WebStory Engine Changelog
 
+## Version 2017.x
+
+### Version 2017.1
+
+ * Allow custom data sources (GitHub issue #27)
+ * Default textbox style changed
+ * Remove browserify2using, use usingify
+ * Change changelog file to markdown format
+ * Update ESLint config
+ * Remove MO5.Dict dependency, use string-dict
+ * Use easy-ajax instead of MO5.ajax
+ * Remove MO5.dom.Element dependency, use class-manipulator
+ * Add enjoy-core to the dependencies
+ * Remove loops, use functions instead
+ * Savegame feature now refactored into its own module
+ * Remove attachEventListener (because we don't support legacy browsers)
+ * Add a createElement module for easier DOM element creation
+
 ## Version 2016.x
 
 ### Version 2016.7.1
