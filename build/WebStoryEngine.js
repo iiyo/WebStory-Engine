@@ -450,8 +450,8 @@ using.ajax = (function () {
 
 
 /*
-    WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Sun, 15 Jan 2017 08:40:37 GMT
+    WebStory Engine dependencies (v2017.1.0)
+    Build time: Sun, 15 Jan 2017 08:52:14 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -10282,7 +10282,7 @@ define("WSE", function (DataBus, assets, commands, dataSources, functions) {
     
     "use strict";
     
-    var WSE = {}, version = "2016.7.1-final.1608060015";
+    var WSE = {}, version = "2017.1.0";
     
     DataBus.inject(WSE);
     
@@ -11410,7 +11410,10 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
             }
         }
         
-        this.interpreter = new Interpreter(this);
+        this.interpreter = new Interpreter(this, {
+            datasource: args.datasource
+        });
+        
         this.keys = new Keys();
         this.listenersSubscribed = false;
         //console.log("this.interpreter: ", this.interpreter);
@@ -11735,7 +11738,7 @@ define("WSE.Interpreter", function (
      * @event
      * @param game [object] The WSE.Game instance the interpreter belongs to.
      */
-    function Interpreter (game) {
+    function Interpreter (game, options) {
         
         var datasource, key;
         
@@ -11789,7 +11792,7 @@ define("WSE.Interpreter", function (
 
         // The datasource to use for saving games and global variables.
         // Hardcoded to localStorage for now.
-        datasource = new LocalStorageSource();
+        datasource = options.datasource || new LocalStorageSource();
         this.datasource = datasource;
         
         // Each game must have it's own unique storage key so that multiple

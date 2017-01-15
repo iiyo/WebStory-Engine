@@ -1,6 +1,6 @@
 {
   "name": "webstory-engine",
-  "version": "2016.7.1-final.1608060015",
+  "version": "2017.1.0",
   "description": "A web-based visual novel engine.",
   "main": "index.html",
   "bin": {
