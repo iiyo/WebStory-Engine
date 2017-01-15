@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2016.7.1-final.1608060015)
-    Build time: Fri, 02 Sep 2016 20:22:53 GMT
+    Build time: Sun, 15 Jan 2017 08:40:37 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -476,7 +476,7 @@ using().define("transform-js", function () { return require("transform-js"); });
 
 using().define("xmugly", function () { return require("xmugly"); });
 
-},{"class-manipulator":2,"databus":3,"eases":23,"easy-ajax":38,"enjoy-core":58,"enjoy-typechecks":85,"howler":86,"string-dict":87,"transform-js":88,"xmugly":121}],2:[function(require,module,exports){
+},{"class-manipulator":2,"databus":3,"eases":23,"easy-ajax":38,"enjoy-core":59,"enjoy-typechecks":85,"howler":86,"string-dict":87,"transform-js":88,"xmugly":121}],2:[function(require,module,exports){
 //
 // # class-manipulator
 //
@@ -1664,13 +1664,15 @@ module.exports = require("./easy-ajax.js");
 
 },{"./easy-ajax.js":37}],39:[function(require,module,exports){
 
+var auto = require("./auto");
+
 function add () {
     return Array.prototype.reduce.call(arguments, function (a, b) { return a + b; });
 }
 
-module.exports = add;
+module.exports = auto(add, 2);
 
-},{}],40:[function(require,module,exports){
+},{"./auto":42}],40:[function(require,module,exports){
 
 function apply (fn, args) {
     
@@ -1685,22 +1687,24 @@ module.exports = apply;
 
 },{}],41:[function(require,module,exports){
 
+var auto = require("./auto");
+
 function at (collection, key) {
     return collection[key];
 }
 
-module.exports = at;
+module.exports = auto(at);
 
-},{}],42:[function(require,module,exports){
+},{"./auto":42}],42:[function(require,module,exports){
 
-var bind = require("./bind");
+var slice = require("./slice");
 var apply = require("./apply");
 
 //
-// **auto(fn)**
+// **auto(fn[, arity])**
 //
-// Wraps `fn` so that if it is called with only a function as its first argument,
-// a partial application is returned. This means that you can do this:
+// Wraps `fn` so that if it is called with less arguments than `fn`'s arity,
+// a partial application is done instead of calling the function. This means that you can do this:
 //
 //     each(fn)(collection);
 //
@@ -1709,19 +1713,27 @@ var apply = require("./apply");
 //     each(fn, collection);
 //
 
-function auto (fn) {
-    return function () {
+function auto (fn, arity) {
+    
+    arity = arguments.length >= 2 ? arity : fn.length;
+    
+    function wrap () {
+        
+        var args = slice(arguments);
+        
         return (
-            (arguments.length === 1 && typeof arguments[0] === "function") ?
-            bind(fn, arguments[0]) :
-            apply(fn, arguments)
+            args.length >= arity ?
+            apply(fn, args) :
+            function () { return apply(wrap, args.concat(slice(arguments))); }
         );
-    };
+    }
+    
+    return wrap;
 }
 
 module.exports = auto;
 
-},{"./apply":40,"./bind":43}],43:[function(require,module,exports){
+},{"./apply":40,"./slice":78}],43:[function(require,module,exports){
 
 function bind (fn) {
     
@@ -1781,24 +1793,27 @@ module.exports = compose;
 },{"./apply":40,"./pipe":69,"./toArray":83}],46:[function(require,module,exports){
 
 var some = require("./some");
+var auto = require("./auto");
 
 function contains (collection, item) {
-    return some(collection, function (currentItem) {
+    return some(function (currentItem) {
         return item === currentItem;
-    }) || false;
+    }, collection) || false;
 }
 
-module.exports = contains;
+module.exports = auto(contains);
 
-},{"./some":79}],47:[function(require,module,exports){
+},{"./auto":42,"./some":79}],47:[function(require,module,exports){
+
+var auto = require("./auto");
 
 function divide () {
     return Array.prototype.reduce.call(arguments, function (a, b) { return a / b; });
 }
 
-module.exports = divide;
+module.exports = auto(divide, 2);
 
-},{}],48:[function(require,module,exports){
+},{"./auto":42}],48:[function(require,module,exports){
 
 var types = require("enjoy-typechecks");
 var auto = require("./auto");
@@ -1821,7 +1836,7 @@ function each (fn, collection) {
 
 module.exports = auto(each);
 
-},{"./auto":42,"enjoy-typechecks":65}],49:[function(require,module,exports){
+},{"./auto":42,"enjoy-typechecks":85}],49:[function(require,module,exports){
 
 var some = require("./some");
 var auto = require("./auto");
@@ -1850,6 +1865,7 @@ module.exports = auto(every);
 },{"./auto":42,"./some":79}],50:[function(require,module,exports){
 
 var each = require("./each");
+var auto = require("./auto");
 
 //
 // Turns an array of objects into an object where the keys are the
@@ -1871,9 +1887,24 @@ function expose (collection, key) {
     return result;
 }
 
-module.exports = expose;
+module.exports = auto(expose);
 
-},{"./each":48}],51:[function(require,module,exports){
+},{"./auto":42,"./each":48}],51:[function(require,module,exports){
+
+var auto = require("./auto");
+
+function fallback (fn, instead) {
+    try {
+        return fn();
+    }
+    catch (error) {
+        return instead(error);
+    }
+}
+
+module.exports = auto(fallback);
+
+},{"./auto":42}],52:[function(require,module,exports){
 
 var each = require("./each");
 var auto = require("./auto");
@@ -1895,7 +1926,7 @@ function filter (fn, collection) {
 
 module.exports = auto(filter);
 
-},{"./auto":42,"./each":48}],52:[function(require,module,exports){
+},{"./auto":42,"./each":48}],53:[function(require,module,exports){
 
 var some = require("./some");
 var auto = require("./auto");
@@ -1920,7 +1951,7 @@ function find (fn, collection) {
 
 module.exports = auto(find);
 
-},{"./auto":42,"./some":79}],53:[function(require,module,exports){
+},{"./auto":42,"./some":79}],54:[function(require,module,exports){
 
 var apply = require("./apply");
 var toArray = require("./toArray");
@@ -1937,7 +1968,7 @@ function flip (fn) {
 
 module.exports = flip;
 
-},{"./apply":40,"./toArray":83}],54:[function(require,module,exports){
+},{"./apply":40,"./toArray":83}],55:[function(require,module,exports){
 
 function free (method) {
     return Function.prototype.call.bind(method);
@@ -1945,7 +1976,7 @@ function free (method) {
 
 module.exports = free;
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 
 var at = require("./at");
 var bind = require("./bind");
@@ -1964,9 +1995,10 @@ function getter (collection) {
 
 module.exports = getter;
 
-},{"./at":41,"./bind":43}],56:[function(require,module,exports){
+},{"./at":41,"./bind":43}],57:[function(require,module,exports){
 
 var some = require("./some");
+var auto = require("./auto");
 
 function has (collection, key) {
     return some(function (item, currentKey) {
@@ -1974,9 +2006,9 @@ function has (collection, key) {
     }, collection) || false;
 }
 
-module.exports = has;
+module.exports = auto(has);
 
-},{"./some":79}],57:[function(require,module,exports){
+},{"./auto":42,"./some":79}],58:[function(require,module,exports){
 
 function id (thing) {
     return thing;
@@ -1984,7 +2016,7 @@ function id (thing) {
 
 module.exports = id;
 
-},{}],58:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 /* eslint "global-require": "off" */
 
 module.exports = {
@@ -1999,6 +2031,7 @@ module.exports = {
     "each": require("./each"),
     "every": require("./every"),
     "expose": require("./expose"),
+    "fallback": require("./fallback"),
     "filter": require("./filter"),
     "find": require("./find"),
     "flip": require("./flip"),
@@ -2034,9 +2067,10 @@ module.exports = {
     "values": require("./values")
 };
 
-},{"./add":39,"./apply":40,"./at":41,"./auto":42,"./bind":43,"./call":44,"./compose":45,"./contains":46,"./divide":47,"./each":48,"./every":49,"./expose":50,"./filter":51,"./find":52,"./flip":53,"./free":54,"./getter":55,"./has":56,"./id":57,"./join":59,"./keys":60,"./loop":61,"./map":62,"./mod":63,"./multiply":64,"./not":66,"./partial":67,"./picker":68,"./pipe":69,"./pluck":70,"./privatize":71,"./put":72,"./putter":73,"./reduce":74,"./repeat":75,"./reverse":76,"./setter":77,"./slice":78,"./some":79,"./sort":80,"./split":81,"./subtract":82,"./toArray":83,"./values":84}],59:[function(require,module,exports){
+},{"./add":39,"./apply":40,"./at":41,"./auto":42,"./bind":43,"./call":44,"./compose":45,"./contains":46,"./divide":47,"./each":48,"./every":49,"./expose":50,"./fallback":51,"./filter":52,"./find":53,"./flip":54,"./free":55,"./getter":56,"./has":57,"./id":58,"./join":60,"./keys":61,"./loop":62,"./map":63,"./mod":64,"./multiply":65,"./not":66,"./partial":67,"./picker":68,"./pipe":69,"./pluck":70,"./privatize":71,"./put":72,"./putter":73,"./reduce":74,"./repeat":75,"./reverse":76,"./setter":77,"./slice":78,"./some":79,"./sort":80,"./split":81,"./subtract":82,"./toArray":83,"./values":84}],60:[function(require,module,exports){
 
 var free = require("./free");
+var auto = require("./auto");
 var reduce = require("./reduce");
 var isArrayLike = require("enjoy-typechecks").isArrayLike;
 
@@ -2057,9 +2091,9 @@ function join (collection, glue) {
     }, collection, "");
 }
 
-module.exports = join;
+module.exports = auto(join);
 
-},{"./free":54,"./reduce":74,"enjoy-typechecks":65}],60:[function(require,module,exports){
+},{"./auto":42,"./free":55,"./reduce":74,"enjoy-typechecks":85}],61:[function(require,module,exports){
 
 var map = require("./map");
 
@@ -2071,7 +2105,7 @@ function keys (collection) {
 
 module.exports = keys;
 
-},{"./map":62}],61:[function(require,module,exports){
+},{"./map":63}],62:[function(require,module,exports){
 
 function loop (fn) {
     while (fn()) {
@@ -2081,7 +2115,7 @@ function loop (fn) {
 
 module.exports = loop;
 
-},{}],62:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 
 var each = require("./each");
 var auto = require("./auto");
@@ -2099,23 +2133,361 @@ function map (fn, collection) {
 
 module.exports = auto(map);
 
-},{"./auto":42,"./each":48}],63:[function(require,module,exports){
+},{"./auto":42,"./each":48}],64:[function(require,module,exports){
+
+var auto = require("./auto");
 
 function mod () {
     return Array.prototype.reduce.call(arguments, function (a, b) { return a % b; });
 }
 
-module.exports = mod;
+module.exports = auto(mod, 2);
 
-},{}],64:[function(require,module,exports){
+},{"./auto":42}],65:[function(require,module,exports){
+
+var auto = require("./auto");
 
 function multiply () {
     return Array.prototype.reduce.call(arguments, function (a, b) { return a * b; });
 }
 
-module.exports = multiply;
+module.exports = auto(multiply, 2);
 
-},{}],65:[function(require,module,exports){
+},{"./auto":42}],66:[function(require,module,exports){
+
+function not (thing) {
+    return !thing;
+}
+
+module.exports = not;
+
+},{}],67:[function(require,module,exports){
+
+var apply = require("./apply");
+
+function partial (fn) {
+    
+    var args = Array.prototype.slice.call(arguments, 1);
+    
+    return function () {
+        
+        var callArgs = Array.prototype.slice.call(arguments);
+        
+        var allArgs = args.map(function (arg) {
+            
+            if (typeof arg === "undefined") {
+                return callArgs.shift();
+            }
+            
+            return arg;
+        });
+        
+        if (callArgs.length) {
+            callArgs.forEach(function (arg) {
+                allArgs.push(arg);
+            });
+        }
+        
+        return apply(fn, allArgs);
+    };
+}
+
+module.exports = partial;
+
+},{"./apply":40}],68:[function(require,module,exports){
+
+var at = require("./at");
+var partial = require("./partial");
+
+//
+// ### Function picker(key)
+//
+//     string | number -> (collection -> any)
+//
+// Binds `at` to a `key`.
+//
+
+function picker (key) {
+    return partial(at, undefined, key);
+}
+
+module.exports = picker;
+
+},{"./at":41,"./partial":67}],69:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+
+function pipe (value) {
+    
+    each(function (fn, index) {
+        if (index > 0) {
+            value = fn(value);
+        }
+    }, arguments);
+    
+    return value;
+}
+
+module.exports = auto(pipe, 2);
+
+},{"./auto":42,"./each":48}],70:[function(require,module,exports){
+
+var map = require("./map");
+var auto = require("./auto");
+
+function pluck (collection, key) {
+    
+    var result = [];
+    
+    map(function (item) {
+        if (key in item || (Array.isArray(item) && key < item.length)) {
+            result.push(item[key]);
+        }
+    }, collection);
+    
+    return result;
+}
+
+module.exports = auto(pluck);
+
+},{"./auto":42,"./map":63}],71:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+
+//
+// Turns an object into an array by putting its keys into the objects
+// contained within the array.
+//
+// Example:
+//
+//     {foo: {}, bar: {}} => [{name: "foo"},{name: "bar"}]
+//
+
+function privatize (collection, key) {
+    
+    var result = [];
+    
+    each(function (item, currentKey) {
+        
+        item[key] = currentKey;
+        
+        result.push(item);
+        
+    }, collection);
+    
+    return result;
+}
+
+module.exports = auto(privatize);
+
+},{"./auto":42,"./each":48}],72:[function(require,module,exports){
+
+var auto = require("./auto");
+
+//
+// ### Function put(collection, key, value)
+//
+//     collection -> string -> any -> undefined
+//
+// Puts a `value` into a collection at `key`.
+//
+
+function put (collection, key, value) {
+    collection[key] = value;
+}
+
+module.exports = auto(put);
+
+},{"./auto":42}],73:[function(require,module,exports){
+
+var put = require("./put");
+var partial = require("./partial");
+
+//
+// ### Function putter(key)
+//
+//     string -> (collection -> value -> undefined)
+//
+// Binds `put` to a key.
+//
+
+function putter (key) {
+    return partial(put, undefined, key, undefined);
+}
+
+module.exports = putter;
+
+},{"./partial":67,"./put":72}],74:[function(require,module,exports){
+
+var each = require("./each");
+var auto = require("./auto");
+var isArrayLike = require("enjoy-typechecks").isArrayLike;
+
+//
+// ### Function reduce(fn, collection[, value])
+//
+//     (any -> any -> string|number -> collection) -> collection -> any -> any
+//
+// Reduces a collection to a single value by applying every item in the collection
+// along with the item's key, the previously reduced value (or the start value)
+// and the collection itself to a reducer function `fn`.
+//
+
+function reduce (fn, collection, value) {
+    
+    var hasValue = arguments.length > 2;
+    
+    // If the collection is array-like, the native .reduce() method is used for performance:
+    if (isArrayLike(collection)) {
+        
+        if (hasValue) {
+            return Array.prototype.reduce.call(collection, fn, value);
+        }
+        
+        return Array.prototype.reduce.call(collection, fn);
+    }
+    
+    each(function (item, key) {
+        
+        if (!hasValue) {
+            hasValue = true;
+            value = item;
+            return;
+        }
+        
+        value = fn(value, item, key, collection);
+        
+    }, collection);
+    
+    return value;
+}
+
+module.exports = auto(reduce);
+
+},{"./auto":42,"./each":48,"enjoy-typechecks":85}],75:[function(require,module,exports){
+
+var auto = require("./auto");
+
+function repeat (fn, times) {
+    for (var i = 0; i < times; i += 1) {
+        fn();
+    }
+}
+
+module.exports = auto(repeat);
+
+},{"./auto":42}],76:[function(require,module,exports){
+
+var free = require("./free");
+var slice = require("./slice");
+var compose = require("./compose");
+
+module.exports = compose(slice, free(Array.prototype.reverse));
+
+},{"./compose":45,"./free":55,"./slice":78}],77:[function(require,module,exports){
+
+var put = require("./put");
+var bind = require("./bind");
+
+//
+// ### Function setter(collection)
+//
+//     collection -> (string -> value -> undefined)
+//
+// Binds `put` to a collection.
+//
+
+function setter (collection) {
+    return bind(put, collection);
+}
+
+module.exports = setter;
+
+},{"./bind":43,"./put":72}],78:[function(require,module,exports){
+
+var free = require("./free");
+
+module.exports = free(Array.prototype.slice);
+
+},{"./free":55}],79:[function(require,module,exports){
+
+var auto = require("./auto");
+var free = require("./free");
+var types = require("enjoy-typechecks");
+
+var someArray = free(Array.prototype.some);
+
+function some (fn, collection) {
+    if (types.isArrayLike(collection)) {
+        return someArray(collection, fn);
+    }
+    else {
+        return someObject(fn, collection);
+    }
+}
+
+function someObject (fn, collection) {
+    return Object.keys(collection).some(function (key) {
+        return fn(collection[key], key, collection);
+    });
+}
+
+module.exports = auto(some);
+
+},{"./auto":42,"./free":55,"enjoy-typechecks":85}],80:[function(require,module,exports){
+
+var free = require("./free");
+var slice = require("./slice");
+var compose = require("./compose");
+
+module.exports = compose(slice, free(Array.prototype.sort));
+
+},{"./compose":45,"./free":55,"./slice":78}],81:[function(require,module,exports){
+
+var free = require("./free");
+
+module.exports = free(String.prototype.split);
+
+},{"./free":55}],82:[function(require,module,exports){
+
+var auto = require("./auto");
+
+function subtract () {
+    return Array.prototype.reduce.call(arguments, function (a, b) { return a - b; });
+}
+
+module.exports = auto(subtract, 2);
+
+},{"./auto":42}],83:[function(require,module,exports){
+
+function toArray (thing) {
+    return Array.prototype.slice.call(thing);
+}
+
+module.exports = toArray;
+
+},{}],84:[function(require,module,exports){
+
+var map = require("./map");
+var id = require("./id");
+
+//
+// ### Function values(collection)
+//
+//     collection -> [any]
+//
+// Extracts all values from a collection such as `array` or `object`.
+//
+
+function values (collection) {
+    return map(id, collection);
+}
+
+module.exports = values;
+
+},{"./id":58,"./map":63}],85:[function(require,module,exports){
 /* eslint no-self-compare: off */
 
 function isNull (a) {
@@ -2271,336 +2643,7 @@ module.exports = {
     isUndefined: isUndefined
 };
 
-},{}],66:[function(require,module,exports){
-
-function not (thing) {
-    return !thing;
-}
-
-module.exports = not;
-
-},{}],67:[function(require,module,exports){
-
-var apply = require("./apply");
-
-function partial (fn) {
-    
-    var args = Array.prototype.slice.call(arguments, 1);
-    
-    return function () {
-        
-        var callArgs = Array.prototype.slice.call(arguments);
-        
-        var allArgs = args.map(function (arg) {
-            
-            if (typeof arg === "undefined") {
-                return callArgs.shift();
-            }
-            
-            return arg;
-        });
-        
-        if (callArgs.length) {
-            callArgs.forEach(function (arg) {
-                allArgs.push(arg);
-            });
-        }
-        
-        return apply(fn, allArgs);
-    };
-}
-
-module.exports = partial;
-
-},{"./apply":40}],68:[function(require,module,exports){
-
-var at = require("./at");
-var partial = require("./partial");
-
-//
-// ### Function picker(key)
-//
-//     string | number -> (collection -> any)
-//
-// Binds `at` to a `key`.
-//
-
-function picker (key) {
-    return partial(at, undefined, key);
-}
-
-module.exports = picker;
-
-},{"./at":41,"./partial":67}],69:[function(require,module,exports){
-
-var each = require("./each");
-
-function pipe (value) {
-    
-    each(function (fn, index) {
-        if (index > 0) {
-            value = fn(value);
-        }
-    }, arguments);
-    
-    return value;
-}
-
-module.exports = pipe;
-
-},{"./each":48}],70:[function(require,module,exports){
-
-var map = require("./map");
-
-function pluck (collection, key) {
-    
-    var result = [];
-    
-    map(function (item) {
-        if (key in item || (Array.isArray(item) && key < item.length)) {
-            result.push(item[key]);
-        }
-    }, collection);
-    
-    return result;
-}
-
-module.exports = pluck;
-
-},{"./map":62}],71:[function(require,module,exports){
-
-var each = require("./each");
-
-//
-// Turns an object into an array by putting its keys into the objects
-// contained within the array.
-//
-// Example:
-//
-//     {foo: {}, bar: {}} => [{name: "foo"},{name: "bar"}]
-//
-
-function privatize (collection, key) {
-    
-    var result = [];
-    
-    each(function (item, currentKey) {
-        
-        item[key] = currentKey;
-        
-        result.push(item);
-        
-    }, collection);
-    
-    return result;
-}
-
-module.exports = privatize;
-
-},{"./each":48}],72:[function(require,module,exports){
-
-//
-// ### Function put(collection, key, value)
-//
-//     collection -> string -> any -> undefined
-//
-// Puts a `value` into a collection at `key`.
-//
-
-function put (collection, key, value) {
-    collection[key] = value;
-}
-
-module.exports = put;
-
-},{}],73:[function(require,module,exports){
-
-var put = require("./put");
-var partial = require("./partial");
-
-//
-// ### Function putter(key)
-//
-//     string -> (collection -> value -> undefined)
-//
-// Binds `put` to a key.
-//
-
-function putter (key) {
-    return partial(put, undefined, key, undefined);
-}
-
-module.exports = putter;
-
-},{"./partial":67,"./put":72}],74:[function(require,module,exports){
-
-var each = require("./each");
-var auto = require("./auto");
-var isArrayLike = require("enjoy-typechecks").isArrayLike;
-
-//
-// ### Function reduce(fn, collection[, value])
-//
-//     (any -> any -> string|number -> collection) -> collection -> any -> any
-//
-// Reduces a collection to a single value by applying every item in the collection
-// along with the item's key, the previously reduced value (or the start value)
-// and the collection itself to a reducer function `fn`.
-//
-
-function reduce (fn, collection, value) {
-    
-    var hasValue = arguments.length > 2;
-    
-    // If the collection is array-like, the native .reduce() method is used for performance:
-    if (isArrayLike(collection)) {
-        
-        if (hasValue) {
-            return Array.prototype.reduce.call(collection, fn, value);
-        }
-        
-        return Array.prototype.reduce.call(collection, fn);
-    }
-    
-    each(function (item, key) {
-        
-        if (!hasValue) {
-            hasValue = true;
-            value = item;
-            return;
-        }
-        
-        value = fn(value, item, key, collection);
-        
-    }, collection);
-    
-    return value;
-}
-
-module.exports = auto(reduce);
-
-},{"./auto":42,"./each":48,"enjoy-typechecks":65}],75:[function(require,module,exports){
-
-var auto = require("./auto");
-
-function repeat (fn, times) {
-    for (var i = 0; i < times; i += 1) {
-        fn();
-    }
-}
-
-module.exports = auto(repeat);
-
-},{"./auto":42}],76:[function(require,module,exports){
-
-var free = require("./free");
-var slice = require("./slice");
-var compose = require("./compose");
-
-module.exports = compose(slice, free(Array.prototype.reverse));
-
-},{"./compose":45,"./free":54,"./slice":78}],77:[function(require,module,exports){
-
-var put = require("./put");
-var bind = require("./bind");
-
-//
-// ### Function setter(collection)
-//
-//     collection -> (string -> value -> undefined)
-//
-// Binds `put` to a collection.
-//
-
-function setter (collection) {
-    return bind(put, collection);
-}
-
-module.exports = setter;
-
-},{"./bind":43,"./put":72}],78:[function(require,module,exports){
-
-var free = require("./free");
-
-module.exports = free(Array.prototype.slice);
-
-},{"./free":54}],79:[function(require,module,exports){
-
-var auto = require("./auto");
-var free = require("./free");
-var types = require("enjoy-typechecks");
-
-var someArray = free(Array.prototype.some);
-
-function some (fn, collection) {
-    if (types.isArrayLike(collection)) {
-        return someArray(collection, fn);
-    }
-    else {
-        return someObject(fn, collection);
-    }
-}
-
-function someObject (fn, collection) {
-    return Object.keys(collection).some(function (key) {
-        return fn(collection[key], key, collection);
-    });
-}
-
-module.exports = auto(some);
-
-},{"./auto":42,"./free":54,"enjoy-typechecks":65}],80:[function(require,module,exports){
-
-var free = require("./free");
-var slice = require("./slice");
-var compose = require("./compose");
-
-module.exports = compose(slice, free(Array.prototype.sort));
-
-},{"./compose":45,"./free":54,"./slice":78}],81:[function(require,module,exports){
-
-var free = require("./free");
-
-module.exports = free(String.prototype.split);
-
-},{"./free":54}],82:[function(require,module,exports){
-
-function subtract () {
-    return Array.prototype.reduce.call(arguments, function (a, b) { return a - b; });
-}
-
-module.exports = subtract;
-
-},{}],83:[function(require,module,exports){
-
-function toArray (thing) {
-    return Array.prototype.slice.call(thing);
-}
-
-module.exports = toArray;
-
-},{}],84:[function(require,module,exports){
-
-var map = require("./map");
-var id = require("./id");
-
-//
-// ### Function values(collection)
-//
-//     collection -> [any]
-//
-// Extracts all values from a collection such as `array` or `object`.
-//
-
-function values (collection) {
-    return map(id, collection);
-}
-
-module.exports = values;
-
-},{"./id":57,"./map":62}],85:[function(require,module,exports){
-arguments[4][65][0].apply(exports,arguments)
-},{"dup":65}],86:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 /*!
  *  howler.js v1.1.29
  *  howlerjs.com
@@ -10686,26 +10729,6 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
     var tools = {};
     
     /**
-     * Attaches a DOM Event to a DOM Element.
-     * 
-     * FIXME: Is this even needed? Supported browsers should all 
-     * have .addEventListener()...
-     */
-    tools.attachEventListener = function (elem, type, listener) {
-        
-        if (elem === null || typeof elem === "undefined") {
-            return;
-        }
-        
-        if (elem.addEventListener) {
-            elem.addEventListener(type, listener, false);
-        }
-        else if (elem.attachEvent) {
-            elem.attachEvent("on" + type, listener);
-        }
-    };
-    
-    /**
      * Sets the x and y units on an asset object according
      * to it's definition in the WebStory.
      * @param obj The JavaScript object asset.
@@ -11514,7 +11537,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         };
         
         if (stageInfo.getAttribute("center") === "yes") {
-            tools.attachEventListener(window, 'resize', alignFn);
+            window.addEventListener('resize', alignFn);
             alignFn();
         }
         
@@ -11526,7 +11549,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         };
         
         if (stageInfo.getAttribute("resize") === "yes") {
-            tools.attachEventListener(window, 'resize', resizeFn);
+            window.addEventListener('resize', resizeFn);
             resizeFn();
         }
         
@@ -11643,16 +11666,16 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
         
         this.subscribeListeners = function () {
             
-            tools.attachEventListener(this.stage, 'contextmenu', contextmenu_proxy);
-            tools.attachEventListener(this.stage, 'click', fn);
+            this.stage.addEventListener('contextmenu', contextmenu_proxy);
+            this.stage.addEventListener('click', fn);
             
             this.listenersSubscribed = true;
         };
         
         this.unsubscribeListeners = function () {
             
-            tools.removeEventListener(this.stage, 'contextmenu', contextmenu_proxy);
-            tools.removeEventListener(this.stage, 'click', fn);
+            this.stage.removeEventListener('contextmenu', contextmenu_proxy);
+            this.stage.removeEventListener('click', fn);
             
             this.listenersSubscribed = false;
         };
@@ -15540,7 +15563,6 @@ using(
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
-    "WSE.tools::attachEventListener",
     "WSE.tools::extractUnit",
     "WSE.tools::calculateValueWithAnchor",
     "WSE.tools::warn"
@@ -15550,7 +15572,6 @@ define("WSE.assets.Imagepack", function (
     easing,
     DisplayObject,
     applyUnits,
-    attachListener,
     extractUnit,
     anchoredValue,
     warn
@@ -15605,7 +15626,7 @@ define("WSE.assets.Imagepack", function (
             image = new Image();
             
             this.bus.trigger("wse.assets.loading.increase", null, false);
-            attachListener(image, 'load', triggerDecreaseFn);
+            image.addEventListener('load', triggerDecreaseFn);
             
             image.src = src;
             image.style.opacity = 0;
@@ -16208,7 +16229,6 @@ using(
     "eases",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
-    "WSE.tools::attachEventListener",
     "WSE.tools::extractUnit",
     "WSE.tools::calculateValueWithAnchor",
     "WSE.tools::warn"
@@ -16218,7 +16238,6 @@ define("WSE.assets.Composite", function (
     easing,
     DisplayObject,
     applyUnits,
-    attachListener,
     extractUnit,
     anchoredValue,
     warn
@@ -16274,7 +16293,7 @@ define("WSE.assets.Composite", function (
             image = new Image();
             
             self.bus.trigger("wse.assets.loading.increase", null, false);
-            attachListener(image, 'load', triggerDecreaseFn);
+            image.addEventListener('load', triggerDecreaseFn);
             
             image.src = src;
             image.style.opacity = 0;
@@ -16743,8 +16762,7 @@ define("WSE.commands.choice", function (tools, DisplayObject) {
             
             scenes[i] = sceneName ? interpreter.getSceneById(sceneName) : null;
             
-            tools.attachEventListener(
-                currentButton, 
+            currentButton.addEventListener( 
                 'click',
                 makeButtonClickFn(current, menuElement, scenes[i], i)
             );
