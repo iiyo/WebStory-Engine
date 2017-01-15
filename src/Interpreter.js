@@ -45,7 +45,7 @@ define("WSE.Interpreter", function (
      * @event
      * @param game [object] The WSE.Game instance the interpreter belongs to.
      */
-    function Interpreter (game) {
+    function Interpreter (game, options) {
         
         var datasource, key;
         
@@ -99,7 +99,7 @@ define("WSE.Interpreter", function (
 
         // The datasource to use for saving games and global variables.
         // Hardcoded to localStorage for now.
-        datasource = new LocalStorageSource();
+        datasource = options.datasource || new LocalStorageSource();
         this.datasource = datasource;
         
         // Each game must have it's own unique storage key so that multiple

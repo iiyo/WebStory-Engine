@@ -62,7 +62,10 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
             }
         }
         
-        this.interpreter = new Interpreter(this);
+        this.interpreter = new Interpreter(this, {
+            datasource: args.datasource
+        });
+        
         this.keys = new Keys();
         this.listenersSubscribed = false;
         //console.log("this.interpreter: ", this.interpreter);
