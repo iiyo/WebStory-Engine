@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2017.1.0)
-    Build time: Sun, 15 Jan 2017 08:52:14 GMT
+    Build time: Sun, 19 Mar 2017 11:37:02 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -11012,6 +11012,18 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
         });
     };
     
+//
+// ## [function] truthy
+//
+// A function that checks whether an attribute value is considered truthy by
+// the engine. Truthy values are `true` and `yes`.
+//
+//     truthy :: any -> boolean
+//
+    tools.truthy = function (value) {
+        return ["true", "yes"].indexOf(value) >= 0;
+    };
+    
     return tools;
     
 });
@@ -11356,9 +11368,10 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.loader"
+    "WSE.loader",
+    "WSE.tools::truthy"
 ).
-define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader, truthy) {
     
     "use strict";
     
@@ -11570,7 +11583,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
             
             (function (self) {
                 
-                var doResize = self.getSetting("host.stage.resize") === "true" ? true : false;
+                var doResize = truthy(self.getSetting("host.stage.resize"));
                 
                 if (!doResize) {
                     return;
@@ -11612,8 +11625,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
     // FIXME: implement...
     Game.prototype.applySettings = function () {
         
-        this.webInspectorEnabled =
-            this.getSetting("host.inspector.enable") === "true" ? true : false;
+        this.webInspectorEnabled = truthy(this.getSetting("host.inspector.enable"));
         
         if (this.host) {
             
@@ -11708,7 +11720,8 @@ using(
     "enjoy-core::find",
     "enjoy-typechecks::isUndefined",
     "enjoy-typechecks::isNull",
-    "WSE.savegames"
+    "WSE.savegames",
+    "WSE.tools::truthy"
 ).
 define("WSE.Interpreter", function (
     LocalStorageSource,
@@ -11724,7 +11737,8 @@ define("WSE.Interpreter", function (
     find,
     isUndefined,
     isNull,
-    savegames
+    savegames,
+    truthy
 ) {
     
     "use strict";
@@ -12501,9 +12515,7 @@ define("WSE.Interpreter", function (
         if (menu !== null) {
             
             try {
-                
-                listenerStatus =
-                    menu.getAttribute("data-wse-listener-status") === "true" ? true : false;
+                listenerStatus = truthy(menu.getAttribute("data-wse-listener-status"));
                 this.stage.removeChild(menu);
             }
             catch (e) {
@@ -13697,9 +13709,10 @@ using(
     "WSE.tools::warn",
     "enjoy-typechecks::isNull",
     "enjoy-typechecks::isUndefined",
-    "WSE"
+    "WSE",
+    "WSE.tools::truthy"
 ).
-define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE) {
+define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE, truthy) {
     
     function load (interpreter, name) {
         
@@ -13785,7 +13798,7 @@ define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE) {
                 }
                 
                 wseType = cur.getAttribute("data-wse-type") || "";
-                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
+                rem = truthy(cur.getAttribute("data-wse-remove"));
                 
                 if (rem === true) {
                     interpreter.stage.removeChild(cur);
@@ -15131,8 +15144,8 @@ define("WSE.assets.Animation", function (
 
 /* global using */
 
-using("WSE.tools::warn", "howler::Howl").
-define("WSE.assets.Audio", function (warn, Howl) {
+using("WSE.tools::warn", "howler::Howl", "WSE.tools::truthy").
+define("WSE.assets.Audio", function (warn, Howl, truthy) {
     
     "use strict";
     
@@ -15155,9 +15168,9 @@ define("WSE.assets.Audio", function (warn, Howl) {
         this.bus = bus;
         this.name = asset.getAttribute("name");
         this.tracks = {};
-        this.autopause = asset.getAttribute("autopause") === "true" ? true : false;
-        this.loop = asset.getAttribute("loop") === "true" ? true : false;
-        this.fade = asset.getAttribute("fade") === "true" ? true : false;
+        this.autopause = truthy(asset.getAttribute("autopause"));
+        this.loop = truthy(asset.getAttribute("loop"));
+        this.fade = truthy(asset.getAttribute("fade"));
         this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
         this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
         this._playing = false;
@@ -15859,7 +15872,8 @@ using(
     "class-manipulator::list",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
-    "WSE.tools::replaceVariables"
+    "WSE.tools::replaceVariables",
+    "WSE.tools::truthy"
 ).
 define("WSE.assets.Textbox", function (
     transform,
@@ -15867,7 +15881,8 @@ define("WSE.assets.Textbox", function (
     classes,
     DisplayObject,
     applyUnits,
-    replaceVars
+    replaceVars,
+    truthy
 ) {
     
     "use strict";
@@ -15881,8 +15896,8 @@ define("WSE.assets.Textbox", function (
         var element, nameElement, textElement;
         
         this.type = asset.getAttribute("behaviour") || "adv";
-        this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
-        this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
+        this.showNames = truthy(asset.getAttribute("namebox"));
+        this.nltobr = truthy(asset.getAttribute("nltobr"));
         this.cssid = this.cssid || "wse_textbox_" + this.name;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;
@@ -16880,7 +16895,7 @@ using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (fu
         name = command.getAttribute("name") || null;
         varName = command.getAttribute("tovar") || null;
         
-        if (typeof functions[name] !== "function") {
+        if (typeof name !== "string") {
             warn(interpreter.bus, "No name supplied on fn element.", command);
             return {
                 doNext: true

@@ -8,9 +8,10 @@ using(
     "WSE.Interpreter",
     "WSE.tools",
     "WSE",
-    "WSE.loader"
+    "WSE.loader",
+    "WSE.tools::truthy"
 ).
-define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader) {
+define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loader, truthy) {
     
     "use strict";
     
@@ -222,7 +223,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
             
             (function (self) {
                 
-                var doResize = self.getSetting("host.stage.resize") === "true" ? true : false;
+                var doResize = truthy(self.getSetting("host.stage.resize"));
                 
                 if (!doResize) {
                     return;
@@ -264,8 +265,7 @@ define("WSE.Game", function (DataBus, ajax, Keys, Interpreter, tools, WSE, loade
     // FIXME: implement...
     Game.prototype.applySettings = function () {
         
-        this.webInspectorEnabled =
-            this.getSetting("host.inspector.enable") === "true" ? true : false;
+        this.webInspectorEnabled = truthy(this.getSetting("host.inspector.enable"));
         
         if (this.host) {
             

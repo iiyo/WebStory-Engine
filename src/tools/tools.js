@@ -290,6 +290,18 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
         });
     };
     
+//
+// ## [function] truthy
+//
+// A function that checks whether an attribute value is considered truthy by
+// the engine. Truthy values are `true` and `yes`.
+//
+//     truthy :: any -> boolean
+//
+    tools.truthy = function (value) {
+        return ["true", "yes"].indexOf(value) >= 0;
+    };
+    
     return tools;
     
 });

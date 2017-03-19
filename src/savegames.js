@@ -5,9 +5,10 @@ using(
     "WSE.tools::warn",
     "enjoy-typechecks::isNull",
     "enjoy-typechecks::isUndefined",
-    "WSE"
+    "WSE",
+    "WSE.tools::truthy"
 ).
-define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE) {
+define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE, truthy) {
     
     function load (interpreter, name) {
         
@@ -93,7 +94,7 @@ define("WSE.savegames", function (each, warn, isNull, isUndefined, WSE) {
                 }
                 
                 wseType = cur.getAttribute("data-wse-type") || "";
-                rem = cur.getAttribute("data-wse-remove") === "true" ? true : false;
+                rem = truthy(cur.getAttribute("data-wse-remove"));
                 
                 if (rem === true) {
                     interpreter.stage.removeChild(cur);

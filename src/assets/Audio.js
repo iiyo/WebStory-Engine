@@ -1,7 +1,7 @@
 /* global using */
 
-using("WSE.tools::warn", "howler::Howl").
-define("WSE.assets.Audio", function (warn, Howl) {
+using("WSE.tools::warn", "howler::Howl", "WSE.tools::truthy").
+define("WSE.assets.Audio", function (warn, Howl, truthy) {
     
     "use strict";
     
@@ -24,9 +24,9 @@ define("WSE.assets.Audio", function (warn, Howl) {
         this.bus = bus;
         this.name = asset.getAttribute("name");
         this.tracks = {};
-        this.autopause = asset.getAttribute("autopause") === "true" ? true : false;
-        this.loop = asset.getAttribute("loop") === "true" ? true : false;
-        this.fade = asset.getAttribute("fade") === "true" ? true : false;
+        this.autopause = truthy(asset.getAttribute("autopause"));
+        this.loop = truthy(asset.getAttribute("loop"));
+        this.fade = truthy(asset.getAttribute("fade"));
         this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
         this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
         this._playing = false;
