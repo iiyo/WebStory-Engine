@@ -1,40 +1,31 @@
-/* global require, console */
 /* eslint no-console: off */
 
-var processScriptsFileFn, concatJsFiles, scriptsFilePath;
-var browserify = require("browserify");
 var fs = require("fs");
-var os = require("os");
-var normalizePath = require("path").normalize;
-var minify = require("minify");
 var copy = require("ncp").ncp;
-var usingify = require("usingify").usingify;
+var browserify = require("browserify");
+var normalizePath = require("path").normalize;
+
+var indexFile = normalizePath("index.js");
+var outputFile = normalizePath("build/WebStoryEngine.js");
 
 mkdirSync('./build');
 mkdirSync('./export');
 mkdirSync('./export/engine');
 
-var usingifyFilePath = normalizePath("WebStoryEngine_usingify.js");
-var dependencyFilePath = normalizePath(os.tmpdir() + "/WebStoryEngine_dependencies.js");
-
-fs.writeFileSync(usingifyFilePath, usingify(JSON.parse("" + fs.readFileSync("package.json"))));
-
-var dependencyFile = fs.createWriteStream(dependencyFilePath);
-var bundle = browserify(usingifyFilePath).bundle();
 var info = JSON.parse("" + fs.readFileSync("package.json"));
+var bundle = browserify({debug: true}).
+    add(indexFile).
+    //transform({global: true}, "uglifyify").
+    bundle();
 
-scriptsFilePath = 'scripts.json';
-
-
-dependencyFile.write(
-    "/*\n" +
-    "    WebStory Engine dependencies (v" + info.version + ")\n" +
-    "    Build time: " + (new Date().toUTCString()) + 
-    "\n*/\n"
-);
-
-bundle.pipe(dependencyFile);
-
+bundle.on("end", done).
+    pipe(fs.createWriteStream(outputFile)).
+    write(
+        "/*\n" +
+        "    WebStory Engine (v" + info.version + ")\n" +
+        "    Build time: " + (new Date().toUTCString()) + 
+        "\n*/\n"
+    );
 
 function mkdirSync (path) {
     try {
@@ -47,111 +38,31 @@ function mkdirSync (path) {
     }
 }
 
-processScriptsFileFn = function (data) {
+function done (error) {
     
-    var json;
+    var content;
     
-    try {
-        json = JSON.parse(data);
-    }
-    catch (e) {
-        console.log('Parsing file ' + scriptsFilePath + ' as JSON failed!');
-        console.log('Error was:' + e);
-        
+    if (error) {
+        console.error(error);
         return;
     }
     
-    concatJsFiles(json.files);
-};
+    /*
+    content = "" + fs.readFileSync(outputFile);
+    content = content.split("%%%version%%%").join(info.version);
+    
+    fs.writeFileSync(outputFile, content);
+    */
+    
+    console.log("WebStory Engine v" + info.version + " built and written to: " + outputFile);
+    
+    exportFiles();
+}
 
-concatJsFiles = function (files) {
-    
-    var fn, concatFile, moduleName, moduleString;
-    
-    moduleString = '';
-    concatFile = ''; 
-    
-    fn = function (path) {
-        
-        var concFn;
-        
-        concFn = function (data) {
-            concatFile += "\n\n" + removeUnwantedSections(data);
-        };
-        
-        concFn(fs.readFileSync(normalizePath(path), 'utf-8'));
-    };
-    
-    moduleString += "\n\nvar $__WSEScripts = document.getElementsByTagName('script');";
-    moduleString += "\nWSEPath = $__WSEScripts[$__WSEScripts.length - 1].src;\n";
-    
-    for (moduleName in files) {
-        moduleString += "\nusing.modules['" + moduleName + "'] = WSEPath;";
-    }
-    
-    fn("libs/MO5/libs/using.js/using.js");
-    fn(dependencyFilePath);
-    fn("libs/MO5/js/MO5.js");
-    
-    concatFile += moduleString;
-    
-    for (moduleName in files) {
-        fn(files[moduleName]);
-    }
-    
-    
-    writeFileFn(concatFile);
-};
-
-function writeFileFn (concatFile) {
-    
-    function makeErrorFn (successText) {
-        return function (err) {
-            
-            if (err) {
-                console.log(err);
-                return;
-            }
-            
-            console.log(successText);
-        };
-    }
-    
-    fs.writeFileSync('./build/WebStoryEngine.js', concatFile);
-    makeErrorFn('WebStory Engine file created.')();
-    
-    minify('./build/WebStoryEngine.js', function(error, data) {
-        if (error) {
-            console.log(error);
-        }
-        else {
-            fs.writeFile('./build/WebStoryEngine.min.js', data, makeExport);
-        }
-    });
-    
-    function makeExport (err) {
-        makeErrorFn("Minified WebStory Engine file created.")(err);
-        copy("./build", "./export/engine", function () {
-            copy("./story", "./export", function () {
-                console.log("Exported WebStory Engine skeleton to export folder.");
-            });
+function exportFiles () {
+    copy("./build", "./export/engine", function () {
+        copy("./story", "./export", function () {
+            console.log("Exported WebStory Engine skeleton to export folder.");
         });
-    }
+    });
 }
-
-function removeUnwantedSections (fileContents) {
-    
-    fileContents = fileContents.replace(
-        /\/\*<ON_DEPLOY_REMOVE>\*\/[\s\S]*\/\*<\/ON_DEPLOY_REMOVE>\*\//g,
-        ""
-    );
-    
-    fileContents = fileContents.replace(/%%%version%%%/g, info.version);
-    
-    return fileContents;
-}
-
-setTimeout(function () {
-    processScriptsFileFn(fs.readFileSync(scriptsFilePath, 'utf-8'));
-    fs.unlinkSync(usingifyFilePath);
-}, 2000);

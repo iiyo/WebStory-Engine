@@ -1,24 +1,17 @@
-/* global using */
 
-using().define("WSE.commands.while", function () {
+function whileCommand (command, interpreter) {
     
-    "use strict";
+    interpreter.index -= 1;
+    interpreter.currentElement -= 1;
+    interpreter.pushToCallStack();
+    interpreter.currentCommands = command.childNodes;
+    interpreter.scenePath.push(interpreter.index+1);
+    interpreter.index = -1;
+    interpreter.currentElement = -1;
     
-    function whileCommand (command, interpreter) {
-        
-        interpreter.index -= 1;
-        interpreter.currentElement -= 1;
-        interpreter.pushToCallStack();
-        interpreter.currentCommands = command.childNodes;
-        interpreter.scenePath.push(interpreter.index+1);
-        interpreter.index = -1;
-        interpreter.currentElement = -1;
-        
-        return {
-            doNext: true
-        };
-    }
-    
-    return whileCommand;
-    
-});
+    return {
+        doNext: true
+    };
+}
+
+module.exports = whileCommand;

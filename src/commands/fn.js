@@ -1,41 +1,37 @@
-/* global using */
 
-using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (functions, warn) {
+var warn = require("../tools/tools").warn;
+var functions = require("../functions");
+
+function fn (command, interpreter) {
     
-    "use strict";
+    var name, varName, ret;
     
-    function fn (command, interpreter) {
-        
-        var name, varName, ret;
-        
-        name = command.getAttribute("name") || null;
-        varName = command.getAttribute("tovar") || null;
-        
-        if (typeof name !== "string") {
-            warn(interpreter.bus, "No name supplied on fn element.", command);
-            return {
-                doNext: true
-            };
-        }
-        
-        if (typeof functions[name] !== "function") {
-            warn(interpreter.bus, "Unknown function '" + name + "'.", command);
-            return {
-                doNext: true
-            };
-        }
-        
-        ret = functions[name](interpreter);
-        
-        if (varName !== null){
-            interpreter.runVars[varName] = "" + ret;
-        }
-        
+    name = command.getAttribute("name") || null;
+    varName = command.getAttribute("tovar") || null;
+    
+    if (typeof name !== "string") {
+        warn(interpreter.bus, "No name supplied on fn element.", command);
         return {
             doNext: true
         };
     }
     
-    return fn;
+    if (typeof functions[name] !== "function") {
+        warn(interpreter.bus, "Unknown function '" + name + "'.", command);
+        return {
+            doNext: true
+        };
+    }
     
-});
+    ret = functions[name](interpreter);
+    
+    if (varName !== null){
+        interpreter.runVars[varName] = "" + ret;
+    }
+    
+    return {
+        doNext: true
+    };
+}
+
+module.exports = fn;

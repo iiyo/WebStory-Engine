@@ -1,309 +1,308 @@
 /* global using */
 
-using("WSE.tools::warn", "howler::Howl", "WSE.tools::truthy").
-define("WSE.assets.Audio", function (warn, Howl, truthy) {
+var tools = require("../tools/tools");
+var Howl = require("howler").Howl;
+
+var warn = tools.warn;
+var truthy = tools.truthy;
+
+/**
+ * Constructor for the <audio> asset.
+ * 
+ * @param asset [XML DOM Element] The asset definition.
+ * @param interpreter [object] The interpreter instance.
+ * @trigger wse.interpreter.warning@interpreter
+ * @trigger wse.assets.audio.constructor@interpreter
+ */
+function Audio (asset, interpreter) {
     
-    "use strict";
+    var sources, i, len, j, jlen, current, track, trackName;
+    var trackFiles, href, type, source, tracks, bus, trackSettings;
     
-    /**
-     * Constructor for the <audio> asset.
-     * 
-     * @param asset [XML DOM Element] The asset definition.
-     * @param interpreter [object] The interpreter instance.
-     * @trigger wse.interpreter.warning@interpreter
-     * @trigger wse.assets.audio.constructor@interpreter
-     */
-    function Audio (asset, interpreter) {
+    bus = interpreter.bus;
+    
+    this.interpreter = interpreter;
+    this.bus = bus;
+    this.name = asset.getAttribute("name");
+    this.tracks = {};
+    this.autopause = truthy(asset.getAttribute("autopause"));
+    this.loop = truthy(asset.getAttribute("loop"));
+    this.fade = truthy(asset.getAttribute("fade"));
+    this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
+    this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
+    this._playing = false;
+    
+    tracks = asset.getElementsByTagName("track");
+    len = tracks.length;
+    
+    if (len < 1) {
         
-        var sources, i, len, j, jlen, current, track, trackName;
-        var trackFiles, href, type, source, tracks, bus, trackSettings;
+        warn(this.bus, "No tracks defined for audio element '" + this.name + "'.", asset);
         
-        bus = interpreter.bus;
+        return {
+            doNext: true
+        };
+    }
+    
+    // check all sources and create Howl instances:
+    for (i = 0; i < len; i += 1) {
         
-        this.interpreter = interpreter;
-        this.bus = bus;
-        this.name = asset.getAttribute("name");
-        this.tracks = {};
-        this.autopause = truthy(asset.getAttribute("autopause"));
-        this.loop = truthy(asset.getAttribute("loop"));
-        this.fade = truthy(asset.getAttribute("fade"));
-        this.fadeinDuration = parseInt(asset.getAttribute("fadein")) || 1000;
-        this.fadeoutDuration = parseInt(asset.getAttribute("fadeout")) || 1000;
-        this._playing = false;
+        current = tracks[i];
         
-        tracks = asset.getElementsByTagName("track");
-        len = tracks.length;
+        trackName = current.getAttribute("title");
         
-        if (len < 1) {
+        if (trackName === null) {
             
-            warn(this.bus, "No tracks defined for audio element '" + this.name + "'.", asset);
+            warn(this.bus, "No title defined for track '" + trackName + 
+                "' in audio element '" + this.name + "'.", asset);
             
-            return {
-                doNext: true
-            };
+            continue;
         }
         
-        // check all sources and create Howl instances:
-        for (i = 0; i < len; i += 1) {
+        sources = current.getElementsByTagName("source");
+        jlen = sources.length;
+        
+        if (jlen < 1) {
             
-            current = tracks[i];
+            warn(this.bus, "No sources defined for track '" + trackName +
+                "' in audio element '" + this.name + "'.", asset);
             
-            trackName = current.getAttribute("title");
+            continue;
+        }
+        
+        trackSettings = {
+            urls: [],
+            autoplay: false,
+            loop: this.loop || false,
+            onload: this.bus.trigger.bind(this.bus, "wse.assets.loading.decrease")
+        };
+        
+        trackFiles = {};
+        
+        for (j = 0; j < jlen; j += 1) {
             
-            if (trackName === null) {
+            source = sources[j];
+            href = source.getAttribute("href");
+            type = source.getAttribute("type");
+            
+            if (href === null) {
                 
-                warn(this.bus, "No title defined for track '" + trackName + 
-                    "' in audio element '" + this.name + "'.", asset);
+                warn(this.bus, "No href defined for source in track '" +
+                    trackName + "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
             
-            sources = current.getElementsByTagName("source");
-            jlen = sources.length;
-            
-            if (jlen < 1) {
+            if (type === null) {
                 
-                warn(this.bus, "No sources defined for track '" + trackName +
-                    "' in audio element '" + this.name + "'.", asset);
+                warn(this.bus, "No type defined for source in track '" + 
+                    trackName + "' in audio element '" + this.name + "'.", asset);
                 
                 continue;
             }
             
-            trackSettings = {
-                urls: [],
-                autoplay: false,
-                loop: this.loop || false,
-                onload: this.bus.trigger.bind(this.bus, "wse.assets.loading.decrease")
-            };
+            trackFiles[type] = href;
+            trackSettings.urls.push(href);
             
-            trackFiles = {};
-            
-            for (j = 0; j < jlen; j += 1) {
-                
-                source = sources[j];
-                href = source.getAttribute("href");
-                type = source.getAttribute("type");
-                
-                if (href === null) {
-                    
-                    warn(this.bus, "No href defined for source in track '" +
-                        trackName + "' in audio element '" + this.name + "'.", asset);
-                    
-                    continue;
-                }
-                
-                if (type === null) {
-                    
-                    warn(this.bus, "No type defined for source in track '" + 
-                        trackName + "' in audio element '" + this.name + "'.", asset);
-                    
-                    continue;
-                }
-                
-                trackFiles[type] = href;
-                trackSettings.urls.push(href);
-                
-            }
-            
-            this.bus.trigger("wse.assets.loading.increase");
-            
-            track = new Howl(trackSettings);
-            
-            this.tracks[trackName] = track;
         }
         
-        /**
-         * Starts playing the current track.
-         * 
-         * @param command [XML DOM Element] The command as written in the WebStory.
-         * @return [object] Object that determines the next state of the interpreter.
-         */
-        this.play = function (command) {
-            
-            var fadeDuration;
-            
-            if (this._playing) {
-                return {
-                    doNext: true
-                };
-            }
-            
-            this._playing = true;
-            this._paused = false;
-            
-            if (command.getAttribute("fadein")) {
-                
-                this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadein");
-                
-                this.tracks[this._currentTrack].volume(0);
-                this.tracks[this._currentTrack].play();
-                
-                this.tracks[this._currentTrack].fade(0, 1, fadeDuration, function () {
-                    this.interpreter.waitCounter -= 1;
-                }.bind(this));
-            }
-            else {
-                this.tracks[this._currentTrack].play();
-            }
-            
-            return {
-                doNext: true
-            };
-        };
+        this.bus.trigger("wse.assets.loading.increase");
         
-        /**
-         * Stops playing the current track.
-         * 
-         * @param command [XML DOM Element] The command as written in the WebStory.
-         * @return [object] Object that determines the next state of the interpreter.
-         */
-        this.stop = function (command) {
-            
-            var fadeDuration;
-            
-            if (!this._currentTrack) {
-                return {
-                    doNext: true
-                };
-            }
-            
-            this._playing = false;
-            this._paused = false;
-            
-            if (command && command.getAttribute("fadeout")) {
-                
-                this.interpreter.waitCounter += 1;
-                fadeDuration = +command.getAttribute("fadeout");
-                
-                this.tracks[this._currentTrack].fade(1, 0, fadeDuration, function () {
-                    this.tracks[this._currentTrack].stop();
-                    this.interpreter.waitCounter -= 1;
-                }.bind(this));
-            }
-            else {
-                this.tracks[this._currentTrack].stop();
-            }
-            
-            this.bus.trigger("wse.assets.audio.stop", this);
-            
-            return {
-                doNext: true
-            };
-        };
+        track = new Howl(trackSettings);
         
-        /**
-         * Pauses playing the curren track.
-         * 
-         * @return [object] Object that determines the next state of the interpreter.
-         */
-        this.pause = function () {
-            
-            if (!this._currentTrack || !this._playing) {
-                return {
-                    doNext: true
-                };
-            }
-            
-            this._paused = true;
-            
-            this.tracks[this._currentTrack].pause();
-            
-            return {
-                doNext: true
-            };
-        };
-        
-        this.bus.trigger("wse.assets.audio.constructor", this);
-        
-        this.bus.subscribe("wse.interpreter.restart", function () {
-            this.stop();
-        }.bind(this));
-        
-        window.addEventListener("blur", function () {
-            if (this._playing) {
-                this.tracks[this._currentTrack].fade(1, 0, 200);
-            }
-        }.bind(this));
-        
-        window.addEventListener("focus", function () {
-            if (this._playing) {
-                this.tracks[this._currentTrack].fade(0, 1, 200);
-            }
-        }.bind(this));
+        this.tracks[trackName] = track;
     }
     
     /**
-     * Changes the currently active track.
+     * Starts playing the current track.
      * 
-     * @param command [DOM Element] The command as specified in the WebStory.
-     * @trigger wse.interpreter.warning@interpreter
-     * @trigger wse.assets.audio.set@interpreter
+     * @param command [XML DOM Element] The command as written in the WebStory.
+     * @return [object] Object that determines the next state of the interpreter.
      */
-    Audio.prototype.set = function (command) {
+    this.play = function (command) {
         
-        var wasPlaying = false;
+        var fadeDuration;
         
         if (this._playing) {
-            wasPlaying = true;
+            return {
+                doNext: true
+            };
         }
         
-        this.stop();
+        this._playing = true;
+        this._paused = false;
         
-        this._currentTrack = command.getAttribute("track");
-        
-        if (wasPlaying) {
-            this.play(command);
+        if (command.getAttribute("fadein")) {
+            
+            this.interpreter.waitCounter += 1;
+            fadeDuration = +command.getAttribute("fadein");
+            
+            this.tracks[this._currentTrack].volume(0);
+            this.tracks[this._currentTrack].play();
+            
+            this.tracks[this._currentTrack].fade(0, 1, fadeDuration, function () {
+                this.interpreter.waitCounter -= 1;
+            }.bind(this));
+        }
+        else {
+            this.tracks[this._currentTrack].play();
         }
         
         return {
             doNext: true
         };
     };
-
+    
     /**
-     * Gathers the data to put into a savegame.
+     * Stops playing the current track.
      * 
-     * @param obj [object] The savegame object.
+     * @param command [XML DOM Element] The command as written in the WebStory.
+     * @return [object] Object that determines the next state of the interpreter.
      */
-    Audio.prototype.save = function () {
+    this.stop = function (command) {
         
-        var obj = {
-            currentTrack: this._currentTrack,
-            playing: this._playing,
-            paused: this._paused
+        var fadeDuration;
+        
+        if (!this._currentTrack) {
+            return {
+                doNext: true
+            };
+        }
+        
+        this._playing = false;
+        this._paused = false;
+        
+        if (command && command.getAttribute("fadeout")) {
+            
+            this.interpreter.waitCounter += 1;
+            fadeDuration = +command.getAttribute("fadeout");
+            
+            this.tracks[this._currentTrack].fade(1, 0, fadeDuration, function () {
+                this.tracks[this._currentTrack].stop();
+                this.interpreter.waitCounter -= 1;
+            }.bind(this));
+        }
+        else {
+            this.tracks[this._currentTrack].stop();
+        }
+        
+        this.bus.trigger("wse.assets.audio.stop", this);
+        
+        return {
+            doNext: true
         };
-        
-        this.bus.trigger("wse.assets.audio.save", this);
-        
-        return obj;
     };
-
+    
     /**
-     * Restore function for loading the state from a savegame.
+     * Pauses playing the curren track.
      * 
-     * @param obj [object] The savegame data.
-     * @trigger wse.assets.audio.restore@interpreter
+     * @return [object] Object that determines the next state of the interpreter.
      */
-    Audio.prototype.restore = function (vals) {
+    this.pause = function () {
         
-        var key;
-        
-        this._playing = vals.playing;
-        this._paused = vals.paused;
-        this._currentTrack = vals.currentTrack;
-        
-        for (key in this.tracks) {
-            this.tracks[key].stop();
+        if (!this._currentTrack || !this._playing) {
+            return {
+                doNext: true
+            };
         }
         
-        if (this._playing && !this._paused) {
-            this.tracks[this._currentTrack].play();
-        }
+        this._paused = true;
         
-        this.bus.trigger("wse.assets.audio.restore", this);
+        this.tracks[this._currentTrack].pause();
+        
+        return {
+            doNext: true
+        };
     };
     
-    return Audio;
+    this.bus.trigger("wse.assets.audio.constructor", this);
     
-});
+    this.bus.subscribe("wse.interpreter.restart", function () {
+        this.stop();
+    }.bind(this));
+    
+    window.addEventListener("blur", function () {
+        if (this._playing) {
+            this.tracks[this._currentTrack].fade(1, 0, 200);
+        }
+    }.bind(this));
+    
+    window.addEventListener("focus", function () {
+        if (this._playing) {
+            this.tracks[this._currentTrack].fade(0, 1, 200);
+        }
+    }.bind(this));
+}
+
+/**
+ * Changes the currently active track.
+ * 
+ * @param command [DOM Element] The command as specified in the WebStory.
+ * @trigger wse.interpreter.warning@interpreter
+ * @trigger wse.assets.audio.set@interpreter
+ */
+Audio.prototype.set = function (command) {
+    
+    var wasPlaying = false;
+    
+    if (this._playing) {
+        wasPlaying = true;
+    }
+    
+    this.stop();
+    
+    this._currentTrack = command.getAttribute("track");
+    
+    if (wasPlaying) {
+        this.play(command);
+    }
+    
+    return {
+        doNext: true
+    };
+};
+
+/**
+ * Gathers the data to put into a savegame.
+ * 
+ * @param obj [object] The savegame object.
+ */
+Audio.prototype.save = function () {
+    
+    var obj = {
+        currentTrack: this._currentTrack,
+        playing: this._playing,
+        paused: this._paused
+    };
+    
+    this.bus.trigger("wse.assets.audio.save", this);
+    
+    return obj;
+};
+
+/**
+ * Restore function for loading the state from a savegame.
+ * 
+ * @param obj [object] The savegame data.
+ * @trigger wse.assets.audio.restore@interpreter
+ */
+Audio.prototype.restore = function (vals) {
+    
+    var key;
+    
+    this._playing = vals.playing;
+    this._paused = vals.paused;
+    this._currentTrack = vals.currentTrack;
+    
+    for (key in this.tracks) {
+        this.tracks[key].stop();
+    }
+    
+    if (this._playing && !this._paused) {
+        this.tracks[this._currentTrack].play();
+    }
+    
+    this.bus.trigger("wse.assets.audio.restore", this);
+};
+
+module.exports = Audio;

@@ -1,5 +1,7 @@
-/* global using */
+/* global WSE */
 
+(function () {
+    
 /**
  * An extension that adds side-image capabilities.
  * When on a character asset an attribute imagepack is set,
@@ -7,62 +9,54 @@
  * the character says something and hidden when someone else
  * says something.
  */
-using().define("WSE.extensions.sideImages", function () {
+function makeToggleSideImagesFn (game) {
     
-    "use strict";
+    var lastSpeakerName = '', fn;
     
-    function makeToggleSideImagesFn (game) {
+    fn = function (data) {
         
-        var lastSpeakerName = '', fn;
+        var speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
         
-        fn = function (data) {
+        assets = game.interpreter.assets;
+        speakerName = data.command.getAttribute('s');
+        speaker = assets[speakerName];
+        ipName = speaker.asset.getAttribute('imagepack');
+        
+        //console.log('speakerName: ' + speakerName);
+        //console.log('lastSpeakerName: ' + lastSpeakerName);
+        
+        if (lastSpeakerName == speakerName) {
+            return;
+        }
+        
+        if (lastSpeakerName !== '') {
             
-            var speaker, speakerName, lastSpeaker, ip, ipName, assets, lastIp;
+            lastSpeaker = assets[lastSpeakerName];
+            lastIp = assets[lastSpeaker.asset.getAttribute('imagepack')];
             
-            assets = game.interpreter.assets;
-            speakerName = data.command.getAttribute('s');
-            speaker = assets[speakerName];
-            ipName = speaker.asset.getAttribute('imagepack');
-            
-            //console.log('speakerName: ' + speakerName);
-            //console.log('lastSpeakerName: ' + lastSpeakerName);
-            
-            if (lastSpeakerName == speakerName) {
-                return;
+            if (lastIp) {
+                lastIp.hide(data.command, {});
             }
-            
-            if (lastSpeakerName !== '') {
-                
-                lastSpeaker = assets[lastSpeakerName];
-                lastIp = assets[lastSpeaker.asset.getAttribute('imagepack')];
-                
-                if (!lastIp) {
-                    //console.log('No old imagepack to hide...');
-                }
-                else {
-                    //console.log('Hiding old imagepack...');
-                    lastIp.hide(data.command, {});
-                }
-            }
-            
-            lastSpeakerName = speakerName;
-            
-            if (!ipName) {
-                return;
-            }
-            
-            ip = assets[ipName];
-            
-            //console.log('Showing new imagepack...');
-            ip.show(data.command, {});
-        };
+        }
         
-        game.bus.subscribe(function () { lastSpeakerName = ''; }, 'wse.interpreter.restart');
+        lastSpeakerName = speakerName;
         
-        return fn;
-    }
-    
-    return function (game) {
-        game.bus.subscribe(makeToggleSideImagesFn(game), 'wse.interpreter.commands.line');
+        if (!ipName) {
+            return;
+        }
+        
+        ip = assets[ipName];
+        
+        ip.show(data.command, {});
     };
+    
+    game.bus.subscribe(function () { lastSpeakerName = ''; }, 'wse.interpreter.restart');
+    
+    return fn;
+}
+
+WSE.bus.subscribe("wse.game.constructor", function (data) {
+    data.game.bus.subscribe(makeToggleSideImagesFn(data.game), 'wse.interpreter.commands.line');
 });
+
+}());

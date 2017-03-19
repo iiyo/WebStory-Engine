@@ -1,75 +1,71 @@
-/* global using */
 
-using("WSE.tools::getParsedAttribute", "WSE.tools::warn").
-define("WSE.commands.with", function (getParsedAttribute, warn) {
+var tools = require("../tools/tools");
+
+var warn = tools.warn;
+var getParsedAttribute = tools.getParsedAttribute;
+
+function withCommand (command, interpreter) {
     
-    "use strict";
+    var container = interpreter.runVars;
+    var children = command.childNodes;
+    var variableName = getParsedAttribute(command, "var", interpreter);
+    var i, numberOfChildren = children.length, current;
     
-    function withCommand (command, interpreter) {
+    for (i = 0; i < numberOfChildren; i += 1) {
         
-        var container = interpreter.runVars;
-        var children = command.childNodes;
-        var variableName = getParsedAttribute(command, "var", interpreter);
-        var i, numberOfChildren = children.length, current;
+        current = children[i];
         
-        for (i = 0; i < numberOfChildren; i += 1) {
-            
-            current = children[i];
-            
-            if (shouldBeSkipped(current, interpreter)) {
-                continue;
-            }
-            
-            if (isWhen(current) && !hasCondition(current)) {
-                warn(interpreter.bus, "Element 'when' without a condition. Ignored.", command);
-            }
-            
-            if (isElse(current) && hasCondition(current)) {
-                warn(interpreter.bus, "Element 'else' with a condition. Ignored.", command);
-            }
-            
-            if (isElse(current) ||
-                    isWhen(current) && hasCondition(current) &&
-                    getParsedAttribute(current, "is") === container[variableName]) {
-                
-                interpreter.pushToCallStack();
-                interpreter.currentCommands = current.childNodes;
-                interpreter.scenePath.push(interpreter.index);
-                interpreter.scenePath.push(i);
-                interpreter.index = -1;
-                interpreter.currentElement = -1;
-                
-                break;
-            }
+        if (shouldBeSkipped(current, interpreter)) {
+            continue;
         }
         
-        return {
-            doNext: true
-        };
+        if (isWhen(current) && !hasCondition(current)) {
+            warn(interpreter.bus, "Element 'when' without a condition. Ignored.", command);
+        }
+        
+        if (isElse(current) && hasCondition(current)) {
+            warn(interpreter.bus, "Element 'else' with a condition. Ignored.", command);
+        }
+        
+        if (isElse(current) ||
+                isWhen(current) && hasCondition(current) &&
+                getParsedAttribute(current, "is") === container[variableName]) {
+            
+            interpreter.pushToCallStack();
+            interpreter.currentCommands = current.childNodes;
+            interpreter.scenePath.push(interpreter.index);
+            interpreter.scenePath.push(i);
+            interpreter.index = -1;
+            interpreter.currentElement = -1;
+            
+            break;
+        }
     }
     
-    return withCommand;
-    
-    
-    function shouldBeSkipped (element, interpreter) {
-        return !element.tagName || !interpreter.checkIfvar(element) ||
-            (element.tagName !== "when" && element.tagName !== "else");
-    }
-    
-    function isWhen (element) {
-        return tagNameIs(element, "when");
-    }
-    
-    function isElse (element) {
-        return tagNameIs(element, "else");
-    }
-    
-    function tagNameIs (element, name) {
-        return element.tagName === name;
-    }
-    
-    function hasCondition (element) {
-        return element.hasAttribute("is");
-    }
-    
-});
+    return {
+        doNext: true
+    };
+}
+
+function shouldBeSkipped (element, interpreter) {
+    return !element.tagName || !interpreter.checkIfvar(element) ||
+        (element.tagName !== "when" && element.tagName !== "else");
+}
+
+function isWhen (element) {
+    return tagNameIs(element, "when");
+}
+
+function isElse (element) {
+    return tagNameIs(element, "else");
+}
+
+function tagNameIs (element, name) {
+    return element.tagName === name;
+}
+
+function hasCondition (element) {
+    return element.hasAttribute("is");
+}
+
+module.exports = withCommand;

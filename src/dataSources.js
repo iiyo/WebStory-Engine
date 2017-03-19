@@ -1,12 +1,8 @@
-/* global using */
 
-using("WSE.dataSources.LocalStorage").
-define("WSE.dataSources", function (LocalStorageDataSource) {
-    
-    var dataSources = {
-        LocalStorage: LocalStorageDataSource
-    };
-    
-    return dataSources;
-    
-});
+var LocalStorageDataSource = require("./dataSources/LocalStorage");
+
+var dataSources = {
+    LocalStorage: LocalStorageDataSource
+};
+
+module.exports = dataSources;

@@ -1,68 +1,63 @@
-/* global using */
 
-using("string-dict").define("WSE.dataSources.LocalStorage", function (Dict) {
+var Dict = require("string-dict");
+
+var testKey = "___wse_storage_test";
+var localStorageEnabled = false;
+var data;
+
+try {
     
-    "use strict";
+    localStorage.setItem(testKey, "works");
     
-    var testKey = "___wse_storage_test";
-    var localStorageEnabled = false;
-    var data;
-    
-    try {
-        
-        localStorage.setItem(testKey, "works");
-        
-        if (localStorage.getItem(testKey) === "works") {
-            localStorageEnabled = true;
-        }
+    if (localStorage.getItem(testKey) === "works") {
+        localStorageEnabled = true;
     }
-    catch (error) {
+}
+catch (error) {
+    
+    console.error("LocalStorage not available, using JS object as fallback.");
+    
+    data = new Dict();
+}
+
+function LocalStorageDataSource () {}
+
+LocalStorageDataSource.prototype.set = function (key, value) {
+    
+    if (!localStorageEnabled) {
+        data.set(key, value);
+    }
+    else {
+        localStorage.setItem(key, value);
+    }
+};
+
+LocalStorageDataSource.prototype.get = function (key) {
+    
+    if (!localStorageEnabled) {
         
-        console.error("LocalStorage not available, using JS object as fallback.");
+        if (!data.has(key)) {
+            return null;
+        }
         
-        data = new Dict();
+        return data.get(key);
     }
     
-    function LocalStorageDataSource () {}
+    return localStorage.getItem(key);
+};
+
+LocalStorageDataSource.prototype.remove = function (key) {
     
-    LocalStorageDataSource.prototype.set = function (key, value) {
+    if (!localStorageEnabled) {
         
-        if (!localStorageEnabled) {
-            data.set(key, value);
-        }
-        else {
-            localStorage.setItem(key, value);
-        }
-    };
-    
-    LocalStorageDataSource.prototype.get = function (key) {
-        
-        if (!localStorageEnabled) {
-            
-            if (!data.has(key)) {
-                return null;
-            }
-            
-            return data.get(key);
+        if (!data.has(key)) {
+            return;
         }
         
-        return localStorage.getItem(key);
-    };
+        return data.remove(key);
+    }
     
-    LocalStorageDataSource.prototype.remove = function (key) {
-        
-        if (!localStorageEnabled) {
-            
-            if (!data.has(key)) {
-                return;
-            }
-            
-            return data.remove(key);
-        }
-        
-        return localStorage.removeItem(key);
-    };
-    
-    return LocalStorageDataSource;
-    
-});
+    return localStorage.removeItem(key);
+};
+
+module.exports = LocalStorageDataSource;

@@ -12,18 +12,13 @@
     </head>
     <body>
         <script src="../../build/WebStoryEngine.js"></script>
+        <script src="../../src/extensions/side-images.js"></script>
         <script>
-            using.modules["WSE.extensions.sideImages"] = "../../src/extensions/side-images.js";
-        </script>
-        <script>
-            using("WSE.Game", "WSE.extensions.sideImages").run(function (Game, injectSideImages) {
-                
-                var game = new Game({ url: "game.xml"});
-                
-                injectSideImages(game);
-                
-                game.start();
-            });
+            
+            var game = new WSE.Game({ url: "game.xml"});
+            
+            game.start();
+            
         </script>
     </body>
 </html>

@@ -9,17 +9,18 @@
     <body>
         <script src="engine/WebStoryEngine.js"></script>
         <script>
-            using("WSE.Game").run(function (Game) {
+            (function () {
                 
                 console.log("Starting the game...");
                 
-                var game = new Game({
+                var game = new WSE.Game({
                     url: "story/game.xmugly",
                     host: typeof HOST === "undefined" ? false : HOST
                 });
                 
                 game.start();
-            });
+                
+            }());
         </script>
     </body>
 </html>

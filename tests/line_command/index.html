@@ -39,12 +39,11 @@
     <body>
         <script src="../../build/WebStoryEngine.js"></script>
         <script>
-            using("WSE.Game").run(function (Game) {
-                
-                var game = new Game({ url: "game.xml"});
-                
-                game.start();
-            });
+            
+            var game = new WSE.Game({ url: "game.xml"});
+            
+            game.start();
+            
         </script>
     </body>
 </html>

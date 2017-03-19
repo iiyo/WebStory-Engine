@@ -1,26 +1,19 @@
-/* global using */
 
-using().define("WSE.commands.break", function () {
+function breakFn (command, interpreter) {
     
-    "use strict";
+    interpreter.bus.trigger(
+        "wse.interpreter.commands.break",
+        {
+            interpreter: interpreter,
+            command: command
+        }, 
+        false
+    );
     
-    function breakFn (command, interpreter) {
-        
-        interpreter.bus.trigger(
-            "wse.interpreter.commands.break",
-            {
-                interpreter: interpreter,
-                command: command
-            }, 
-            false
-        );
-        
-        return {
-            doNext: false,
-            wait: true
-        };
-    }
-    
-    return breakFn;
-    
-});
+    return {
+        doNext: false,
+        wait: true
+    };
+}
+
+module.exports = breakFn;

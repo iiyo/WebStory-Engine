@@ -1,25 +1,18 @@
-/* global using */
 
-using().define("WSE.functions", function () {
+var functions = {
     
-    "use strict";
+    savegames: function (interpreter) {
+        interpreter.toggleSavegameMenu();
+    },
     
-    var functions = {
-        
-        savegames: function (interpreter) {
-            interpreter.toggleSavegameMenu();
-        },
-        
-        stageclick_disable: function (interpreter) {
-            interpreter.game.unsubscribeListeners();
-        },
-        
-        stageclick_enable: function (interpreter) {
-            interpreter.game.subscribeListeners();
-        }
-        
-    };
+    stageclick_disable: function (interpreter) {
+        interpreter.game.unsubscribeListeners();
+    },
     
-    return functions;
+    stageclick_enable: function (interpreter) {
+        interpreter.game.subscribeListeners();
+    }
     
-});
+};
+
+module.exports = functions;

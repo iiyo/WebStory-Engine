@@ -1,5 +1,4 @@
-/* global using */
 
-using("WSE.tools.ui").define("WSE.commands.confirm", function (ui) {
-    return ui.makeInputFn("confirm");
-});
+var ui = require("../tools/ui");
+
+module.exports = ui.makeInputFn("confirm");

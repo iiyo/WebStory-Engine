@@ -1,5 +1,4 @@
-/* global using */
 
-using("WSE.tools.ui").define("WSE.commands.prompt", function (ui) {
-    return ui.makeInputFn("prompt");
-});
+var ui = require("../tools/ui");
+
+module.exports = ui.makeInputFn("prompt");

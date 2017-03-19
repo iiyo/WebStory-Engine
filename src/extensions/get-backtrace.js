@@ -1,10 +1,8 @@
-/* global using */
+/* global WSE */
 
-using("WSE.commands").run(function (commands) {
+(function () {
     
-    "use strict";
-    
-    commands.getBacktrace = function (command, interpreter) {
+    function getBacktrace (command, interpreter) {
         
         var i, frame, str = "", len = interpreter.callStack.length;
         
@@ -22,5 +20,8 @@ using("WSE.commands").run(function (commands) {
         return {
             doNext: true
         };
-    };
-});
+    }
+    
+    WSE.commands.getBacktrace = getBacktrace;
+    
+}());
