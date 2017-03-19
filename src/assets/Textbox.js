@@ -6,7 +6,8 @@ using(
     "class-manipulator::list",
     "WSE.DisplayObject",
     "WSE.tools::applyAssetUnits",
-    "WSE.tools::replaceVariables"
+    "WSE.tools::replaceVariables",
+    "WSE.tools::truthy"
 ).
 define("WSE.assets.Textbox", function (
     transform,
@@ -14,7 +15,8 @@ define("WSE.assets.Textbox", function (
     classes,
     DisplayObject,
     applyUnits,
-    replaceVars
+    replaceVars,
+    truthy
 ) {
     
     "use strict";
@@ -28,8 +30,8 @@ define("WSE.assets.Textbox", function (
         var element, nameElement, textElement;
         
         this.type = asset.getAttribute("behaviour") || "adv";
-        this.showNames = asset.getAttribute("namebox") === "yes" ? true : false;
-        this.nltobr = asset.getAttribute("nltobr") === "true" ? true : false;
+        this.showNames = truthy(asset.getAttribute("namebox"));
+        this.nltobr = truthy(asset.getAttribute("nltobr"));
         this.cssid = this.cssid || "wse_textbox_" + this.name;
         this.effectType = asset.getAttribute("effect") || "typewriter";
         this.speed = asset.getAttribute("speed") || 0;

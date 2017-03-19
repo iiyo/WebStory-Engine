@@ -15,7 +15,8 @@ using(
     "enjoy-core::find",
     "enjoy-typechecks::isUndefined",
     "enjoy-typechecks::isNull",
-    "WSE.savegames"
+    "WSE.savegames",
+    "WSE.tools::truthy"
 ).
 define("WSE.Interpreter", function (
     LocalStorageSource,
@@ -31,7 +32,8 @@ define("WSE.Interpreter", function (
     find,
     isUndefined,
     isNull,
-    savegames
+    savegames,
+    truthy
 ) {
     
     "use strict";
@@ -808,9 +810,7 @@ define("WSE.Interpreter", function (
         if (menu !== null) {
             
             try {
-                
-                listenerStatus =
-                    menu.getAttribute("data-wse-listener-status") === "true" ? true : false;
+                listenerStatus = truthy(menu.getAttribute("data-wse-listener-status"));
                 this.stage.removeChild(menu);
             }
             catch (e) {
