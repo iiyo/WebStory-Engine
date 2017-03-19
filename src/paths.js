@@ -5,7 +5,6 @@
     var base = using.path + "../../../../";
     
     using.modules["WSE.assets"] = base + "src/assets.js";
-    using.modules["WSE.assets.Animation"] = base + "src/assets/Animation.js";
     using.modules["WSE.assets.Audio"] = base + "src/assets/Audio.js";
     using.modules["WSE.assets.Background"] = base + "src/assets/Background.js";
     using.modules["WSE.assets.Character"] = base + "src/assets/Character.js";

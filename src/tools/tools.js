@@ -1,6 +1,6 @@
 /* global using */
 
-using("MO5.Timer").define("WSE.tools", function (Timer) {
+using().define("WSE.tools", function () {
     
     "use strict";
     
@@ -215,20 +215,6 @@ using("MO5.Timer").define("WSE.tools", function (Timer) {
         }
         
         return value;
-    };
-    
-    tools.createTimer = function (duration) {
-        
-        var timer = new Timer();
-        
-        duration = duration || 0;
-        duration = duration < 0 ? 0 : duration;
-        
-        timer.start();
-        
-        setTimeout(timer.stop.bind(timer), duration);
-        
-        return timer;
     };
     
     tools.getWindowDimensions = function () {

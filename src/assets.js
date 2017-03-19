@@ -1,7 +1,6 @@
 /* global using */
 
 using(
-    "WSE.assets.Animation",
     "WSE.assets.Audio",
     "WSE.assets.Background",
     "WSE.assets.Character",
@@ -11,7 +10,6 @@ using(
     "WSE.assets.Composite"
 ).
 define("WSE.assets", function (
-    AnimationAsset,
     AudioAsset,
     BackgroundAsset,
     CharacterAsset,
@@ -22,7 +20,6 @@ define("WSE.assets", function (
 ) {
     
     var assets = {
-        Animation: AnimationAsset,
         Audio: AudioAsset,
         Background: BackgroundAsset,
         Character: CharacterAsset,

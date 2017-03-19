@@ -50,7 +50,6 @@
         
         "WSE.DisplayObject": "src/DisplayObject.js",
         
-        "WSE.assets.Animation": "src/assets/Animation.js",
         "WSE.assets.Audio": "src/assets/Audio.js",
         "WSE.assets.Character": "src/assets/Character.js",
         "WSE.assets.Curtain": "src/assets/Curtain.js",
