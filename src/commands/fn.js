@@ -11,7 +11,7 @@ using("WSE.functions", "WSE.tools::warn").define("WSE.commands.fn", function (fu
         name = command.getAttribute("name") || null;
         varName = command.getAttribute("tovar") || null;
         
-        if (typeof functions[name] !== "function") {
+        if (typeof name !== "string") {
             warn(interpreter.bus, "No name supplied on fn element.", command);
             return {
                 doNext: true
