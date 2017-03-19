@@ -11,7 +11,7 @@
     
     . assets :
         
-        . audio name music, +loop, -fade, +autopause :
+        . audio name music, loop true, fade false, autopause true :
             
             . track title main_menu_music :
                 . source href chaos-circus.mp3, type mp3
