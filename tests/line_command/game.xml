@@ -25,10 +25,10 @@
             <show asset="tb" />
             
             <line s="n">
-                Narrator speaking.
+                <b>Narrator</b> speaking.
             </line>
             <line s="s">
-                Sara speaking.
+                Sara <i>speaking</i>.
             </line>
             <line s="p">
                 Pete Pölpel speaking.
