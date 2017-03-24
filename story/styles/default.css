@@ -62,6 +62,11 @@ b
     font-weight: bold;
 }
 
+i
+{
+    font-style: italic;
+}
+
 body
 {
     color: white;
