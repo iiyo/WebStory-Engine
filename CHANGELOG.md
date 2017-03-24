@@ -2,6 +2,12 @@
 
 ## Version 2017.x
 
+### Version 2017.1.1
+
+ * Fix italic text (GitHub issue [#28](https://github.com/iiyo/WebStory-Engine/issues/28))
+ * `yes` and `true` are now both considered truthy attribute values and can be used interchangeably
+ * Fix wrong attribute values in audio tests
+
 ### Version 2017.1
 
  * Allow custom data sources (GitHub issue #27)
