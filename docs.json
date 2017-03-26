@@ -1,0 +1,36 @@
+{
+    "name": "WebStory Engine",
+    "output": "dist/docs/",
+    "ignore": [
+        "dist/",
+        "node_modules/",
+        "build/",
+        "packages/",
+        "export/"
+    ],
+    "navigation": {
+        "Home": "index.md",
+        "Games": "docs/games.md",
+        "User Guide": {
+            "Beginner's Guide": "docs/beginners-guide.md",
+            "Language Reference": "docs/reference/language.md"
+        }
+    },
+    "code": [
+        {
+            "extension": "js",
+            "language": "javascript",
+            "comments": [
+                {
+                    "type": "single",
+                    "start": "//"
+                },
+                {
+                    "type": "multiline",
+                    "start": "/*",
+                    "end": "*/"
+                }
+            ]
+        }
+    ]
+}
