@@ -4,7 +4,15 @@
 Want to get started with WebStory Engine? Just click the button below to download the most
 recent version:
 
-[Download WebStory Engine (v2016.7)](https://github.com/iiyo/WebStory-Engine/releases/download/v2017.1/WebStory-Engine-v2017.1.0.zip)
+[Download WebStory Engine (v2017.1.1)](https://github.com/iiyo/WebStory-Engine/releases/download/v2017.1.1/WebStory-Engine-v2017.1.1.zip)
+
+
+## What's new in 2017.1.1?
+
+- Fix italic text (GitHub issue [#28](https://github.com/iiyo/WebStory-Engine/issues/28))
+- Fix shake effect (GitHub issue [#29](https://github.com/iiyo/WebStory-Engine/issues/29))
+- `yes` and `true` are now both considered truthy attribute values and can be used interchangeably
+- Fix wrong attribute values in audio tests
 
 
 ## What's new in v2017.1?
