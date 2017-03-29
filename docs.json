@@ -14,7 +14,9 @@
         "User Guide": {
             "Beginner's Guide": "docs/beginners-guide.md",
             "Language Reference": "docs/reference/language.md"
-        }
+        },
+        "Downloads": "docs/downloads.md",
+        "Community": "docs/community.md"
     },
     "code": [
         {

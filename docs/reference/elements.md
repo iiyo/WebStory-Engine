@@ -58,6 +58,7 @@
   * [restart](elements/restart.md) - Restarts the WebStory
   * [set](elements/set.md) - Sets an image on an ImagePack or a track on an Audio asset
   * [set_vars](elements/set_vars.md) - Sets the values of many variables at once
+  * [shake](elements/shake.md) - Shakes an asset
   * [show](elements/show.md) - Displays an asset on the stage
   * [start](elements/start.md) - Starts an animation
   * [stop](elements/stop.md) - Stops an Audio track or an animation

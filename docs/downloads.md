@@ -1,7 +1,7 @@
 
 # Downloads
 
-Want to get started with WebStory Engine? Just click the button below to download the most
+Want to get started with WebStory Engine? Just click the link below to download the most
 recent version:
 
 [Download WebStory Engine (v2017.1.1)](https://github.com/iiyo/WebStory-Engine/releases/download/v2017.1.1/WebStory-Engine-v2017.1.1.zip)
