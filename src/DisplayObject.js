@@ -535,14 +535,14 @@ define("WSE.DisplayObject", function (
     
     DisplayObject.prototype.shake = function (command) {
         
-        var dx, dy, element, self, xUnit, yUnit, duration, period;
+        var dx, dy, element, self, xUnit, yUnit, duration, times;
         var ox, oy, stage;
         
         self = this;
         element = document.getElementById(this.cssid);
         dx = command.getAttribute("dx");
         dy = command.getAttribute("dy");
-        period = command.getAttribute("period") || 50;
+        times = command.getAttribute("times") || 2;
         duration = command.getAttribute("duration") || 275;
         stage = this.interpreter.stage;
         
@@ -560,19 +560,10 @@ define("WSE.DisplayObject", function (
             dy = parseInt(dy, 10);
         }
         
-        function easing (d, t) {
-            
-            var x = t / period;
-            
-            while (x > 2.0) {
-                x -= 2.0;
-            }
-            
-            if  (x > 1.0) {
-                x = 2.0 - x;
-            }
-            
-            return x;
+        function easing (distance) {
+            return function (x) {
+                return distance * Math.sin(x * (times * 2) * Math.PI);
+            };
         }
         
         if (dx !== null) {
@@ -587,20 +578,20 @@ define("WSE.DisplayObject", function (
             self.interpreter.waitCounter += 1;
             
             transform(
-                ox - dx,
-                ox + dx,
+                0,
+                1,
                 function (v) {
                     element.style.left = v + xUnit;
                 },
                 {
                     duration: duration,
-                    easing:   easing
+                    easing: easing(dx)
+                },
+                function () {
+                    element.style.left = ox + xUnit;
+                    self.interpreter.waitCounter -= 1;
                 }
-            ).
-            then(function () {
-                element.style.left = ox + xUnit;
-                self.interpreter.waitCounter -= 1;
-            });
+            );
         }
         
         if (dy !== null) {
@@ -615,14 +606,14 @@ define("WSE.DisplayObject", function (
             self.interpreter.waitCounter += 1;
             
             transform(
-                oy - dy,
-                oy + dy,
+                0,
+                1,
                 function (v) {
                     element.style.top = v + yUnit;
                 },
                 {
                     duration: duration,
-                    easing:   easing
+                    easing: easing(dy)
                 },
                 function () {
                     element.style.top = oy + yUnit;
