@@ -451,7 +451,7 @@ using.ajax = (function () {
 
 /*
     WebStory Engine dependencies (v2017.1.1)
-    Build time: Sun, 19 Mar 2017 11:52:12 GMT
+    Build time: Wed, 29 Mar 2017 20:07:16 GMT
 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /* global using, require */
@@ -14596,14 +14596,14 @@ define("WSE.DisplayObject", function (
     
     DisplayObject.prototype.shake = function (command) {
         
-        var dx, dy, element, self, xUnit, yUnit, duration, period;
+        var dx, dy, element, self, xUnit, yUnit, duration, times;
         var ox, oy, stage;
         
         self = this;
         element = document.getElementById(this.cssid);
         dx = command.getAttribute("dx");
         dy = command.getAttribute("dy");
-        period = command.getAttribute("period") || 50;
+        times = command.getAttribute("times") || 2;
         duration = command.getAttribute("duration") || 275;
         stage = this.interpreter.stage;
         
@@ -14621,19 +14621,10 @@ define("WSE.DisplayObject", function (
             dy = parseInt(dy, 10);
         }
         
-        function easing (d, t) {
-            
-            var x = t / period;
-            
-            while (x > 2.0) {
-                x -= 2.0;
-            }
-            
-            if  (x > 1.0) {
-                x = 2.0 - x;
-            }
-            
-            return x;
+        function easing (distance) {
+            return function (x) {
+                return distance * Math.sin(x * (times * 2) * Math.PI);
+            };
         }
         
         if (dx !== null) {
@@ -14648,20 +14639,20 @@ define("WSE.DisplayObject", function (
             self.interpreter.waitCounter += 1;
             
             transform(
-                ox - dx,
-                ox + dx,
+                0,
+                1,
                 function (v) {
                     element.style.left = v + xUnit;
                 },
                 {
                     duration: duration,
-                    easing:   easing
+                    easing: easing(dx)
+                },
+                function () {
+                    element.style.left = ox + xUnit;
+                    self.interpreter.waitCounter -= 1;
                 }
-            ).
-            then(function () {
-                element.style.left = ox + xUnit;
-                self.interpreter.waitCounter -= 1;
-            });
+            );
         }
         
         if (dy !== null) {
@@ -14676,14 +14667,14 @@ define("WSE.DisplayObject", function (
             self.interpreter.waitCounter += 1;
             
             transform(
-                oy - dy,
-                oy + dy,
+                0,
+                1,
                 function (v) {
                     element.style.top = v + yUnit;
                 },
                 {
                     duration: duration,
-                    easing:   easing
+                    easing: easing(dy)
                 },
                 function () {
                     element.style.top = oy + yUnit;
@@ -14924,7 +14915,6 @@ define("WSE.DisplayObject", function (
     return DisplayObject;
     
 });
-
 
 /* global using */
 
