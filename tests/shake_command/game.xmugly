@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+. ws :
+    . settings :
+        . stage width 1366px, height 768px, +create, +center, +resize
+        . triggers
+    --
+    . assets :
+        . background ~bg, src ../../story/assets/images/Rainbow_A_01.jpg, width 100%, height 100%
+        . textbox ~tb, x 50%, xAnchor 50%, y 100%, yAnchor 100%, width 100%, height 60px
+        . character ~n, textbox tb
+    --
+    . scenes :
+        . scene #start :
+            
+            . move @tb, y 100%, yAnchor 100%
+            
+            . show @bg
+            . wait
+            
+            . show @tb
+            . wait
+            
+            . shake @bg
+            
+            (( n: shake @bg ))
+            
+            . shake @bg, :1000
+            
+            (( n: shake @bg, :1000 ))
+            
+            . shake @bg, :1000, dy 100px
+            
+            (( n: shake @bg, :1000, dy 100px ))
+            
+            . shake @bg, :1000, times 10
+            
+            (( n: shake @bg, :1000, times 10 ))
+            
+            . shake @bg, :1000, dx 100px
+            
+            (( n: shake @bg, :1000, dx 100px ))
+            
+            . shake @bg, :500, dx 100px, times 20
+            
+            (( n: shake @bg, :500, dx 100px, times 20 ))
+            
+            . shake @bg, :1000, dx 100px, dy 100px, times 10
+            
+            (( n: shake @bg, :1000, dx 100px, dy 100px, times 10 ))
+            
+            . shake @bg, dx 50%
+            
+            (( n: shake @bg, dx 50% ))
+            
+            . restart
+        --
+    --
+--
