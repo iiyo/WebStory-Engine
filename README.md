@@ -1,14 +1,12 @@
 # WebStory Engine
 
-[![Join the chat at https://gitter.im/iiyo/WebStory-Engine](https://badges.gitter.im/iiyo/WebStory-Engine.svg)](https://gitter.im/iiyo/WebStory-Engine?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-![WebStory Engine Logo](https://iiyo.org/res/webstory-engine-logo.png)
+**PLEASE READ: This project is no longer actively developed. Bugs can still be reported using the issue tracker and might get fixed, but no new features will be added any time soon (maybe never). If you want to take over, just fork the project and rename it to something else. Thanks for your understanding!**
 
 WebStory Engine is an engine for interactive web stories (e.g. visual
 novels). WebStories are written in an easy-to-use yet powerful XML format
 and run directly in the browser.
 
-Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "WebStoryEngine Official Site")
+Examples and documentation at: [WebStoryEngine.org](http://webstoryengine.org "WebStory Engine Official Site")
 
 ## Attributions ##
 
